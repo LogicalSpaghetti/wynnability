@@ -46,6 +46,10 @@ section {
   z-index: 40;
 }
 
+#editAbilityTooltip {
+  overflow: auto;
+}
+
 .small-btn {
   height: 23px;
   width: 23px;
@@ -92,6 +96,10 @@ section {
   --bs-modal-header-border-color: #20212b;
   --bs-modal-footer-border-color: #20212b;
   --bs-modal-bg: #343640;
+}
+
+.abilityName {
+  padding-bottom: 4px;
 }
 
 .minecraftTooltip {
@@ -197,6 +205,10 @@ section {
 .ability-type-none {
   background-color: #383838;
   color: white;
+}
+
+.rtl {
+  direction: rtl;
 }
 
 .page-up-arrow:hover {

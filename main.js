@@ -1,3 +1,58 @@
+function moveTooltip(X, Y, checkHidden = false) {
+        const cursorTooltip = document.getElementById('cursorTooltip');
+        if (checkHidden && cursorTooltip.hidden)
+        return;
+    
+        let scale = 1;
+        if (cursorTooltip.offsetWidth + 24 > window.innerWidth)
+            scale = (window.innerWidth - 24) / cursorTooltip.offsetWidth;
+        cursorTooltip.style.transform = `scale(${scale})`;
+
+        let leftOffset = (X + cursorTooltip.offsetWidth + 12) > window.innerWidth ? window.innerWidth - cursorTooltip.offsetWidth - 12 : X + 5;
+        leftOffset = Math.max(leftOffset, 12);
+
+        let upOffset = Y + 2;
+        if (Y > (window.innerHeight / 2)) {
+            upOffset = Y - cursorTooltip.offsetHeight - 2;
+            cursorTooltip.style.transformOrigin = `bottom left`;
+        } else
+            cursorTooltip.style.transformOrigin = `top left`;
+        
+        cursorTooltip.style.top = `${upOffset}px`;
+        cursorTooltip.style.left = `${leftOffset}px`;
+    }
+document.addEventListener('DOMContentLoaded', (e) => {
+    //Attaches a div to a cursor, used to display content
+    document.addEventListener( 'pointermove', (e) => {moveTooltip(e.clientX, e.clientY, true);} );
+    //Makes tooltip disappear on tap
+    document.addEventListener( 'touchstart', () => {tree.hideHoverAbilityTooltip()});
+    document.addEventListener( 'wheel', (e) => tree.hideHoverAbilityTooltip() );
+
+    let treescrollprocessor = new TouchProcessor();
+    document.getElementById('treeTableBody').addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        let swipeY = e.changedTouches[0].clientY;
+        treescrollprocessor.processTouch(e, 
+            () => {},
+            () => {},
+            () => {},
+            () => {},
+            () => {},
+            () => {},
+            (event) => {
+                const deltaY = event.changedTouches[0].clientY - swipeY;
+                if (Math.abs(deltaY) > 30) {
+                    swipeY = event.changedTouches[0].clientY;
+                    if (deltaY < 0)
+                        tree.incrementVerticalPage(1);
+                    else
+                        tree.incrementVerticalPage(-1);
+                }
+            }
+        );
+    }, {passive: false});
+})
+
 function copyFromField(fieldID) {
 
     const field = document.getElementById(fieldID);
@@ -11,7 +66,7 @@ function copyFromField(fieldID) {
     }
 
     navigator.clipboard.writeText(field.value);
-
+    
 }
 
 function clamp(number, min, max) {
@@ -20,7 +75,7 @@ function clamp(number, min, max) {
 
 }
 
-function shortenText(text, maxChars, replaceEndWith = '...') {
+function shortenText(text, maxChars, replaceEndWith = "...") {
 
     if (text.length <= maxChars || maxChars < 1 || text.length < 2)
         return text;
@@ -41,7 +96,7 @@ function enforceMinMax(inputElementID, min, max) {
     min = isNaN(Number(min)) ? null : Number(min);
     max = isNaN(Number(max)) ? null : Number(max);
 
-    if (document.readyState === 'complete' || document.readyState === 'loaded') {
+    if (document.readyState === "complete" || document.readyState === "loaded") {
 
         if (min != null)
             inputElement.min = min;
@@ -49,19 +104,19 @@ function enforceMinMax(inputElementID, min, max) {
         if (max != null)
             inputElement.max = max;
 
-        inputElement.addEventListener('change', () => {
-
+        inputElement.addEventListener('change', (e) => {
+    
             if (inputElement.hasAttribute('min'))
                 inputElement.value = Math.max(inputElement.value, inputElement.min);
-
+    
             if (inputElement.hasAttribute('max'))
                 inputElement.value = Math.min(inputElement.value, inputElement.max);
-
-        }, true);
+    
+        }, true)
 
     } else {
 
-        document.addEventListener('DOMContentLoaded', () => {
+        document.addEventListener("DOMContentLoaded", () => {
 
             if (min != null)
                 inputElement.min = min;
@@ -69,124 +124,255 @@ function enforceMinMax(inputElementID, min, max) {
             if (max != null)
                 inputElement.max = max;
 
-            inputElement.addEventListener('change', () => {
-
+            inputElement.addEventListener('change', (e) => {
+        
                 if (inputElement.hasAttribute('min'))
                     inputElement.value = Math.max(inputElement.value, inputElement.min);
 
                 if (inputElement.hasAttribute('max'))
                     inputElement.value = Math.min(inputElement.value, inputElement.max);
-
-            }, true);
+        
+            }, true)
 
         });
-    }
+   }
 }
 
-function showSmallToast(innerHTML = 'I\'m a toast!', autohide = true, hideDelay = 5000, id = 'smallToast') {
+function showSmallToast(innerHTML = "I'm a toast!", autohide = true, hideDelay = 5000, id = 'smallToast') {
 
     const container = document.getElementById(id);
-    if (container == null)
+    if(container == null)
         return;
 
     container.querySelector('.toast-body').innerHTML = innerHTML;
 
-    const toast = bootstrap.Toast.getOrCreateInstance(container, {
-        'autohide': autohide,
-        'delay': autohide ? hideDelay : null,
-    });
+    const toast = bootstrap.Toast.getOrCreateInstance( container, {'autohide': autohide, 'delay': autohide ? hideDelay : null} );
     toast.show();
 }
 
+const TAPLENGTH = 250;
+const SWIPEMINDISTANCE = 30;
+class TouchProcessor{
+
+    lastTap = 0;
+
+    taplength = 250;
+
+    swipemindistance = 30;
+    
+    startX;
+    startY;
+
+    singeTapTimeout;
+
+    constructor({taplength = TAPLENGTH, swipemindistance = SWIPEMINDISTANCE} = {}) {
+        this.taplength = isNaN(Number(taplength)) ? TAPLENGTH : Math.max(Number(taplength), 0);
+        this.swipemindistance = isNaN(Number(swipemindistance)) ? SWIPEMINDISTANCE : Math.max(Number(swipemindistance), 0);
+    }
+
+    processTouch(event, singleTapCallback = (e) => {}, doubleTapCallback = (e) => {},
+        holdStartCallback = (e) => {}, holdMoveCallback = (e) => {}, holdEndCallback = (e) => {},
+        swipeStartCallback = (e) => {}, swipeMoveCallback = (e) => {}, swipeEndCallback = (e) => {}) {
+
+        if (this.singeTapTimeout != null) {
+            clearTimeout(this.singeTapTimeout);
+            this.singeTapTimeout = null;
+        }
+
+        const currentTime = new Date().getTime();
+        const timeSinceLastTap = currentTime - this.lastTap;
+
+        if (timeSinceLastTap < TAPLENGTH && timeSinceLastTap > 0) {
+            doubleTapCallback(event);
+        } else {
+
+            const target = event.target;
+            this.startX = event.touches[0].clientX;
+            this.startY = event.touches[0].clientY;
+
+            let touchmove;
+            let touchmoveElectricBoogaloo;
+            let touchend;
+
+            let processor = this;
+
+            target.addEventListener("touchmove", touchmove = function(e) {
+
+                const deltaX = e.changedTouches[0].clientX - processor.startX;
+                const deltaY = e.changedTouches[0].clientY - processor.startY;
+
+                if (deltaX ** 2 + deltaY ** 2 >= processor.swipemindistance ** 2){
+
+                    if (holdTimeout) {
+                        clearTimeout(holdTimeout);
+                        holdTimeout = null;
+                    }
+                    target.removeEventListener("touchend", touchend);
+                    target.removeEventListener("touchmove", touchmove);
+
+                    swipeStartCallback(event);
+                    target.addEventListener("touchmove", touchmoveElectricBoogaloo = function(e) {
+                        swipeMoveCallback(e);
+                    }, {passive: true});
+                    target.addEventListener("touchend", (e) => {
+                        target.removeEventListener("touchmove", touchmoveElectricBoogaloo);
+                        swipeEndCallback(e);
+                    }, {once: true});
+
+                }
+            }, {passive: true});
+
+            let holdTimeout = setTimeout(
+                () => {
+                    target.removeEventListener("touchend", touchend);
+                    target.removeEventListener("touchmove", touchmove);
+                    holdStartCallback(event);
+                    target.addEventListener("touchmove", (e) => holdMoveCallback(e), {passive: true});
+                    target.addEventListener("touchend", (e) => {
+                        holdEndCallback(e);
+                        target.removeEventListener("touchmove", (e) => holdMoveCallback(e), {passive: true});
+                    }, {once: true});
+                },
+                TAPLENGTH
+            );
+
+            target.addEventListener("touchend", touchend = function() {
+                if (holdTimeout) {
+                    clearTimeout(holdTimeout);
+                    holdTimeout = null;
+                }
+                target.removeEventListener("touchmove", touchmove);
+
+                const currentTime = new Date().getTime();
+
+                processor.singeTapTimeout = setTimeout(
+                    () => {
+                    singleTapCallback(event);
+                    processor.singeTapTimeout = null;
+                    },
+                    TAPLENGTH + processor.lastTap - currentTime
+                );
+            }, {once: true});
+        }
+        this.lastTap = currentTime;
+    }
+
+    touchmove(e) {
+        const deltaX = e.changedTouches[0].clientX - this.startX;
+        const deltaY = e.changedTouches[0].clientY - this.startY;
+
+        if (deltaX ** 2 + deltaY ** 2 >= this.swipemindistance ** 2){
+
+            if (holdTimeout) {
+                clearTimeout(holdTimeout);
+                holdTimeout = null;
+            }
+            target.removeEventListener("touchend", touchend);
+            target.removeEventListener("touchmove", touchmove);
+
+            swipeStartCallback(event);
+            target.addEventListener("touchmove", touchmoveElectricBoogaloo = function(e) {
+                swipeMoveCallback(e);
+            }, {passive: true});
+            target.addEventListener("touchend", (e) => {
+                target.removeEventListener("touchmove", touchmoveElectricBoogaloo);
+                swipeEndCallback(e);
+            }, {once: true});
+
+        }
+    }
+}
+
 const codeDictionaryGenericSymbols = {
-    'mana': '§b✺',
+    'mana' : '§b✺',
 
-    'damage': '§c⚔',
-    'neuteral': '§6✣',
-    'earth': '§2✤',
-    'thunder': '§e✦',
-    'water': '§b❉',
-    'fire': '§c✹',
-    'air': '§f❋',
+    'damage' : '§c⚔',
+    'neuteral' : '§6✣',
+    'earth' : '§2✤',
+    'thunder' : '§e✦',
+    'water' : '§b❉',
+    'fire' : '§c✹',
+    'air' : '§f❋',
 
-    'effect': '§e✧',
-    'duration': '§d⌛',
-    'AoE': '§3☀',
-    'range': '§a➼',
-    'cooldown': '§3⌚',
-    'heal': '§d❤',
-    'blindness': '§c⬣',
-    'slowness': '§c⬤',
+    'effect' : '§e✧',
+    'duration' : '§d⌛',
+    'AoE' : '§3☀',
+    'range' : '§a➼',
+    'cooldown' : '§3⌚',
+    'heal' : '§d❤',
+    'blindness' : '§c⬣',
+    'slowness' : '§c⬤',
 };
 const codeDictionaryClassSymbols = {
-    'focus': '§e➽',
+    'focus' : '§e➽',
 
-    'winded': '§b≈',
-    'dilation': '§3➲',
+    'winded' : '§b≈',
+    'dilation' : '§3➲',
 
-    'resistance': '§a❁',
-    'corrupted': '§4☠',
-    'armorbreak': '§c✃',
-    'sacred': '§6✧',
-    'provoke': '§4💢',
-    'invincibility': '§b☗',
+    'resistance' : '§a❁',
+    'corrupted' : '§4☠',
+    'armorbreak' : '§c✃',
+    'sacred' : '§6✧',
+    'provoke' : '§4💢',
+    'invincibility' : '§b☗',
 
-    'marked': '§c✜',
-    'clone': '§5',
+    'marked' : '§c✜',
+    'clone' : '§5',
 
-    'puppet': '§6⚘',
-    'whipped': '§6⇶',
-    'awakened': '§f♚',
-    'bloodpool': '§4⚕',
-    'bleeding': '§c',
+    'puppet' : '§6⚘',
+    'whipped' : '§6⇶',
+    'awakened' : '§f♚',
+    'bloodpool' : '§4⚕',
+    'bleeding' : '§c',
 };
 const codeDictionaryCommonAbilityAttributes = {
+    
+    'manacost' : ['§b✺', '\n§b✺ §7Mana Cost: §f_'],
 
-    'manacost': ['§b✺', '\n§b✺ §7Mana Cost: §f_'],
+    'damage' : ['§c⚔', '\n§c⚔ §7Total Damage: §f_% §8(of your DPS)'],
+    'neuteral' : ['§6✣', '\n   §8(§6✣ §8Damage: _%)'],
+    'earth' : ['§2✤', '\n   §8(§2✤ §8Earth: _%)'],
+    'thunder' : ['§e✦', '\n   §8(§e✦ §8Thunder: _%)'],
+    'water' : ['§b❉', '\n   §8(§b❉ §8Water: _%)'],
+    'fire' : ['§c✹', '\n   §8(§c✹ §8Fire: _%)'],
+    'air' : ['§f❋', '\n   §8(§f❋ §8Air: _%)'],
+    
+    'effect' : ['§e✧', '\n§e✧ §7Effect: §f_'],
+    'duration' : ['§d⌛', '\n§d⌛ §7Duration: §f_s'],
+    'range' : ['§a➼', '\n§a➼ §7Range: §f_ Blocks'],
+    'AoE' : ['§3☀', '\n§3☀ §7Area of Effect: §f_ Blocks §7(Circle-Shaped)'],
+    'cooldown' : ['§3⌚', '\n§3⌚ §7Cooldown: §f_s'],
 
-    'damage': ['§c⚔', '\n§c⚔ §7Total Damage: §f_% §8(of your DPS)'],
-    'neuteral': ['§6✣', '\n   §8(§6✣ §8Damage: _%)'],
-    'earth': ['§2✤', '\n   §8(§2✤ §8Earth: _%)'],
-    'thunder': ['§e✦', '\n   §8(§e✦ §8Thunder: _%)'],
-    'water': ['§b❉', '\n   §8(§b❉ §8Water: _%)'],
-    'fire': ['§c✹', '\n   §8(§c✹ §8Fire: _%)'],
-    'air': ['§f❋', '\n   §8(§f❋ §8Air: _%)'],
-
-    'effect': ['§e✧', '\n§e✧ §7Effect: §f_'],
-    'duration': ['§d⌛', '\n§d⌛ §7Duration: §f_s'],
-    'range': ['§a➼', '\n§a➼ §7Range: §f_ Blocks'],
-    'AoE': ['§3☀', '\n§3☀ §7Area of Effect: §f_ Blocks §7(Circle-Shaped)'],
-    'cooldown': ['§3⌚', '\n§3⌚ §7Cooldown: §f_s'],
 };
 
 const codeDictionaryColor = {
-    '0': '#000000',
-    '1': '#0000AA',
-    '2': '#00AA00',
-    '3': '#00AAAA',
-    '4': '#AA0000',
-    '5': '#AA00AA',
-    '6': '#FFAA00',
-    '7': '#AAAAAA',
-    '8': '#555555',
-    '9': '#5555FF',
-    'a': '#55FF55',
-    'b': '#55FFFF',
-    'c': '#FF5555',
-    'd': '#FF55FF',
-    'e': '#FFFF55',
-    'f': '#FFFFFF',
-    'r': null,
+    '0' : '#000000',
+    '1' : '#0000AA',
+    '2' : '#00AA00',
+    '3' : '#00AAAA',
+    '4' : '#AA0000',
+    '5' : '#AA00AA',
+    '6' : '#FFAA00',
+    '7' : '#AAAAAA',
+    '8' : '#555555',
+    '9' : '#5555FF',
+    'a' : '#55FF55',
+    'b' : '#55FFFF',
+    'c' : '#FF5555',
+    'd' : '#FF55FF',
+    'e' : '#FFFF55',
+    'f' : '#FFFFFF',
+    'r' : null,
 };
 const codeDictionaryDecoration = {
-    'm': 'line-through',
-    'n': 'underline',
+    'm' : 'line-through',
+    'n' : 'underline',
 };
 const codeDictionaryStyle = {
-    'l': 'fw-bold',
-    'o': 'fst-italic',
+    'l' : 'fw-bold',
+    'o' : 'fst-italic',
 };
-const minecraftDelimiters = {'§': true, '&': true};
+const minecraftDelimiters = {'§' : true, '&' : true};
 const preferredDelimiter = '§';
 
 function sanitizeHTML(text) {
@@ -198,12 +384,12 @@ function splitByColorFormats(string) {
     let result =
         [
             {
-                color: null,
-                content: '',
-            },
+                color : null,
+                content : ''
+            }
         ];
 
-    if (!string.length)
+    if (string.length == 0)
         return result;
 
     let i = 0;
@@ -221,21 +407,21 @@ function splitByColorFormats(string) {
             continue;
 
         let code = string[i];
-
+        
         if (code in codeDictionaryColor)
-            result.push({color: code, content: ''});
+            result.push( {color : code, content : ''} );
 
-        else if (code === '#' && string.length - i >= 7) {
+        else if (code == '#' && string.length - i >= 7) {
             const endOfColorCode = i + 6;
             for (i; i < endOfColorCode; i++) {
                 code += string[i + 1];
             }
-            result.push({color: code, content: ''});
+            result.push( {color : code, content : ''} );
 
         } else
             result[result.length - 1]['content'] += char + code;
     }
-
+    
     return result;
 
 }
@@ -245,78 +431,78 @@ function splitByOtherFormats(string = '') {
     let result =
         [
             {
-                decoration: null,
-                style: null,
-                content: '',
-            },
+                decoration : null,
+                style : null,
+                content : ''
+            }
         ];
 
-    if (!string.length)
+    if (string.length == 0)
         return result;
-
+    
     let i = 0;
     for (i; i < string.length - 1; i++) {
 
         const char = string[i];
-
+        
         if (!minecraftDelimiters[char]) {
 
             result[result.length - 1]['content'] += char;
             continue;
 
         }
-
+        
         i++;
         const code = string[i];
-
+        
         if (code in codeDictionaryStyle)
-            result.push({style: code, content: ''});
+            result.push( {style : code, content : ''} );
 
         else if (code in codeDictionaryDecoration)
-            result.push({decoration: code, content: ''});
+            result.push( {decoration : code, content : ''} );
     }
     if (i < string.length && !minecraftDelimiters[string[string.length - 1]])
         result[result.length - 1]['content'] += string[string.length - 1];
-
+    
     return result;
 
 }
 
-function anyToHTML(text = '') {
-    return sanitizeHTML(text).replace(/\r\n|\r|\n/g, '<br>').replace(/ /g, '&nbsp;').replace(/-/g, '-&#8288;');
+function anyToHTML(text = "") {
+    return sanitizeHTML(text).replace(/(?:\r\n|\r|\n)/g, '<br>').replace(/ /g, '&nbsp;').replace(/-/g, '-&#8288;');
 }
 
-function minecraftToHTML(text = '') {
+function minecraftToHTML(text = "") {
 
     result = '';
 
     const colorSplitArr = splitByColorFormats(text);
-
-    colorSplitArr.forEach(colorSplit => {
+    
+    colorSplitArr.forEach( colorSplit => {
 
         let pendingContent = '';
 
         let spansToClose = 0;
         let pendingTextDecorations = {};
         let pendingTextStyles = {};
-
+        
         const formatSplitArr = splitByOtherFormats(colorSplit['content']);
-
-        formatSplitArr.forEach(formatSplit => {
-
+        
+        formatSplitArr.forEach( formatSplit => {
+            
             const decoration = formatSplit['decoration'];
             const style = formatSplit['style'];
             const content = formatSplit['content'];
 
             if (decoration != null && codeDictionaryDecoration[decoration] != null)
-                pendingTextDecorations[decoration] = true;
+                pendingTextDecorations[ decoration ] = true;
 
             if (style != null && codeDictionaryStyle[style] != null)
-                pendingTextStyles[style] = true;
+                pendingTextStyles[ style ] = true;
 
             if (content == null || content == '')
                 return;
-
+            
 
             pendingContent += '<span';
             spansToClose++;
@@ -340,14 +526,14 @@ function minecraftToHTML(text = '') {
                 pendingContent += ' class="';
                 for (let style of styles)
                     pendingContent += ' ' + codeDictionaryStyle[style];
-                pendingContent += '"';
+                pendingContent += '"'
             }
 
             pendingContent += `>${anyToHTML(content)}`;
 
         });
 
-
+        
         if (pendingContent.length == 0)
             return;
 
@@ -355,7 +541,7 @@ function minecraftToHTML(text = '') {
 
         if (color != null)
             if (codeDictionaryColor[color] != null)
-                result += `<span style="color:${codeDictionaryColor[color]}">`;
+                result += `<span style="color:${ codeDictionaryColor[color] }">`;
             else
                 result += `<span style="color:${sanitizeHTML(color)}">`;
         else
@@ -367,40 +553,40 @@ function minecraftToHTML(text = '') {
             result += '</span>';
 
     });
-
+    
     return result;
 }
 
-function stripMinecraftFormatting(text = '') {
+function stripMinecraftFormatting(text = "") {
 
-    let result = '';
+    result = '';
 
     const colorSplitArr = splitByColorFormats(text);
-
-    colorSplitArr.forEach(colorSplit => {
-
+    
+    colorSplitArr.forEach( colorSplit => {
+        
         const formatSplitArr = splitByOtherFormats(colorSplit['content']);
-
-        formatSplitArr.forEach(formatSplit => {
+        
+        formatSplitArr.forEach( formatSplit => {
 
             result += formatSplit['content'];
         });
     });
-
+    
     return result;
 }
 
 function insertStringBeforeSelected(insertString) {
 
     const activeElement = document.activeElement;
-    if (!activeElement || !(activeElement.type == 'textarea' || activeElement.type == 'text')) {
+    if ( !activeElement || !(activeElement.type == 'textarea' || activeElement.type == 'text') ) {
         return;
     }
 
     if (activeElement.maxLength != null && activeElement.value.length + insertString.length > activeElement.maxLength) {
         return;
     }
-
+   
     const currentValue = activeElement.value;
     const cursorPosition = activeElement.selectionStart;
 
@@ -419,46 +605,46 @@ function convertToMinecraftTooltip(text, outputFieldID) {
 }
 
 const classDictionary = {
-    'archer': 'abilities/class/archer',
-    'warrior': 'abilities/class/warrior',
-    'assassin': 'abilities/class/assassin',
-    'mage': 'abilities/class/mage',
-    'shaman': 'abilities/class/shaman',
-};
+    'archer' : 'abilities/class/archer',
+    'warrior' : 'abilities/class/warrior',
+    'assassin' : 'abilities/class/assassin',
+    'mage' : 'abilities/class/mage',
+    'shaman' : 'abilities/class/shaman',
+}
 
 const abilityIconDictionary = {
-    'skill': 'abilities/class/',
-    'red': 'abilities/generic/red',
-    'blue': 'abilities/generic/blue',
-    'purple': 'abilities/generic/purple',
-    'yellow': 'abilities/generic/yellow',
-    'white': 'abilities/generic/white',
-};
+    'skill' : 'abilities/class/',
+    'red' : 'abilities/generic/red',
+    'blue' : 'abilities/generic/blue',
+    'purple' : 'abilities/generic/purple',
+    'yellow' : 'abilities/generic/yellow',
+    'white' : 'abilities/generic/white',
+}
 const altAbilityIconDictionary = {
-    'skill': 'abilities/class/',
-    'magenta': 'abilities/generic/magenta',
-    'red': 'abilities/generic/red',
-    'blue': 'abilities/generic/blue',
-    'purple': 'abilities/generic/purple',
-    'yellow': 'abilities/generic/yellow',
-    'white': 'abilities/generic/white',
-};
+    'skill' : 'abilities/class/',
+    'magenta' : 'abilities/generic/magenta',
+    'red' : 'abilities/generic/red',
+    'blue' : 'abilities/generic/blue',
+    'purple' : 'abilities/generic/purple',
+    'yellow' : 'abilities/generic/yellow',
+    'white' : 'abilities/generic/white',
+}
 
 const travelIconDictionary = {
-    'up': 'abilities/generic/travel_up_1',
-    'down': 'abilities/generic/travel_down_2',
-    'right': 'abilities/generic/travel_right_3',
-    'left': 'abilities/generic/travel_left_4',
-};
+    'up' : 'abilities/generic/travel_up_1',
+    'down' : 'abilities/generic/travel_down_2',
+    'right' : 'abilities/generic/travel_right_3',
+    'left' : 'abilities/generic/travel_left_4',
+}
 
 const reverseDirectionDictionary = {
-    'up': 'down',
-    'down': 'up',
-    'right': 'left',
-    'left': 'right',
-};
+    'up' : 'down',
+    'down' : 'up',
+    'right' : 'left',
+    'left' : 'right',
+}
 
-function generateIconDiv(type, travelnode = new TravelNode(), classs = '', allocationStatus = 0, bScaleAbilityIcon = false, useAlternativeAbilityIcons = false) {
+function generateIconDiv(type, travelnode = new TravelNode(), classs = "", allocationStatus = 0, bScaleAbilityIcon = false, useAlternativeAbilityIcons = false) {
 
     let result = document.createElement('div');
     result.classList.add('centered-element-container');
@@ -471,7 +657,7 @@ function generateIconDiv(type, travelnode = new TravelNode(), classs = '', alloc
     let iconDictionary = abilityIconDictionary;
     if (useAlternativeAbilityIcons)
         iconDictionary = altAbilityIconDictionary;
-
+  
     if (type == 'skill')
         switch (allocationStatus) {
             case 0:
@@ -489,6 +675,9 @@ function generateIconDiv(type, travelnode = new TravelNode(), classs = '', alloc
 
     else if (type in iconDictionary)
         switch (allocationStatus) {
+            case -1:
+                url = iconDictionary[type] + '_blocked.png';
+                break;
             case 0:
                 url = iconDictionary[type] + '_dark.png';
                 break;
@@ -501,7 +690,7 @@ function generateIconDiv(type, travelnode = new TravelNode(), classs = '', alloc
             default:
                 break;
         }
-
+        
 
     if (url != null) {
         let img = document.createElement('img');
@@ -510,14 +699,9 @@ function generateIconDiv(type, travelnode = new TravelNode(), classs = '', alloc
         img.style.zIndex = 11;
 
         if (bScaleAbilityIcon) {
-            img.style.width = getImgScaleForType(type) + `%`;
-
-            // here to guarantee nothing breaks
-            img.onload = (e) => {
-                img.style.width = `${img.naturalWidth * 100 / 36}%`;
-            };
+            img.style.width = `${img.naturalWidth * 100 / 36}%`;
+            img.onload = (e) => {img.style.width = `${img.naturalWidth * 100 / 36}%`};
         }
-
 
         result.appendChild(img);
     }
@@ -525,38 +709,18 @@ function generateIconDiv(type, travelnode = new TravelNode(), classs = '', alloc
     return result;
 }
 
-function getImgScaleForType(type) {
-    switch (type) {
-        case 'skill':
-            return `122.222`;
-        case `magenta`:
-            return `200`;
-        case 'purple':
-            return `111.111`;
-        case 'red':
-            return `144.444`;
-        case 'blue':
-            return `122.222`;
-        case `yellow`:
-            return `111.111`;
-        case `white`:
-            return '100';
-        default:
-            return '100';
-    }
-}
-
-const POINTSREQUIRED_LOWER = 1;
-const POINTSREQUIRED_UPPER = 5;
+const POINTSREQUIRED_LOWER = -69;
+const POINTSREQUIRED_UPPER = 69;
 const POINTSREQUIRED_INPUTID = 'pointsRequiredInput';
 enforceMinMax(POINTSREQUIRED_INPUTID, POINTSREQUIRED_LOWER, POINTSREQUIRED_UPPER);
 
 const ARCHETYPEPOINTSREQUIRED_LOWER = 0;
-const ARCHETYPEPOINTSREQUIRED_UPPER = 100;
+const ARCHETYPEPOINTSREQUIRED_UPPER = 420;
 const ARCHETYPEPOINTSREQUIRED_INPUTID = 'archetypePointsRequiredInput';
 enforceMinMax(ARCHETYPEPOINTSREQUIRED_INPUTID, ARCHETYPEPOINTSREQUIRED_LOWER, ARCHETYPEPOINTSREQUIRED_UPPER);
 
-class Ability {
+class Ability
+{   
     /**
      * Top-most text
      * @var string
@@ -611,16 +775,7 @@ class Ability {
      */
     requires = -1;
 
-    constructor({
-                    name = '',
-                    description = '',
-                    unlockingWillBlock = [],
-                    archetype = '',
-                    pointsRequired = POINTSREQUIRED_LOWER,
-                    archetypePointsRequired = ARCHETYPEPOINTSREQUIRED_LOWER,
-                    type = 'skill',
-                    requires = -1,
-                } = {}) {
+    constructor({name = '', description = '', unlockingWillBlock = [], archetype = '', pointsRequired = POINTSREQUIRED_LOWER, archetypePointsRequired = ARCHETYPEPOINTSREQUIRED_LOWER, type = 'skill', requires = -1} = {}) {
 
         this.name = String(name) ? String(name) : '';
         this._plainname = stripMinecraftFormatting(this.name);
@@ -637,9 +792,9 @@ class Ability {
         this.pointsRequired = isNaN(Number(pointsRequired)) ? POINTSREQUIRED_LOWER : clamp(Number(pointsRequired), POINTSREQUIRED_LOWER, POINTSREQUIRED_UPPER);
 
         this.archetypePointsRequired = isNaN(Number(archetypePointsRequired)) ? ARCHETYPEPOINTSREQUIRED_LOWER : clamp(Number(archetypePointsRequired), ARCHETYPEPOINTSREQUIRED_LOWER, ARCHETYPEPOINTSREQUIRED_UPPER);
-
+        
         this.type = Object.keys(abilityIconDictionary).includes(String(type))
-        || Object.keys(altAbilityIconDictionary).includes(String(type))
+            || Object.keys(altAbilityIconDictionary).includes(String(type))
             ? String(type) : Object.keys(abilityIconDictionary)[0];
 
         this.requires = isNaN(Number(requires)) ? -1 : Number(requires);
@@ -651,7 +806,6 @@ class Ability {
 }
 
 const NUMOFVARIANTS = 4;
-
 class TravelNode {
     /**
      * up : empty/0 means unconnected, 1 means connected, 2 means allocated
@@ -702,7 +856,7 @@ class TravelNode {
 
         let result = '';
 
-        let connectionCountMap = {'connected': 0, 'active': 0};
+        let connectionCountMap = {'connected' : 0, 'active' : 0};
         const properties = ['up', 'down', 'left', 'right'];
         for (let property of properties)
             if (this[property] == 1)
@@ -734,7 +888,7 @@ class TravelNode {
 
 const MAXABILITYPOINTS_LOWER = 1;
 const MAXABILITYPOINTS_DEFAULT = 45;
-const MAXABILITYPOINTS_UPPER = 100;
+const MAXABILITYPOINTS_UPPER = 1984;
 const MAXABILITYPOINTS_INPUTID = 'maxAbilityPoints';
 enforceMinMax(MAXABILITYPOINTS_INPUTID, MAXABILITYPOINTS_LOWER, MAXABILITYPOINTS_UPPER);
 
@@ -743,6 +897,12 @@ const PAGES_DEFAULT = 7;
 const PAGES_UPPER = 30;
 const PAGES_INPUTID = 'treePages';
 enforceMinMax(PAGES_INPUTID, PAGES_LOWER, PAGES_UPPER);
+
+const HORIZONTAL_PAGES_LOWER = 1;
+const HORIZONTAL_PAGES_DEFAULT = 1;
+const HORIZONTAL_PAGES_UPPER = 30;
+const HORIZONTAL_PAGES_INPUTID = 'horizontalPages';
+enforceMinMax(HORIZONTAL_PAGES_INPUTID, HORIZONTAL_PAGES_LOWER, HORIZONTAL_PAGES_UPPER);
 
 const ROWSPERPAGE_LOWER = 3;
 const ROWSPERPAGE_DEFAULT = 6;
@@ -770,10 +930,16 @@ class Properties {
     maxAbilityPoints = 45;
 
     /**
-     * Number of ability tree pages unsigned
+     * Number of vertical ability tree pages unsigned
      * @var int
      */
     pages = 7;
+
+    /**
+     * Number of horizontal ability tree pages unsigned
+     * @var int
+     */
+    horizontalPages = 1;
 
     /**
      * How many cells per page
@@ -792,9 +958,9 @@ class Properties {
      * @var bool
      */
     loopTree = false;
-
+    
     /**
-     * Whether you can go up the tree
+     * Whether or not you can go up the tree
      * @var bool
      */
     bTravesableUp = false;
@@ -805,22 +971,15 @@ class Properties {
      */
     useAlternativeAbilityIcons = false;
 
-    constructor({
-                    classs = Object.keys(classDictionary)[0],
-                    maxAbilityPoints = MAXABILITYPOINTS_DEFAULT,
-                    loopTree = false,
-                    pages = PAGES_DEFAULT,
-                    rowsPerPage = ROWSPERPAGE_DEFAULT,
-                    pagesDisplayed = PAGESDISPLAYED_DEFAULT,
-                    bTravesableUp = false,
-                    useAlternativeAbilityIcons = false,
-                } = {}) {
-
+    constructor({classs = Object.keys(classDictionary)[0], maxAbilityPoints = MAXABILITYPOINTS_DEFAULT, loopTree = false, pages = PAGES_DEFAULT, horizontalPages = HORIZONTAL_PAGES_DEFAULT, rowsPerPage = ROWSPERPAGE_DEFAULT, pagesDisplayed = PAGESDISPLAYED_DEFAULT, bTravesableUp = false, useAlternativeAbilityIcons = false} = {}) {
+        
         this.classs = Object.keys(classDictionary).includes(String(classs)) ? String(classs) : Object.keys(classDictionary)[0];
 
         this.maxAbilityPoints = isNaN(Number(maxAbilityPoints)) ? MAXABILITYPOINTS_DEFAULT : clamp(Number(maxAbilityPoints), MAXABILITYPOINTS_LOWER, MAXABILITYPOINTS_UPPER);
 
         this.pages = isNaN(Number(pages)) ? PAGES_DEFAULT : clamp(Number(pages), PAGES_LOWER, PAGES_UPPER);
+
+        this.horizontalPages = isNaN(Number(horizontalPages)) ? HORIZONTAL_PAGES_DEFAULT : clamp(Number(horizontalPages), HORIZONTAL_PAGES_LOWER, HORIZONTAL_PAGES_UPPER);
 
         this.rowsPerPage = isNaN(Number(rowsPerPage)) ? ROWSPERPAGE_DEFAULT : clamp(Number(rowsPerPage), ROWSPERPAGE_LOWER, ROWSPERPAGE_UPPER);
 
@@ -853,9 +1012,9 @@ class StateLog {
     type;
 
     constructor({changeDescription, state, type} = {}) {
-        this.change = String(changeDescription) ?? '';
-        this.state = String(state) ?? '';
-        this.type = String(type) ?? '';
+        this.change = String(changeDescription) ? String(changeDescription) : '';
+        this.state = String(state) ? String(state) : '';
+        this.type = String(type) ? String(type) : '';
     }
 }
 
@@ -865,7 +1024,11 @@ const MAXSELECTEDCELLS = 40;
 const CELLIDPREFIX = 'cell-';
 const COLUMNS = 9;
 
-class BaseTree {
+let abilityTooltipTimeout;
+const ABILITYTOOLTIPDURATION = 5000;
+const LSHAPEDALLOCATION = false;
+class BaseTree
+{
     /**
      * Generic properties of the editor
      * @var Properties
@@ -891,6 +1054,12 @@ class BaseTree {
     selectedAbilityID = -1;
 
     /**
+     * Selected archetype for ability sorting
+     * @var string
+     */
+    selectedArchetype = null;
+
+    /**
      * Recorded changes queue
      * @var StateLog[]
      */
@@ -909,10 +1078,16 @@ class BaseTree {
     cellMap = {};
 
     /**
-     * Current page
+     * Current horizontal page
      * @var int
      */
-    currentPage = 1;
+    currentVerticalPage = 1;
+
+    /**
+     * Current vertical page
+     * @var int
+     */
+    currentHorizontalPage = 1;
 
     /**
      * Used by initializeEditNode method to keep track of affected cells
@@ -970,30 +1145,30 @@ class BaseTree {
      */
     currentTree;
 
+    #treeTouchProcessor = new TouchProcessor();
+
     constructor() {
         this.properties = new Properties();
         this.writeProperties();
         this.renderEverything();
         this.saveState('Reset tree and settings');
-        window.addEventListener('mouseup', (e) => {
-            this.finallizeEditNode();
-        });
+        window.addEventListener("pointerup", (e) => {this.finallizeEditNode()});
     }
 
     // #region Serialization and history
     toJSON() {
         var result = {};
         for (var x in this) {
-            if (x !== 'history' && x !== 'currentHistoryState' && x !== 'selectedAbilityID' && x !== 'currentPage' &&
-                x !== 'selectedCells' && x !== 'currentTree' && x !== 'potentialAllocationMap') {
+            if (x !== "history" && x !== "currentHistoryState" && x !== "selectedAbilityID" && x !== "currentVerticalPage"  &&
+                x !== "selectedCells" && x !== "currentTree" && x !== "potentialAllocationMap" && x !== "selectedArchetype" && x !== "treeTouchProcessor") {
                 result[x] = this[x];
             }
         }
         return result;
     }
 
-    readProperties(classSelectId = 'classSelect', maxAbilityPointsId = MAXABILITYPOINTS_INPUTID, loopTreeId = 'loopTreeSwitch', pagesId = PAGES_INPUTID,
-                   rowsPerPageId = ROWSPERPAGE_INPUTID, pagesDisplayedId = PAGESDISPLAYED_INPUTID, bTravesableUp = 'travelUpSwitch', useAlternativeAbilityIcons = 'altIconSwitch') {
+    readProperties(classSelectId = "classSelect", maxAbilityPointsId = MAXABILITYPOINTS_INPUTID, loopTreeId = "loopTreeSwitch", pagesId = PAGES_INPUTID, horizontalPagesId = HORIZONTAL_PAGES_INPUTID,
+        rowsPerPageId = ROWSPERPAGE_INPUTID, pagesDisplayedId = PAGESDISPLAYED_INPUTID, bTravesableUp = "travelUpSwitch", useAlternativeAbilityIcons = "altIconSwitch") {
 
         if (this.properties != null && this.properties.loopTree != document.getElementById(loopTreeId).checked) {
 
@@ -1003,44 +1178,46 @@ class BaseTree {
 
                 if (this.cellMap[key] == null || this.cellMap[key]['travelNode'] == null)
                     continue;
-
+                
                 this.cellMap[key]['travelNode']['left'] = 0;
-
+                
             }
 
             for (let key = COLUMNS; key <= totalCells; key += COLUMNS) {
 
                 if (this.cellMap[key] == null || this.cellMap[key]['travelNode'] == null)
                     continue;
-
+                
                 this.cellMap[key]['travelNode']['right'] = 0;
-
+                
             }
 
         }
-
+        
         this.properties = new Properties({
-            classs: document.getElementById(classSelectId).value,
-            maxAbilityPoints: document.getElementById(maxAbilityPointsId).value,
-            pages: document.getElementById(pagesId).value,
-            rowsPerPage: document.getElementById(rowsPerPageId).value,
-            pagesDisplayed: document.getElementById(pagesDisplayedId).value,
-            loopTree: document.getElementById(loopTreeId).checked,
-            bTravesableUp: document.getElementById(bTravesableUp).checked,
-            useAlternativeAbilityIcons: document.getElementById(useAlternativeAbilityIcons).checked,
+            classs : document.getElementById(classSelectId).value,
+            maxAbilityPoints : document.getElementById(maxAbilityPointsId).value,
+            pages : document.getElementById(pagesId).value,
+            horizontalPages : document.getElementById(horizontalPagesId).value,
+            rowsPerPage : document.getElementById(rowsPerPageId).value,
+            pagesDisplayed : document.getElementById(pagesDisplayedId).value,
+            loopTree : document.getElementById(loopTreeId).checked,
+            bTravesableUp : document.getElementById(bTravesableUp).checked,
+            useAlternativeAbilityIcons : document.getElementById(useAlternativeAbilityIcons).checked
         });
-
+        
         this.setMode(this.bEditMode);
         this.writeProperties();
         this.saveState('Updated properties');
     }
 
-    writeProperties(classSelectId = 'classSelect', maxAbilityPointsId = MAXABILITYPOINTS_INPUTID, loopTreeId = 'loopTreeSwitch', pagesId = PAGES_INPUTID,
-                    rowsPerPageId = ROWSPERPAGE_INPUTID, pagesDisplayedId = PAGESDISPLAYED_INPUTID, bTravesableUp = 'travelUpSwitch', useAlternativeAbilityIcons = 'altIconSwitch') {
+    writeProperties(classSelectId = "classSelect", maxAbilityPointsId = MAXABILITYPOINTS_INPUTID, loopTreeId = "loopTreeSwitch", pagesId = PAGES_INPUTID, horizontalPagesId = HORIZONTAL_PAGES_INPUTID,
+        rowsPerPageId = ROWSPERPAGE_INPUTID, pagesDisplayedId = PAGESDISPLAYED_INPUTID, bTravesableUp = "travelUpSwitch", useAlternativeAbilityIcons = "altIconSwitch") {
 
         document.getElementById(classSelectId).value = this.properties.classs;
         document.getElementById(maxAbilityPointsId).value = this.properties.maxAbilityPoints;
         document.getElementById(pagesId).value = this.properties.pages;
+        document.getElementById(horizontalPagesId).value = this.properties.horizontalPages;
         document.getElementById(rowsPerPageId).value = this.properties.rowsPerPage;
         document.getElementById(pagesDisplayedId).value = this.properties.pagesDisplayed;
         document.getElementById(loopTreeId).checked = this.properties.loopTree;
@@ -1049,26 +1226,46 @@ class BaseTree {
 
     }
 
-    saveState(change = '', type = '', replaceSameType = false, jsonContainerID = 'json-container') {
+    renderScrollArrows(bShowSidewayArrows) {
 
+        let hideElementsOfClass = bShowSidewayArrows ? "shown-on-single-horizontal-page" : "shown-on-multi-horizontal-page";
+        let showElementsOfClass = !bShowSidewayArrows ? "shown-on-single-horizontal-page" : "shown-on-multi-horizontal-page";
+
+        const containersToHide = document.getElementsByClassName(hideElementsOfClass);
+        const containersToShow = document.getElementsByClassName(showElementsOfClass);
+
+        for (let container of containersToHide)
+            container.hidden = true;
+        
+        for (let container of containersToShow)
+          container.hidden = false;
+
+    }
+
+    remapCells(bKeepCurrent) {
+        
+    }
+
+    saveState(change = "", type = "", replaceSameType = false, jsonContainerID = "json-container") {
+        
         const state = JSON.stringify(this, null, 0);
 
         const replaceLast = replaceSameType && this.history[this.currentHistoryState].type == type;
 
         const numOfPreservedStates = this.currentHistoryState + (replaceLast ? 0 : 1);
 
-        if (this.history.length > numOfPreservedStates)
+        if (this.history.length > numOfPreservedStates) 
             this.history.splice(numOfPreservedStates, this.history.length - numOfPreservedStates);
-
+        
         const maxSaveStates = Number(document.getElementById('maxSaveStates').value) ?? 10;
-
+        
         const removeElementsBeforeID = this.history.length - maxSaveStates + 1;
-
+        
         if (removeElementsBeforeID > 0) {
-
+            
             let newHistory = [];
-
-            this.history.forEach((element, index) => {
+            
+            this.history.forEach( (element, index) => {
 
                 if (index < removeElementsBeforeID)
                     return;
@@ -1079,7 +1276,7 @@ class BaseTree {
             this.history = newHistory;
         }
 
-        const newStateLog = new StateLog({changeDescription: change, type: type, state: state});
+        const newStateLog = new StateLog({changeDescription : change, type : type, state : state});
 
         this.currentHistoryState = this.history.push(newStateLog) - 1;
 
@@ -1110,12 +1307,12 @@ class BaseTree {
         if (container == null) {
             return;
         }
-
-        container.innerHTML = '';
+        
+        container.innerHTML = "";
 
         for (let i = this.history.length - 1; i > this.currentHistoryState; i--) {
 
-            const div = document.createElement('div');
+            const div = document.createElement("div");
             div.classList.add('history-record-overriden', 'minecraftTooltip');
             div.addEventListener('click', (e) => this.loadState(i));
             div.innerHTML = this.history[i].change;
@@ -1123,7 +1320,7 @@ class BaseTree {
 
         }
 
-        const div = document.createElement('div');
+        const div = document.createElement("div");
         div.classList.add('history-record-selected', 'minecraftTooltip');
         div.addEventListener('click', (e) => this.loadState(this.currentHistoryState));
         div.innerHTML = this.history[this.currentHistoryState].change;
@@ -1131,7 +1328,7 @@ class BaseTree {
 
         for (let i = this.currentHistoryState - 1; i >= 0; i--) {
 
-            const div = document.createElement('div');
+            const div = document.createElement("div");
             div.classList.add('history-record-not-selected', 'minecraftTooltip');
             div.addEventListener('click', (e) => this.loadState(i));
             div.innerHTML = this.history[i].change;
@@ -1151,15 +1348,17 @@ class BaseTree {
             this.renderAbilityPointsUsed();
         }
 
-        let hideElementsOfClass = this.bEditMode ? 'shown-on-allocation' : 'shown-on-tree-edit';
-        let showElementsOfClass = this.bEditMode ? 'shown-on-tree-edit' : 'shown-on-allocation';
+        this.renderScrollArrows(this.properties.horizontalPages > 1 ? true : false);
+
+        let hideElementsOfClass = this.bEditMode ? "shown-on-allocation" : "shown-on-tree-edit";
+        let showElementsOfClass = this.bEditMode ? "shown-on-tree-edit" : "shown-on-allocation";
 
         const containersToHide = document.getElementsByClassName(hideElementsOfClass);
         const containersToShow = document.getElementsByClassName(showElementsOfClass);
 
         for (let container of containersToHide)
             container.hidden = true;
-
+  
         for (let container of containersToShow)
             container.hidden = false;
 
@@ -1182,7 +1381,7 @@ class BaseTree {
         const timeoutId = setTimeout(() => {
             controller.abort();
             console.log('Fetch request timed out');
-        }, 5000);
+          }, 5000);
 
         fetch(`presets/${classSelect.value}.json`, {
 
@@ -1191,29 +1390,29 @@ class BaseTree {
             mode: 'same-origin',
             method: 'GET',
             headers: {
-                'Accept': 'application/json',
+                'Accept': 'application/json'
             },
 
-        }).then((response) => {
+        }).then( (response) => {
 
             if (!response.ok) {
                 throw new Error(`HTTP error: ${response.status}`);
-            }
+              }
 
             return response.text();
 
-        }).then((text) => {
+        }).then( (text) => {
 
             this.loadFromJSON(text);
             this.saveState(`Loaded default ${classSelect.value} tree`);
 
-        }).catch((e) => {
-
-            if (e != 'Couldn\'t parse')
-                showSmallToast('Load Failed: couldn\'t reach the server');
+        }).catch( (e) => {
+            
+            if (e != "Couldn't parse")
+                showSmallToast("Load Failed: couldn't reach the server");
 
             console.log(e.stack);
-
+            
         }).finally(() => {
 
             self.classList.remove('btn-secondary');
@@ -1224,7 +1423,7 @@ class BaseTree {
 
     }
 
-    loadTreeFromField(jsonContainerID = 'json-container') {
+    loadTreeFromField(jsonContainerID = "json-container") {
 
         const jsonContainer = document.getElementById(jsonContainerID);
         if (jsonContainer == null) {
@@ -1238,7 +1437,7 @@ class BaseTree {
     loadTreeFromFile(dropEvent) {
 
         dropEvent.preventDefault();
-
+        
         let file;
 
         if (dropEvent.dataTransfer.items)
@@ -1246,13 +1445,13 @@ class BaseTree {
         else
             file = dropEvent.dataTransfer.files[0];
 
-        file.text().then(text => {
+        file.text().then( text => {
 
             this.loadFromJSON(text);
             this.saveState(`Loaded tree from ${file.name}`);
 
         });
-
+        
     }
 
     loadEmptyTree() {
@@ -1269,8 +1468,8 @@ class BaseTree {
         try {
             obj = JSON.parse(json);
         } catch (error) {
-            showSmallToast('Load Failed: couldn\'t parse JSON');
-            throw ('Couldn\'t parse');
+            showSmallToast("Load Failed: couldn't parse JSON");
+            throw ("Couldn't parse");
         }
 
         this.properties = new Properties(obj.properties);
@@ -1287,23 +1486,24 @@ class BaseTree {
         this.abilities = {};
         const abilities = obj.abilities;
         if (typeof abilities === 'object' && !Array.isArray(abilities) && abilities !== null) {
-
-            Object.keys(abilities).forEach(id => {
-
+            
+            Object.keys(abilities).forEach( id => {
+    
                 this.abilities[id] = new Ability(abilities[id]);
-
+    
             });
         }
 
         this.cellMap = {};
         const cellMap = obj.cellMap;
         if (typeof cellMap === 'object' && !Array.isArray(cellMap) && cellMap !== null) {
-
-            Object.keys(cellMap).forEach(id => {
+        
+            Object.keys(cellMap).forEach( id => {
 
                 this.cellMap[id] = {};
                 this.cellMap[id]['travelNode'] = new TravelNode(cellMap[id]['travelNode']);
-                this.cellMap[id]['abilityID'] = cellMap[id]['abilityID'];
+                if (cellMap[id]['abilityID'] != null)
+                    this.cellMap[id]['abilityID'] = cellMap[id]['abilityID'];
 
             });
         }
@@ -1317,12 +1517,12 @@ class BaseTree {
         this.abilityTrees = {};
         const abilityTrees = obj.abilityTrees;
         if (typeof abilityTrees === 'object' && !Array.isArray(abilityTrees) && abilityTrees !== null) {
-
-            Object.keys(abilityTrees).forEach(treeName => {
-
+        
+            Object.keys(abilityTrees).forEach( treeName => {
+    
                 if (Array.isArray(abilityTrees[treeName]))
                     this.abilityTrees[treeName] = abilityTrees[treeName];
-
+    
             });
         }
 
@@ -1333,7 +1533,7 @@ class BaseTree {
         } else
             this.bEditMode = true;
 
-        document.getElementById('json-container').value = json;
+        document.getElementById("json-container").value = json;
         this.writeProperties();
         this.renderEverything();
     }
@@ -1341,25 +1541,25 @@ class BaseTree {
     downloadJSON() {
         const json = JSON.stringify(this, null, 0);
 
-        const link = document.createElement('a');
-        const file = new Blob([json], {type: 'text/plain'});
+        const link = document.createElement("a");
+        const file = new Blob([json], { type: 'text/plain' });
         link.href = URL.createObjectURL(file);
         link.download = `Wynnability_${this.properties.classs}.json`;
         link.click();
         URL.revokeObjectURL(link.href);
     }
-
     // #endregion
 
     // #region Archetypes
-    editArchetype(name = '', nameFormID = 'archetypeNameInput') {
+    editArchetype(name = "", nameFormID = "archetypeNameInput") {   
 
         const nameInputElement = document.getElementById(nameFormID);
 
-        if (name == '') {
-            nameInputElement.value = '';
-            nameInputElement.oldname = '';
-        } else {
+        if (name == "") {
+            nameInputElement.value = "";
+            nameInputElement.oldname = "";
+        }
+        else {
             nameInputElement.value = name;
             nameInputElement.oldname = name;
         }
@@ -1367,20 +1567,20 @@ class BaseTree {
         nameInputElement.dispatchEvent(new Event('input'));
     }
 
-    saveArchetype(nameFormID = 'archetypeNameInput') {
+    saveArchetype(nameFormID = "archetypeNameInput") {
 
         const nameInputElement = document.getElementById(nameFormID);
-        if (nameInputElement.value == '' || this.archetypes.includes(nameInputElement.value))
+        if (nameInputElement.value == "" || this.archetypes.includes(nameInputElement.value) )
             return;
-
-        const oldname = nameInputElement.oldname ?? '';
+        
+        const oldname = nameInputElement.oldname ?? "";
         const newname = nameInputElement.value;
-
-        if (oldname == '') {
-
+        
+        if (oldname == "") {
+            
             this.archetypes.push(newname);
             this.saveState(`Added archetype: ${minecraftToHTML(newname)}`);
-
+            
         } else {
 
             const existingIndex = this.archetypes.indexOf(oldname);
@@ -1389,82 +1589,134 @@ class BaseTree {
             this.saveState(`Renamed archetype: ${minecraftToHTML(oldname)} -> ${minecraftToHTML(newname)}`);
 
         }
-
+        
         this.renderArchetypes();
 
     }
 
     deleteArchetype(name) {
 
-        if (typeof name != 'string' || name == '')
+        if (typeof name != "string" || name == "")
             return;
-
+        
         const index = this.archetypes.indexOf(name);
         if (index > -1)
             this.archetypes.splice(index, 1);
 
-        this.updateArchetype(name);
+        this.updateArchetype(name);        
         this.renderArchetypes();
         this.saveState(`Deleted archetype: ${minecraftToHTML(name)}`);
 
     }
 
-    renderArchetypes(containerID = 'archetypeContainer') {
+    renderArchetypes(containerID = "archetypeContainer", neutralContainerID = "neutralContainer") {
 
         const container = document.getElementById(containerID);
 
         let archetypeCounts = {};
+        let placedArchetypeCounts = {"" : 0};
+        let neutralCount = 0;
         for (let archetype of this.archetypes) {
             archetypeCounts[archetype] = 0;
+            placedArchetypeCounts[archetype] = 0;
         }
 
         for (let ability of Object.values(this.abilities)) {
             if (ability.archetype.length > 0)
                 archetypeCounts[ability.archetype]++;
+            else
+                neutralCount++;
         }
-
-        container.innerHTML = '';
-
+        for(let cellKey of Object.keys(this.cellMap)) {
+            if (this.cellMap[cellKey]['abilityID'] != null)
+                placedArchetypeCounts[ this.abilities[ this.cellMap[cellKey]['abilityID'] ]['archetype'] ]++;
+        }
+        
+        container.innerHTML = "";
+        
         for (let archetype of this.archetypes) {
 
-            const div = document.createElement('div');
-            div.classList.add('d-inline-flex', 'minecraftTooltip', 'w-100', 'mb-1');
+            const div = document.createElement("div");
+            div.classList.add('d-inline-flex', 'minecraftTooltip', 'w-100', 'mb-1', 'pt-1');
 
-            const text = document.createElement('div');
+            if (archetype == this.selectedArchetype) {
+
+                div.classList.add('selected-ability');
+                div.addEventListener('click', (e) => {
+                    if (e.target.nodeName != 'BUTTON')
+                        this.selectArchetype(null);
+                });
+
+            } else {
+
+                div.addEventListener('click', (e) => {
+                    if (e.target.nodeName != 'BUTTON')
+                        this.selectArchetype(archetype);
+                });
+
+            }
+
+            const text = document.createElement("div");
             text.classList.add('flex-fill', 'overflow-hidden');
             text.innerHTML = minecraftToHTML(archetype);
             div.appendChild(text);
 
-            const abilityCount = document.createElement('div');
-            abilityCount.innerHTML = archetypeCounts[archetype];
+            const abilityCount = document.createElement("div");
+            abilityCount.innerHTML = placedArchetypeCounts[archetype] + '/' + archetypeCounts[archetype];
             div.appendChild(abilityCount);
-
-            const editbtn = document.createElement('button');
+            
+            const editbtn = document.createElement("button");
             editbtn.classList.add('small-btn', 'me-1', 'ms-2', 'font-default');
-            editbtn.type = 'button';
-            editbtn.style = 'background-color: transparent;';
-            editbtn.title = 'Edit';
-            editbtn.innerHTML = '✒️';
+            editbtn.type = "button";
+            editbtn.style = "background-color: transparent;";
+            editbtn.title = "Edit";
+            editbtn.innerHTML = "✒️";
             editbtn.setAttribute('data-bs-toggle', 'modal');
             editbtn.setAttribute('data-bs-target', '#archetypeModal');
             editbtn.addEventListener('click', (e) => this.editArchetype(archetype));
             div.appendChild(editbtn);
-
-            const delbtn = document.createElement('button');
+            
+            const delbtn = document.createElement("button");
             delbtn.classList.add('small-btn', 'font-default');
-            delbtn.type = 'button';
-            delbtn.style = 'background-color: transparent;';
-            delbtn.title = 'Delete';
-            delbtn.innerHTML = '💀';
+            delbtn.type = "button";
+            delbtn.style = "background-color: transparent;";
+            delbtn.title = "Delete";
+            delbtn.innerHTML = "💀";
             delbtn.addEventListener('click', (e) => this.deleteArchetype(archetype));
             div.appendChild(delbtn);
-
+            
             container.appendChild(div);
 
         }
+
+        const div = document.createElement("div");
+        div.classList.add('d-inline-flex', 'minecraftTooltip', 'w-100', 'mb-1', 'pt-1');
+
+        if (this.selectedArchetype == "") {
+
+            div.classList.add('selected-ability');
+            div.addEventListener('click', (e) => {
+                this.selectArchetype(null);
+            });
+
+        } else {
+
+            div.addEventListener('click', (e) => {
+                this.selectArchetype("");
+            });
+
+        }
+
+        const abilityCount = document.createElement("div");
+        abilityCount.innerHTML = minecraftToHTML("§f§lNeutral ") + placedArchetypeCounts[""] + '/' + neutralCount;
+        div.appendChild(abilityCount);
+        
+        const neutralContainer = document.getElementById(neutralContainerID);
+        neutralContainer.innerHTML = "";
+        neutralContainer.appendChild(div);
     }
 
-    updateArchetype(oldarchetype, newarchetype = '') {
+    updateArchetype(oldarchetype, newarchetype = "") {
 
         if (typeof newarchetype != 'string')
             return;
@@ -1473,46 +1725,51 @@ class BaseTree {
             if (this.abilities[abilityID]['archetype'] == oldarchetype)
                 this.abilities[abilityID]['archetype'] = newarchetype;
         }
-
-        this.renderAbilities();
     }
 
+    selectArchetype(archetype = null) {
+
+        this.selectedArchetype = archetype;
+        this.renderArchetypes();
+        this.renderAbilities();
+
+    }
     // #endregion
 
     // #region Abilities
-    renderAbilityTypeSelector(selected = 'skill', containerId = 'abilityTypeInput') {
+    renderAbilityTypeSelector(selected = "skill", containerId = "abilityTypeInput") {
 
         const container = document.getElementById(containerId);
 
-        container.innerHTML = '';
+        container.innerHTML = "";
         container.value = selected;
 
         let iconDictionary = abilityIconDictionary;
         if (this.properties.useAlternativeAbilityIcons)
             iconDictionary = altAbilityIconDictionary;
 
-        Object.keys(iconDictionary).forEach((type) => {
+        Object.keys(iconDictionary).forEach( (type) => {
             const div = generateIconDiv(type, null, this.properties.classs, type == selected ? 2 : 1, false, this.properties.useAlternativeAbilityIcons);
             div.classList.add('ability-type-selector');
             container.appendChild(div);
-            div.addEventListener('click', (e) => {
-                this.renderAbilityTypeSelector(type);
-            });
+            div.addEventListener("click", (e) => { this.renderAbilityTypeSelector(type); this.renderEditorAbilityTooltip() });
         });
 
     }
 
-    renderEditorAbilityTooltip(nameFormID = 'abilityNameInput', descriptionFormID = 'abilityDescriptionInput', archetypeFormID = 'abilityArchetypeInput', pointsRequiredFormID = POINTSREQUIRED_INPUTID,
-                               archetypePointsRequiredFormID = ARCHETYPEPOINTSREQUIRED_INPUTID, containerId = 'editAbilityTooltip', prerequisiteFormID = 'abilityPrerequiseteInput', abilityBlockCountDisplayID = 'abilityBlockCountDisplay') {
-
+    renderEditorAbilityTooltip(nameFormID = "abilityNameInput", descriptionFormID = "abilityDescriptionInput", archetypeFormID = "abilityArchetypeInput",
+        pointsRequiredFormID = POINTSREQUIRED_INPUTID, archetypePointsRequiredFormID = ARCHETYPEPOINTSREQUIRED_INPUTID, containerId = "editAbilityTooltip",
+        prerequisiteFormID = "abilityPrerequiseteInput", abilityBlockCountDisplayID="abilityBlockCountDisplay", typeFormID = "abilityTypeInput") {
+        
         const nameInputElement = document.getElementById(nameFormID);
         const descriptionInputElement = document.getElementById(descriptionFormID);
         const archetypeInputElement = document.getElementById(archetypeFormID);
         const pointsRequiredInputElement = document.getElementById(pointsRequiredFormID);
         const archetypePointsRequiredInputElement = document.getElementById(archetypePointsRequiredFormID);
+        const typeInputElement = document.getElementById(typeFormID);
         const prerequisiteInputElement = document.getElementById(prerequisiteFormID);
         const container = document.getElementById(containerId);
-
+        
         const abilityBlockCountDisplay = document.getElementById(abilityBlockCountDisplayID);
 
         let blockedAbilities = this.getBlockedAbilities();
@@ -1520,24 +1777,24 @@ class BaseTree {
             abilityBlockCountDisplay.innerHTML = blockedAbilities.length;
 
         container.innerHTML = this._getAbilityTooltipHTML(new Ability({
-            name: nameInputElement.value,
-            description: descriptionInputElement.value,
-            unlockingWillBlock: blockedAbilities,
-            archetype: archetypeInputElement.value,
-            pointsRequired: pointsRequiredInputElement.value,
-            archetypePointsRequired: archetypePointsRequiredInputElement.value,
-            requires: prerequisiteInputElement.value,
+            name : nameInputElement.value,
+            description : descriptionInputElement.value,
+            unlockingWillBlock : blockedAbilities,
+            archetype : archetypeInputElement.value,
+            pointsRequired : pointsRequiredInputElement.value,
+            archetypePointsRequired : archetypePointsRequiredInputElement.value,
+            type : typeInputElement.value,
+            requires : prerequisiteInputElement.value
         }));
     }
 
-    renderHoverAbilityTooltip(abilityId = -1, containerId = 'cursorTooltip') {
-
+    renderHoverAbilityTooltip(abilityId = -1, containerId = "cursorTooltip") {
         const container = document.getElementById(containerId);
         const ability = this.abilities[abilityId];
 
         if (this.selectedCells.length > 0 || ability == null)
             return;
-
+        
         container.hidden = false;
 
         container.innerHTML = this._getAbilityTooltipHTML(ability);
@@ -1545,40 +1802,52 @@ class BaseTree {
 
     _getAbilityTooltipHTML(ability = new Ability()) {
 
-        let result = `${ability.name}\n\n`;
-        result += `${ability.description}\n\n`;
+        let result = '';
+
+        if (ability.type == 'skill')
+            result = `
+                <div class="abilityName">${minecraftToHTML(ability.name)}</div>
+                ${minecraftToHTML(ability.description)}<br><br>`;
+        else
+            result = `
+                ${minecraftToHTML(ability.name)}<br><br>
+                ${minecraftToHTML(ability.description)}<br><br>`;
 
         if (ability.unlockingWillBlock.length > 0) {
-            result += `§cUnlocking will block:\n`;
+            result += `<span style="color:${codeDictionaryColor['c']}">Unlocking&nbsp;will&nbsp;block:<br></span>`;
             for (let id of ability.unlockingWillBlock)
-                result += `§c- §7${this.abilities[id].getPlainName()}\n`;
-            result += '\n';
+                result += `<span style="color:${codeDictionaryColor['c']}">-&#8288;&nbsp;</span><span style="color:${codeDictionaryColor['7']}">${anyToHTML(this.abilities[id].getPlainName())}</span><br>`;
+            result += '<br>';
         }
 
-        if (ability.archetype !== '')
-            result += `${ability.archetype + ' Archetype'}\n\n`;
+        if (ability.archetype != "")
+            result += `${minecraftToHTML(ability.archetype + ' Archetype')}<br><br>`;
 
-        result += `§7Ability Points: §f${ability.pointsRequired}\n`;
-
+        result += `<span style="color:${codeDictionaryColor['7']}">Ability&nbsp;Points:&nbsp;</span>${ability.pointsRequired}<br>`;
+        
         if (this.abilities[ability.requires] != null)
-            result += `§7Required Ability: §f${stripMinecraftFormatting(this.abilities[ability.requires].name)}\n`;
+            result += `<span style="color:${codeDictionaryColor['7']}">Required&nbsp;Ability:&nbsp;</span>${anyToHTML(stripMinecraftFormatting(this.abilities[ability.requires].name))}<br>`;
 
-        if (ability.archetype !== '' && ability.archetypePointsRequired > 0)
-            result += `§7Min ${stripMinecraftFormatting(ability.archetype)} Archetype: §f${ability.archetypePointsRequired}`;
-
-        return minecraftToHTML(result);
+        if (ability.archetype != "" && ability.archetypePointsRequired > 0)
+            result += `<span style="color:${codeDictionaryColor['7']}">Min&nbsp;${anyToHTML(stripMinecraftFormatting(ability.archetype))}&nbsp;Archetype:&nbsp;</span>${ability.archetypePointsRequired}`;
+            
+        return result;
     }
 
-    hideHoverAbilityTooltip(containerId = 'cursorTooltip') {
+    hideHoverAbilityTooltip(containerId = "cursorTooltip") {
+        if (abilityTooltipTimeout != null) {
+            clearTimeout(abilityTooltipTimeout);
+            abilityTooltipTimeout = null;
+        }
         const container = document.getElementById(containerId);
 
         container.hidden = true;
-        container.innerHTML = '';
+        container.innerHTML = "";
     }
 
     editAbility(abilityID = -1,
-                nameFormID = 'abilityNameInput', descriptionFormID = 'abilityDescriptionInput', abilityBlockFormID = 'abilityBlockInput', archetypeFormID = 'abilityArchetypeInput',
-                pointsRequiredFormID = POINTSREQUIRED_INPUTID, archetypePointsRequiredFormID = ARCHETYPEPOINTSREQUIRED_INPUTID, prerequisiteFormID = 'abilityPrerequiseteInput') {
+        nameFormID = "abilityNameInput", descriptionFormID = "abilityDescriptionInput", abilityBlockFormID = "abilityBlockInput", archetypeFormID = "abilityArchetypeInput",
+        pointsRequiredFormID = POINTSREQUIRED_INPUTID, archetypePointsRequiredFormID = ARCHETYPEPOINTSREQUIRED_INPUTID, prerequisiteFormID = "abilityPrerequiseteInput") {   
 
         const nameInputElement = document.getElementById(nameFormID);
         const descriptionInputElement = document.getElementById(descriptionFormID);
@@ -1611,13 +1880,13 @@ class BaseTree {
                 const option = document.createElement('option');
                 option.value = id;
                 option.innerHTML = abilityName;
-                option.classList.add('ability-type-' + this.abilities[id].type);
+                option.classList.add("ability-type-" + this.abilities[id].type);
                 prerequisiteInputElement.appendChild(option);
 
                 const li = document.createElement('li');
                 li.innerHTML = abilityName;
                 li.value = id;
-                li.classList.add('ability-type-' + this.abilities[id].type, 'dropdown-item');
+                li.classList.add("ability-type-" + this.abilities[id].type, "dropdown-item");
                 li.addEventListener('click', (event) => {
                     event.target.classList.toggle('active');
                     this.renderEditorAbilityTooltip();
@@ -1626,9 +1895,9 @@ class BaseTree {
 
             }
 
-            nameInputElement.abilityId = '';
-            nameInputElement.value = '';
-            descriptionInputElement.value = '';
+            nameInputElement.abilityId = "";
+            nameInputElement.value = "";
+            descriptionInputElement.value = "";
             pointsRequiredInputElement.value = 1;
             archetypePointsRequiredInputElement.value = 0;
             prerequisiteInputElement.value = -1;
@@ -1648,7 +1917,7 @@ class BaseTree {
                 if (archetype == this.abilities[abilityID].archetype)
                     option.selected = true;
                 archetypeInputElement.appendChild(option);
-
+            
             }
 
             let blockedAbilitiesMap = {};
@@ -1667,7 +1936,7 @@ class BaseTree {
                 const option = document.createElement('option');
                 option.value = id;
                 option.innerHTML = abilityName;
-                option.classList.add('ability-type-' + this.abilities[id].type);
+                option.classList.add("ability-type-" + this.abilities[id].type);
                 if (id == this.abilities[abilityID].requires)
                     option.selected = true;
                 prerequisiteInputElement.appendChild(option);
@@ -1675,9 +1944,9 @@ class BaseTree {
                 const li = document.createElement('li');
                 li.innerHTML = abilityName;
                 li.value = id;
-                li.classList.add('ability-type-' + this.abilities[id].type, 'dropdown-item');
+                li.classList.add("ability-type-" + this.abilities[id].type, "dropdown-item");
                 if (blockedAbilitiesMap[id])
-                    li.classList.add('active');
+                    li.classList.add("active");
                 li.addEventListener('click', (event) => {
                     event.target.classList.toggle('active');
                     this.renderEditorAbilityTooltip();
@@ -1692,14 +1961,14 @@ class BaseTree {
             pointsRequiredInputElement.value = this.abilities[abilityID].pointsRequired;
             archetypePointsRequiredInputElement.value = this.abilities[abilityID].archetypePointsRequired;
             this.renderAbilityTypeSelector(this.abilities[abilityID].type);
-
+            
         }
 
         nameInputElement.dispatchEvent(new Event('input'));
         descriptionInputElement.dispatchEvent(new Event('input'));
     }
 
-    getBlockedAbilities(abilityBlockFormID = 'abilityBlockInput') {
+    getBlockedAbilities(abilityBlockFormID = "abilityBlockInput") {
 
         const abilityBlockInputElement = document.getElementById(abilityBlockFormID);
 
@@ -1712,8 +1981,8 @@ class BaseTree {
         return blockedAbilities;
     }
 
-    saveAbility(nameFormID = 'abilityNameInput', descriptionFormID = 'abilityDescriptionInput', archetypeFormID = 'abilityArchetypeInput', pointsRequiredFormID = POINTSREQUIRED_INPUTID,
-                archetypePointsRequiredFormID = ARCHETYPEPOINTSREQUIRED_INPUTID, typeFormID = 'abilityTypeInput', prerequisiteFormID = 'abilityPrerequiseteInput') {
+    saveAbility(nameFormID = "abilityNameInput", descriptionFormID = "abilityDescriptionInput", archetypeFormID = "abilityArchetypeInput", pointsRequiredFormID = POINTSREQUIRED_INPUTID,
+    archetypePointsRequiredFormID = ARCHETYPEPOINTSREQUIRED_INPUTID, typeFormID = "abilityTypeInput", prerequisiteFormID = "abilityPrerequiseteInput") {
 
         const nameInputElement = document.getElementById(nameFormID);
         const descriptionInputElement = document.getElementById(descriptionFormID);
@@ -1724,24 +1993,24 @@ class BaseTree {
         const prerequisiteInputElement = document.getElementById(prerequisiteFormID);
 
         if (nameInputElement.value == '') {
-            nameInputElement.value = 'UNNAMED';
+            nameInputElement.value = 'UNNAMED'
             this.renderEditorAbilityTooltip();
         }
 
         const newAbility = new Ability({
-            name: nameInputElement.value,
-            description: descriptionInputElement.value,
-            unlockingWillBlock: this.getBlockedAbilities(),
-            archetype: archetypeInputElement.value,
-            pointsRequired: pointsRequiredInputElement.value,
-            archetypePointsRequired: archetypePointsRequiredInputElement.value,
-            type: typeInputElement.value,
-            requires: prerequisiteInputElement.value,
+            name : nameInputElement.value,
+            description : descriptionInputElement.value,
+            unlockingWillBlock : this.getBlockedAbilities(),
+            archetype : archetypeInputElement.value,
+            pointsRequired : pointsRequiredInputElement.value,
+            archetypePointsRequired : archetypePointsRequiredInputElement.value,
+            type : typeInputElement.value,
+            requires : prerequisiteInputElement.value
         });
-
+        
         let abilityID = nameInputElement.abilityId;
-
-
+        
+        
         if (this.abilities[abilityID] == null) {
 
             let maxId = 0;
@@ -1762,7 +2031,7 @@ class BaseTree {
 
             this.abilities[abilityID] = newAbility;
 
-            this.saveState(`Edited ability: ${minecraftToHTML(oldName)} -> ${minecraftToHTML(nameInputElement.value)}`);
+            this.saveState(`Edited ability: ${minecraftToHTML(oldName)} -> ${minecraftToHTML(nameInputElement.value)}`);            
         }
 
         this.renderAbilities();
@@ -1802,45 +2071,51 @@ class BaseTree {
     sortAbilities() {
 
         let priorityMap = {};
-        Object.keys(altAbilityIconDictionary).forEach((elem, i) => {
+        Object.keys(altAbilityIconDictionary).forEach( (elem, i) => {
             priorityMap[elem] = i;
         });
-
+        
         let sortedAbilityIDs = Object.keys(this.abilities).sort((a, b) => {
-
+            
             if (this.abilities[a].type == null)
                 return 1;
             if (this.abilities[b].type == null)
                 return -1;
-
+            
             const priorityDif = priorityMap[this.abilities[a].type] - priorityMap[this.abilities[b].type];
 
             if (priorityDif != 0)
                 return priorityDif;
-
+            
             return this.abilities[a].getPlainName().localeCompare(this.abilities[b].getPlainName()) || 1;
-        });
+        })
 
         return sortedAbilityIDs;
 
     }
-
-    renderAbilities(containerID = 'abilityContainer', searchFieldID = 'abilitySearch', notOnTreeFilterID = 'notOnTreeFilter') {
-
+    
+    renderAbilities(containerID = "abilityContainer", searchFieldID = "abilitySearch", notOnTreeFilterID = "notOnTreeFilter") {
+        
         const container = document.getElementById(containerID);
         if (container == null)
             return;
-
-        container.innerHTML = '';
+        
+        container.innerHTML = "";
 
         let sortedAbilityIDs = this.sortAbilities();
+
+        if (this.selectedArchetype != null) {
+            sortedAbilityIDs = sortedAbilityIDs.filter( (id) => {
+                return this.abilities[id].archetype == this.selectedArchetype;
+            });
+        }
 
         const searchContainer = document.getElementById(searchFieldID);
         if (searchFieldID != null && searchContainer.value != null && String(searchContainer.value) != null && String(searchContainer.value) != '') {
 
             const filterSubstring = String(searchContainer.value).toLowerCase();
 
-            sortedAbilityIDs = sortedAbilityIDs.filter((id) => {
+            sortedAbilityIDs = sortedAbilityIDs.filter( (id) => {
                 return this.abilities[id].getPlainName().toLowerCase().includes(filterSubstring);
             });
         }
@@ -1849,9 +2124,9 @@ class BaseTree {
         let bFilterNotOnTree = notOnTreeFilter != null && !notOnTreeFilter.checked;
 
         let abilitiesOnTree = {};
-        for (let cellKey of Object.keys(this.cellMap)) {
+        for(let cellKey of Object.keys(this.cellMap)) {
             if (this.cellMap[cellKey]['abilityID'] != null)
-                abilitiesOnTree[this.cellMap[cellKey]['abilityID']] = true;
+                abilitiesOnTree[ this.cellMap[cellKey]['abilityID'] ] = true;
         }
 
         for (let id of sortedAbilityIDs) {
@@ -1859,7 +2134,7 @@ class BaseTree {
             if (bFilterNotOnTree && abilitiesOnTree[id])
                 continue;
 
-            const div = document.createElement('div');
+            const div = document.createElement("div");
 
             if (id == this.selectedAbilityID) {
 
@@ -1880,46 +2155,61 @@ class BaseTree {
 
             div.classList.add('d-inline-flex', 'align-items-center', 'minecraftTooltip', 'w-100', 'mb-1');
 
-            const imgholder = document.createElement('div');
-            imgholder.style = 'width: 56px; text-align: center;';
+            const imgholder = document.createElement("div");
+            imgholder.style = "width: 56px; text-align: center;";
             div.appendChild(imgholder);
             imgholder.appendChild(generateIconDiv(this.abilities[id].type, null, this.properties.classs, abilitiesOnTree[id] ? 2 : 1, false, true));
 
-            imgholder.addEventListener('mouseover', (e) => {
-                this.renderHoverAbilityTooltip(id);
-            });
-            imgholder.addEventListener('mouseout', (e) => {
-                this.hideHoverAbilityTooltip();
-            });
+            imgholder.addEventListener('pointerover', (e) => {if (e.pointerType !== "touch") this.renderHoverAbilityTooltip(id); });
+            imgholder.addEventListener('pointerout', (e) => {if (e.pointerType !== "touch") this.hideHoverAbilityTooltip(); });
+            imgholder.addEventListener('touchstart', (e) => {
+                this.#treeTouchProcessor.processTouch(
+                    e,
+                    () => {},
+                    () => {}, 
+                    () => {
+                        document.body.style.overflow = 'hidden';
+                        this.renderHoverAbilityTooltip(id);
+                        moveTooltip(e.changedTouches[0].clientX, e.changedTouches[0].clientY);
+                    },
+                    () => {
+                        moveTooltip(e.changedTouches[0].clientX, e.changedTouches[0].clientY);
+                    },
+                    () => {
+                        this.hideHoverAbilityTooltip();
+                        document.body.style.overflow = 'auto';
+                    }
+                );
+            }, {passive: false});
 
-            const text = document.createElement('div');
+            const text = document.createElement("div");
             text.classList.add('flex-fill', 'align-items-center', 'overflow-hidden', 'ms-2');
             text.innerHTML = minecraftToHTML(this.abilities[id].name);
             div.appendChild(text);
-
-            const editbtn = document.createElement('button');
+            
+            const editbtn = document.createElement("button");
             editbtn.classList.add('small-btn', 'me-1', 'ms-2', 'font-default');
-            editbtn.type = 'button';
-            editbtn.style = 'background-color: transparent;';
-            editbtn.title = 'Edit';
-            editbtn.innerHTML = '✒️';
+            editbtn.type = "button";
+            editbtn.style = "background-color: transparent;";
+            editbtn.title = "Edit";
+            editbtn.innerHTML = "✒️";
             editbtn.setAttribute('data-bs-toggle', 'modal');
             editbtn.setAttribute('data-bs-target', '#abilityModal');
             editbtn.addEventListener('click', (e) => this.editAbility(id));
             div.appendChild(editbtn);
-
-            const delbtn = document.createElement('button');
+            
+            const delbtn = document.createElement("button");
             delbtn.classList.add('small-btn', 'font-default');
-            delbtn.type = 'button';
-            delbtn.style = 'background-color: transparent;';
-            delbtn.title = 'Delete';
-            delbtn.innerHTML = '💀';
+            delbtn.type = "button";
+            delbtn.style = "background-color: transparent;";
+            delbtn.title = "Delete";
+            delbtn.innerHTML = "💀";
             delbtn.addEventListener('click', (e) => this.deleteAbility(id));
             div.appendChild(delbtn);
-
+            
             container.appendChild(div);
 
-        }
+        }   
     }
 
     selectAbility(abilityID = -1) {
@@ -1929,7 +2219,7 @@ class BaseTree {
 
     }
 
-    focusSelectedAbility(containerID = 'abilityContainer') {
+    focusSelectedAbility(containerID = "abilityContainer") {
 
         const container = document.getElementById(containerID);
         if (container == null)
@@ -1939,11 +2229,10 @@ class BaseTree {
         if (selected == null)
             return;
 
-        container.scrollTo({top: selected.offsetTop - 10, behavior: 'instant'});
+        container.scrollTo({top: selected.offsetTop - 10, behavior: "instant"})
         //selected.scrollIntoView({block: "center", inline: "center", behavior: "instant"});
 
     }
-
     // #endregion
 
     // #region Tree editing
@@ -1952,8 +2241,8 @@ class BaseTree {
             if (this.cellMap[cell]['abilityID'] != null)
                 delete this.cellMap[cell]['travelNode'];
             else
-                delete this.cellMap[cell];
-
+                delete this.cellMap[cell]
+        
         this.saveState(`Removed all paths from the tree`);
         this.renderTree();
     }
@@ -1963,26 +2252,43 @@ class BaseTree {
             if (this.cellMap[cell]['travelNode'] != null)
                 delete this.cellMap[cell]['abilityID'];
             else
-                delete this.cellMap[cell];
-
+                delete this.cellMap[cell]
+        
         this.saveState(`Removed all abilities from the tree`);
         this.renderAbilities();
+        this.renderArchetypes();
         this.renderTree();
     }
 
-    incrementPage(increment = 0) {
+    incrementVerticalPage(increment = 0) {
 
-        this.setCurrentPage(this.currentPage + increment);
+        this.setcurrentVerticalPage(this.currentVerticalPage + increment);
         this.renderTree();
 
     }
 
-    setCurrentPage(page = this.currentPage) {
+    incrementHorizontalPage(increment = 0) {
 
-        if (page == null || typeof page != 'number' || page < 1)
+        this.setcurrentHorizontalPage(this.currentHorizontalPage + increment);
+        this.renderTree();
+
+    }
+
+    setcurrentVerticalPage(page = this.currentVerticalPage) {
+
+        if (page == null || typeof page != "number" || page < 1)
             return;
 
-        this.currentPage = clamp(page, 1, this.properties.pages - this.properties.pagesDisplayed + 1);
+        this.currentVerticalPage = clamp(page, 1, this.properties.pages - this.properties.pagesDisplayed + 1);
+
+    }
+
+    setcurrentHorizontalPage(page = this.currentHorizontalPage) {
+
+        if (page == null || typeof page != "number" || page < 1)
+            return;
+
+        this.currentHorizontalPage = clamp(page, 1, this.properties.horizontalPages);
 
     }
 
@@ -1994,71 +2300,55 @@ class BaseTree {
 
     }
 
+    getAdjecentCell(cellKey, direction) {
+        switch (direction) {
+            case "up":
+                const upKey = cellKey - COLUMNS;
+                if (upKey >= 1)
+                    return upKey;
+                break;
+
+            case "down":
+                const downKey = cellKey + COLUMNS;
+                if (downKey <= this.properties.pages * this.properties.rowsPerPage * COLUMNS)
+                    return downKey;
+                break;
+
+            case "left":
+                if (this.cellPositionInRow(cellKey) > 1)
+                    return cellKey - 1;
+                else if(this.properties.loopTree)
+                    return cellKey - 1 + COLUMNS;
+                break;
+
+            case "right":
+                if (this.cellPositionInRow(cellKey) < COLUMNS)
+                    return cellKey + 1;
+                else if(this.properties.loopTree)
+                    return cellKey + 1 - COLUMNS;
+                break;
+
+            default:
+                break;
+        }
+        return null;
+    }
+
     getAdjacentCells(cellKey, bUseCellsAsKeys = true) {
 
         cellKey = Number(cellKey);
         let result = {};
 
-        const totalCells = this.properties.pages * this.properties.rowsPerPage * COLUMNS;
-
-        //up
-        const upKey = cellKey - COLUMNS;
-        if (upKey >= 1) {
-
-            if (bUseCellsAsKeys)
-                result[upKey] = 'up';
-            else
-                result['up'] = upKey;
-
+        for (let direction of Object.keys(reverseDirectionDictionary)) {
+            const adjacentCell = this.getAdjecentCell(cellKey, direction);
+            if (adjacentCell != null) {
+                if (bUseCellsAsKeys)
+                    result[adjacentCell] = direction;
+                else
+                    result[direction] = adjacentCell;
+            }
         }
-
-        //down
-        const downKey = cellKey + COLUMNS;
-        if (downKey <= totalCells) {
-
-            if (bUseCellsAsKeys)
-                result[downKey] = 'down';
-            else
-                result['down'] = downKey;
-
-        }
-
-        const cellPositionInRow = this.cellPositionInRow(cellKey);
-
-        //left
-        if (cellPositionInRow > 1) {
-
-            if (bUseCellsAsKeys)
-                result[cellKey - 1] = 'left';
-            else
-                result['left'] = cellKey - 1;
-
-        } else if (this.properties.loopTree) {
-
-            if (bUseCellsAsKeys)
-                result[cellKey - 1 + COLUMNS] = 'left';
-            else
-                result['left'] = cellKey - 1 + COLUMNS;
-
-        }
-
-        //right
-        if (cellPositionInRow < COLUMNS) {
-
-            if (bUseCellsAsKeys)
-                result[cellKey + 1] = 'right';
-            else
-                result['right'] = cellKey + 1;
-
-        } else if (this.properties.loopTree) {
-
-            if (bUseCellsAsKeys)
-                result[cellKey + 1 - COLUMNS] = 'right';
-            else
-                result['right'] = cellKey + 1 - COLUMNS;
-
-        }
-
+        
         return result;
     }
 
@@ -2070,14 +2360,14 @@ class BaseTree {
             return {};
 
         const adjacent = this.getAdjacentCells(cellKey, false);
-
+        
         for (let direction of Object.keys(adjacent)) {
             const cellID = adjacent[direction];
 
             const otherCell = this.cellMap[cellID];
             const reverseDirection = reverseDirectionDictionary[direction];
-
-            if (otherCell == null
+            
+            if   ( otherCell == null
                 || otherCell['travelNode'] == null
                 || cell['travelNode'][direction] == 0
                 || otherCell['travelNode'][reverseDirection] == 0)
@@ -2103,9 +2393,9 @@ class BaseTree {
             const position1 = this.cellPositionInRow(cellKey1);
             const position2 = this.cellPositionInRow(cellKey2);
 
-            if (dif == (COLUMNS - 1) && position1 == 1 && position2 == COLUMNS)
+            if ( dif == (COLUMNS - 1) && position1 == 1 && position2 == COLUMNS )
                 return 'left';
-            if (dif == (1 - COLUMNS) && position2 == 1 && position1 == COLUMNS)
+            if (dif == (1 - COLUMNS) && position2 == 1 && position1 == COLUMNS )
                 return 'right';
         }
 
@@ -2123,7 +2413,7 @@ class BaseTree {
     }
 
     connectCells(cellKey1, cellKey2, bDisconnectIfConnected = true) {
-
+        
         const direction = this.determineCellRelation(cellKey1, cellKey2);
 
         if (direction == null)
@@ -2136,11 +2426,11 @@ class BaseTree {
 
         if (this.cellMap[cellKey1]['travelNode'] == null)
             this.cellMap[cellKey1]['travelNode'] = new TravelNode();
-
+        
         if (this.cellMap[cellKey2]['travelNode'] == null)
             this.cellMap[cellKey2]['travelNode'] = new TravelNode();
-
-        if (bDisconnectIfConnected && this.cellMap[cellKey1]['travelNode'][direction] != 0 && this.cellMap[cellKey2]['travelNode'][reverseDirection] != 0) {
+            
+        if ( bDisconnectIfConnected && this.cellMap[cellKey1]['travelNode'][direction] != 0 && this.cellMap[cellKey2]['travelNode'][reverseDirection] != 0 ) {
 
             this.cellMap[cellKey1]['travelNode'][direction] = 0;
             this.cellMap[cellKey2]['travelNode'][reverseDirection] = 0;
@@ -2168,13 +2458,13 @@ class BaseTree {
 
         const cellElem = document.getElementById(CELLIDPREFIX + cellKey).firstChild;
         cellElem.innerHTML += `<img class="ability-icon ${EDITPATHTEMPCLASS} ${EDITPATHTEMPCLASS + this.selectedCells.length - 1}" src="abilities/generic/travel_center_6_a.png" style="z-index: 26;" draggable="false"></img>\n`;
-
+    
     }
 
     continueEditWithloopedNode(direction = 1) {
 
         const selectedCellsLength = this.selectedCells.length;
-
+        
         if (selectedCellsLength == 0 || !(this.properties.loopTree))
             return;
 
@@ -2194,7 +2484,7 @@ class BaseTree {
                     this.continueEditNode(lastCellKey + COLUMNS - 1);
                 break;
 
-            case 1:
+            case 1: 
                 if (cellPositionInRow == COLUMNS)
                     this.continueEditNode(lastCellKey - COLUMNS + 1);
                 break;
@@ -2217,22 +2507,22 @@ class BaseTree {
             return;
 
         }
-
+        
         const adjacentCellsMap = this.getAdjacentCells(cellKey, true);
         const prevCellKey = this.selectedCells[selectedCellsLength - 1];
-
+        
         // if cell is not adjacent to the last one - ignore it
-        if (adjacentCellsMap[prevCellKey] == null)
+        if ( adjacentCellsMap[prevCellKey] == null )
             return;
-
+        
         // if backtracked - remove last element and visuals
         if (cellKey == this.selectedCells[selectedCellsLength - 2]) {
 
-            const collection = document.getElementsByClassName(EDITPATHTEMPCLASS + (selectedCellsLength - 1));
+            const collection = document.getElementsByClassName( EDITPATHTEMPCLASS + (selectedCellsLength - 1) );
 
-            while (collection[0])
+            while(collection[0])
                 collection[0].parentNode.removeChild(collection[0]);
-
+            
             this.selectedCells.splice(selectedCellsLength - 1, 1);
 
         } else {
@@ -2243,14 +2533,14 @@ class BaseTree {
             // add center image to the cell
             if (!this.selectedCells.includes(cellKey))
                 newCellElem.innerHTML += `<img class="ability-icon ${EDITPATHTEMPCLASS} ${EDITPATHTEMPCLASS + selectedCellsLength}" src="abilities/generic/travel_center_6_a.png" style="z-index: 26;"></img>\n`;
-
+            
             // add connection images to this and previous cell
             switch (adjacentCellsMap[prevCellKey]) {
                 case 'up':
                     newCellElem.innerHTML += `<img class="ability-icon ${EDITPATHTEMPCLASS} ${EDITPATHTEMPCLASS + selectedCellsLength}" src="abilities/generic/travel_up_10_a.png" style="z-index: 30;"></img>\n`;
                     prevCellElem.innerHTML += `<img class="ability-icon ${EDITPATHTEMPCLASS} ${EDITPATHTEMPCLASS + selectedCellsLength}" src="abilities/generic/travel_down_8_a.png" style="z-index: 28;"></img>\n`;
                     break;
-
+                    
                 case 'down':
                     newCellElem.innerHTML += `<img class="ability-icon ${EDITPATHTEMPCLASS} ${EDITPATHTEMPCLASS + selectedCellsLength}" src="abilities/generic/travel_down_8_a.png" style="z-index: 28;"></img>\n`;
                     prevCellElem.innerHTML += `<img class="ability-icon ${EDITPATHTEMPCLASS} ${EDITPATHTEMPCLASS + selectedCellsLength}" src="abilities/generic/travel_up_10_a.png" style="z-index: 30;"></img>\n`;
@@ -2265,7 +2555,7 @@ class BaseTree {
                     newCellElem.innerHTML += `<img class="ability-icon ${EDITPATHTEMPCLASS} ${EDITPATHTEMPCLASS + selectedCellsLength}" src="abilities/generic/travel_right_9_a.png" style="z-index: 29;"></img>\n`;
                     prevCellElem.innerHTML += `<img class="ability-icon ${EDITPATHTEMPCLASS} ${EDITPATHTEMPCLASS + selectedCellsLength}" src="abilities/generic/travel_left_7_a.png" style="z-index: 27;"></img>\n`;
                     break;
-
+                
                 default:
                     break;
             }
@@ -2275,10 +2565,10 @@ class BaseTree {
 
         }
 
-    }
+    }    
 
     finallizeEditNode() {
-
+        
         const selectedCellsLength = this.selectedCells.length;
 
         let editSummary = '';
@@ -2286,7 +2576,7 @@ class BaseTree {
         switch (selectedCellsLength) {
             case 0:
                 return;
-
+            
             case 1:
                 const cellKey = this.selectedCells[0];
 
@@ -2298,19 +2588,19 @@ class BaseTree {
                     this.cellMap[cellKey]['abilityID'] = this.selectedAbilityID;
                     editSummary = `Positioned ${minecraftToHTML(this.abilities[this.selectedAbilityID].name)} on tree`;
                     this.selectedAbilityID = -1;
-                    this.renderAbilities();
-
+                    
                 } else {
 
                     if (this.cellMap[cellKey]['abilityID'] != null) {
 
                         const abilityID = this.cellMap[cellKey]['abilityID'];
                         this.removeAbilityFromTree(abilityID);
+                        this.hideHoverAbilityTooltip();
                         editSummary = `Removed ${minecraftToHTML(this.abilities[abilityID].name)} from tree`;
 
                     } else if (this.cellMap[cellKey]['travelNode'] == null) {
-
-                        this.cellMap[cellKey]['travelNode'] = new TravelNode({up: 0, down: 0, left: 0, right: 0});
+                
+                        this.cellMap[cellKey]['travelNode'] = new TravelNode({up : 0, down : 0, left : 0, right : 0});
 
                         editSummary = `Added empty tree node on page ${Math.ceil(cellKey / (this.properties.rowsPerPage * COLUMNS))}`;
 
@@ -2333,7 +2623,7 @@ class BaseTree {
                 break;
 
             default:
-                for (let cellKey = 0; cellKey < selectedCellsLength - 1; cellKey++) {
+                for(let cellKey = 0; cellKey < selectedCellsLength - 1; cellKey++) {
 
                     const cellKey1 = this.selectedCells[cellKey];
                     const cellKey2 = this.selectedCells[cellKey + 1];
@@ -2346,28 +2636,30 @@ class BaseTree {
                 break;
         }
 
-        const collection = document.getElementsByClassName(EDITPATHTEMPCLASS);
+        const collection = document.getElementsByClassName( EDITPATHTEMPCLASS );
 
-        while (collection[0])
+        while(collection[0])
             collection[0].parentNode.removeChild(collection[0]);
 
         this.selectedCells = [];
         this.saveState(editSummary);
         this.renderTree();
+        this.renderAbilities();
+        this.renderArchetypes();
 
     }
 
     removeCellFromTree(cellKey) {
 
         const connected = this.getConnectedCells(cellKey);
-
+        
         for (let key of Object.keys(connected)) {
             const cellID = connected[key];
 
             if (this.cellMap[cellID]['travelNode'] == null)
                 continue;
 
-            this.cellMap[cellID]['travelNode'][reverseDirectionDictionary[key]] = 0;
+            this.cellMap[cellID]['travelNode'][ reverseDirectionDictionary[ key ] ] = 0;
 
             if (!this.cellMap[cellID]['travelNode'].hasConnections())
                 delete this.cellMap[cellID];
@@ -2383,7 +2675,7 @@ class BaseTree {
         for (let cellKey of Object.keys(this.cellMap)) {
 
             if (this.cellMap[cellKey] != null && this.cellMap[cellKey]['abilityID'] == abilityID) {
-
+                
                 if (this.cellMap[cellKey]['travelNode'] == null) {
 
                     this.removeCellFromTree(cellKey);
@@ -2392,18 +2684,16 @@ class BaseTree {
                 }
 
                 const connected = Object.keys(this.getConnectedCells(cellKey));
-
+                
                 if (connected.length == 0)
                     delete this.cellMap[cellKey];
                 else
                     delete this.cellMap[cellKey]['abilityID'];
             }
         }
-
-        this.renderAbilities();
     }
 
-    renderTreeForEditing(tableBodyID = 'treeTableBody') {
+    renderTreeForEditing(tableBodyID = "treeTableBody") {
 
         const table = document.getElementById(tableBodyID);
         if (table == null)
@@ -2411,12 +2701,12 @@ class BaseTree {
 
         table.innerHTML = '';
 
-        this.setCurrentPage();
+        this.setcurrentVerticalPage();
 
         const CELLSPERPAGE = this.properties.rowsPerPage * COLUMNS;
 
-        for (let page = this.currentPage; page < this.currentPage + this.properties.pagesDisplayed; page++) {
-
+        for (let page = this.currentVerticalPage; page < this.currentVerticalPage + this.properties.pagesDisplayed; page++) {
+            
             const pageRow = document.createElement('tr');
             table.appendChild(pageRow);
 
@@ -2425,7 +2715,7 @@ class BaseTree {
             pageRow.appendChild(pageCol);
 
             const pageDiv = document.createElement('div');
-            pageDiv.classList.add('page-display');
+            pageDiv.classList.add("page-display");
             pageDiv.innerHTML = `PAGE ${page}`;
             pageCol.appendChild(pageDiv);
 
@@ -2433,13 +2723,14 @@ class BaseTree {
 
                 const newRow = document.createElement('tr');
                 table.appendChild(newRow);
-
+    
                 for (let col = 1; col <= COLUMNS; col++) {
 
                     const cellKey = (page - 1) * (CELLSPERPAGE) + (row - 1) * COLUMNS + col;
-
+                    
                     const newCol = document.createElement('td');
                     newCol.id = CELLIDPREFIX + cellKey;
+                    newCol.cellKey = cellKey;
                     newRow.appendChild(newCol);
 
                     const cell = this.cellMap[cellKey];
@@ -2449,47 +2740,93 @@ class BaseTree {
                     if (cell != null) {
 
                         div = generateIconDiv(
-                            this.abilities[cell['abilityID']] ? this.abilities[cell['abilityID']].type : null,
+                            this.abilities[ cell['abilityID'] ] ? this.abilities[ cell['abilityID'] ].type : null,
                             cell['travelNode'],
                             this.properties.classs,
                             1,
                             true,
-                            true,
+                            true
                         );
 
-                        if (this.abilities[cell['abilityID']] != null) {
+                        if (this.abilities[ cell['abilityID'] ] != null) {
 
-                            div.addEventListener('mouseover', (e) => {
-                                this.renderHoverAbilityTooltip(cell['abilityID']);
-                            });
-                            div.addEventListener('mouseout', (e) => {
-                                this.hideHoverAbilityTooltip();
-                            });
-
+                            div.addEventListener('pointerover', (e) => {if (e.pointerType !== "touch") this.renderHoverAbilityTooltip(cell['abilityID'])});
+                            
+                            div.addEventListener('pointerout', (e) => {if (e.pointerType !== "touch") this.hideHoverAbilityTooltip()});
+    
                         }
 
                     } else {
                         div = document.createElement('div');
-                        div.classList.add('centered-element-container');
+                        div.classList.add("centered-element-container");
                     }
 
                     div.style.userSelect = 'none';
-                    div.addEventListener('mousedown', (e) => {
-                        this.initializeEditNode(cellKey);
-                    });
-                    div.addEventListener('mouseenter', (e) => {
-                        this.continueEditNode(cellKey);
-                    });
-                    newCol.appendChild(div);
+                    div.addEventListener('pointerdown', (e) => {if (e.pointerType !== "touch") this.initializeEditNode(cellKey)});
+                    div.addEventListener('pointerenter', (e) => {if (e.pointerType !== "touch") this.continueEditNode(cellKey)});
+                    div.addEventListener('touchstart', (e) => {
+                        this.#treeTouchProcessor.processTouch(
+                            e,
+                            () => {
+                                if (this.abilities[this.selectedAbilityID] != null) {
 
+                                    this.removeAbilityFromTree(this.selectedAbilityID);
+                                    this.cellMap[cellKey] = this.cellMap[cellKey] ?? {};
+                                    this.cellMap[cellKey]['abilityID'] = this.selectedAbilityID;
+                                    let editSummary = `Positioned ${minecraftToHTML(this.abilities[this.selectedAbilityID].name)} on tree`;
+                                    this.selectedAbilityID = -1;
+                                    this.saveState(editSummary);
+                                    this.renderAbilities();
+                                    this.renderArchetypes();
+                                    this.renderTree();
+                                    
+                                } else {
+                                    const td = e.target.closest("td");
+                                    try {
+                                        this.renderHoverAbilityTooltip(this.cellMap[td.cellKey]['abilityID']);
+                                        moveTooltip(e.changedTouches[0].clientX, e.changedTouches[0].clientY);
+                                    } catch (e) {};
+                                }
+                            },
+                            () => {}, 
+                            () => {
+                                this.hideHoverAbilityTooltip();
+                                //document.body.style.overflow = 'hidden';
+                                this.initializeEditNode(cellKey);
+                            },
+                            (event) => {
+                                const location = event.changedTouches[0];
+                                const target = document.elementFromPoint(location.clientX, location.clientY);
+                                if (target == null)
+                                    return;
+
+                                if (target.id == "rightTreeBoundary")
+                                    this.continueEditWithloopedNode(1);
+                                else if (target.id == "leftTreeBoundary")
+                                    this.continueEditWithloopedNode(-1);
+                                else {
+                                    const td = target.closest("td");
+                                    if (td && td.cellKey != null)
+                                        this.continueEditNode(td.cellKey);
+                                }
+                            },
+                            () => {
+                                //document.body.style.overflow = 'auto';
+                                this.finallizeEditNode();
+                            }
+                        );
+                        }, {passive: false});
+                    newCol.appendChild(div);
+                    
                 }
             }
         }
     }
 
+
     // #endregion
 
-    renderTree(tableBodyID = 'treeTableBody') {
+    renderTree(tableBodyID = "treeTableBody") {
 
         if (this.bEditMode)
             this.renderTreeForEditing(tableBodyID);
@@ -2509,7 +2846,7 @@ class BaseTree {
     }
 
     ensureStartingAbility() {
-        if (this.startingAbilityID != null && this.abilities[this.startingAbilityID] != null)
+        if (this.startingAbilityID != null && this.abilities[ this.startingAbilityID ] != null)
             return;
 
         const abilityList = Object.keys(this.abilities);
@@ -2517,7 +2854,7 @@ class BaseTree {
             return;
         this.startingAbilityID = abilityList[0];
     }
-
+    
     ensureDefaultTree() {
 
         if (Object.keys(this.abilityTrees).length == 0) {
@@ -2541,23 +2878,25 @@ class BaseTree {
             undirectedConnectionsMap[key] = this.getConnectedCells(key);
         }
         let directedConnectionsMap = {};
-        if (this.properties.bTravesableUp) {
+        if (this.properties.bTravesableUp)
             directedConnectionsMap = undirectedConnectionsMap;
-        } else {
+        else {
             for (let key of Object.keys(undirectedConnectionsMap)) {
+                
                 directedConnectionsMap[key] = Object.assign({}, undirectedConnectionsMap[key]);
-                if (directedConnectionsMap[key]['up'] != null)
+
+                if (!this.properties.bTravesableUp)
                     delete directedConnectionsMap[key]['up'];
             }
         }
 
-        // cellID : {abilityID : distance from ability}
+        // cellID : {abilityID : {distance from ability : int, restrict going sideways : false}}
         let pathwayMap = {};
 
         for (let cellID of Object.keys(this.cellMap)) {
-            if (this.cellMap[cellID]['abilityID'] != null) {
+            if (this.cellMap[cellID]["abilityID"] != null) {
                 pathwayMap[cellID] = pathwayMap[cellID] ?? {};
-                pathwayMap[cellID][this.cellMap[cellID]['abilityID']] = 0;
+                pathwayMap[cellID][ this.cellMap[cellID]["abilityID"] ] = {'distance' : 0, 'restrictSides' : false};
             }
         }
 
@@ -2569,41 +2908,50 @@ class BaseTree {
 
                 let pendingAbilityIDs = [];
                 for (let abilityID of Object.keys(pathwayMap[cellID])) {
-                    if (pathwayMap[cellID][abilityID] == currentProcessingTarget)
+                    if (pathwayMap[cellID][abilityID]['distance'] == currentProcessingTarget)
                         pendingAbilityIDs.push(abilityID);
                 }
 
                 if (pendingAbilityIDs.length != 0) {
                     keepGoing = true;
 
-                    let connectedCellNumbers = Object.values(directedConnectionsMap[cellID]);
-                    for (let connectedCellNumber of connectedCellNumbers) {
+                    for (let connectedCellDirection of Object.keys(directedConnectionsMap[cellID])) {
 
-                        if (this.cellMap[connectedCellNumber]['abilityID'] == null) {
+                        const connectedCellNumber = directedConnectionsMap[cellID][connectedCellDirection];
+
+                        if (this.cellMap[connectedCellNumber]["abilityID"] == null) {
 
                             pathwayMap[connectedCellNumber] = pathwayMap[connectedCellNumber] ?? {};
+                            const restrictSides = (connectedCellDirection == 'down' && !LSHAPEDALLOCATION);
 
-                            for (let abilityID of pendingAbilityIDs) {
-                                pathwayMap[connectedCellNumber][abilityID] = pathwayMap[connectedCellNumber][abilityID] ?? currentProcessingTarget + 1;
+                            for (let parentAbilityID of pendingAbilityIDs) {
+
+                                    if ( pathwayMap[cellID][parentAbilityID]['restrictSides'] && (connectedCellDirection == 'left' || connectedCellDirection == 'right') )
+                                        continue;
+
+                                    pathwayMap[connectedCellNumber][parentAbilityID] = pathwayMap[connectedCellNumber][parentAbilityID] ?? {'distance' : currentProcessingTarget + 1, restrictSides};
                             }
 
                         } else {
                             for (let parentAbilityID of pendingAbilityIDs) {
 
-                                const childAbilityID = this.cellMap[connectedCellNumber]['abilityID'];
+                                if ( pathwayMap[cellID][parentAbilityID]['restrictSides'] && (connectedCellDirection == 'left' || connectedCellDirection == 'right') )
+                                    continue;
+
+                                const childAbilityID = this.cellMap[connectedCellNumber]["abilityID"];
 
                                 if (parentAbilityID == childAbilityID)
                                     continue;
-
+                                
                                 this.potentialAllocationMap[parentAbilityID] = this.potentialAllocationMap[parentAbilityID] ?? {};
 
                                 if (this.potentialAllocationMap[parentAbilityID][childAbilityID] == null) {
-
+                                    
                                     this.potentialAllocationMap[parentAbilityID][childAbilityID] = {};
 
                                     let backtrackProcessingTarget = currentProcessingTarget;
                                     let currentCell = connectedCellNumber;
-                                    let lastTravelNode = new TravelNode(this.cellMap[currentCell]['travelNode']);
+                                    let lastTravelNode = new TravelNode( this.cellMap[currentCell]['travelNode'] );
 
                                     for (backtrackProcessingTarget; backtrackProcessingTarget >= 0; backtrackProcessingTarget--) {
 
@@ -2612,13 +2960,14 @@ class BaseTree {
                                             const cellID = undirectedConnectionsMap[currentCell][direction];
 
                                             if (pathwayMap[cellID] &&
-                                                pathwayMap[cellID][parentAbilityID] == backtrackProcessingTarget) {
+                                                pathwayMap[cellID][parentAbilityID] &&
+                                                pathwayMap[cellID][parentAbilityID]['distance'] == backtrackProcessingTarget) {
 
                                                 lastTravelNode[direction] = 2;
                                                 this.potentialAllocationMap[parentAbilityID][childAbilityID][currentCell] = lastTravelNode;
 
                                                 currentCell = cellID;
-                                                lastTravelNode = new TravelNode(this.cellMap[currentCell]['travelNode']);
+                                                lastTravelNode = new TravelNode( this.cellMap[currentCell]['travelNode'] );
                                                 lastTravelNode[reverseDirectionDictionary[direction]] = 2;
                                                 break;
                                             }
@@ -2640,14 +2989,7 @@ class BaseTree {
     compileCurrentTree() {
         this.ensureStartingAbility();
         this.ensureSelectedTree();
-        this.currentTree = {
-            'allocatedNodes': {},
-            'connectedNodes': {},
-            'blockedNodes': {},
-            'archetypes': {},
-            'abilityPoints': 0,
-            'travelNodes': {},
-        };
+        this.currentTree = {'allocatedNodes' : {}, 'connectedNodes' : {}, 'blockedNodes' : {}, 'archetypes' : {}, 'abilityPoints' : 0, 'travelNodes' : {}};
         if (this.startingAbilityID == null || this.abilities[this.startingAbilityID] == null)
             return;
 
@@ -2667,15 +3009,15 @@ class BaseTree {
             }
 
             allocatableNodes = [];
-            for (let abilityID of Object.keys(this.currentTree['connectedNodes'])) {
+            for (let abilityID of Object.keys( this.currentTree['connectedNodes'] )) {
                 if (this.currentTree['allocatedNodes'][abilityID] == false &&
                     this.isAllocatable(abilityID))
                     allocatableNodes.push(abilityID);
             }
         } while (allocatableNodes.length > 0);
 
-        for (let abilityID of Object.keys(this.currentTree['allocatedNodes']))
-            if (!this.currentTree['allocatedNodes'][abilityID])
+        for (let abilityID of Object.keys( this.currentTree['allocatedNodes'] ))
+            if ( !this.currentTree['allocatedNodes'][abilityID] )
                 delete this.currentTree['allocatedNodes'][abilityID];
     }
 
@@ -2685,11 +3027,11 @@ class BaseTree {
             return false;
 
         if (this.abilities[abilityID].archetype != '' &&
-            this.currentTree['archetypes'][this.abilities[abilityID].archetype] < this.abilities[abilityID].archetypePointsRequired)
+            this.currentTree['archetypes'][ this.abilities[abilityID].archetype ] < this.abilities[abilityID].archetypePointsRequired)
             return false;
 
         if (this.abilities[abilityID].requires != -1 &&
-            !this.currentTree['allocatedNodes'][this.abilities[abilityID].requires])
+            !this.currentTree['allocatedNodes'][ this.abilities[abilityID].requires ])
             return false;
 
         return this.currentTree['connectedNodes'][abilityID] != null
@@ -2701,7 +3043,7 @@ class BaseTree {
         for (let blockedID of this.abilities[abilityID].unlockingWillBlock)
             this.currentTree['blockedNodes'][blockedID] = true;
         if (this.abilities[abilityID].archetype != '')
-            this.currentTree['archetypes'][this.abilities[abilityID].archetype] += 1;
+            this.currentTree['archetypes'][ this.abilities[abilityID].archetype ] += 1;
         this.currentTree['abilityPoints'] += this.abilities[abilityID].pointsRequired;
         this.currentTree['allocatedNodes'][abilityID] = true;
         this.abilityTrees[this.selectedTree].push(abilityID);
@@ -2717,7 +3059,7 @@ class BaseTree {
     }
 
     deallocateNode(abilityID) {
-        this.abilityTrees[this.selectedTree].splice(this.abilityTrees[this.selectedTree].indexOf(abilityID), 1);
+        this.abilityTrees[this.selectedTree].splice( this.abilityTrees[this.selectedTree].indexOf(abilityID) , 1);
         this.compileCurrentTree();
         this.saveState(`Reallocated nodes on '${minecraftToHTML(this.selectedTree)}'`, 'treeAllocation', true);
     }
@@ -2725,8 +3067,8 @@ class BaseTree {
     addConnectedNodes(abilityID) {
         if (this.potentialAllocationMap[abilityID] == null)
             return;
-
-        for (let connectedAbilityID of Object.keys(this.potentialAllocationMap[abilityID])) {
+        
+        for (let connectedAbilityID of Object.keys( this.potentialAllocationMap[abilityID] )) {
 
             if (this.currentTree['allocatedNodes'][connectedAbilityID])
                 this.allocateTravelNodes(abilityID, connectedAbilityID);
@@ -2747,7 +3089,7 @@ class BaseTree {
             if (this.currentTree['travelNodes'][cellID] == null)
                 this.currentTree['travelNodes'][cellID] = new TravelNode(travelNodeMap[cellID]);
             else
-                this.currentTree['travelNodes'][cellID].mergeTravelNodes(travelNodeMap[cellID]);
+                this.currentTree['travelNodes'][cellID].mergeTravelNodes( travelNodeMap[cellID] );
         }
     }
 
@@ -2759,28 +3101,29 @@ class BaseTree {
         return nodeMap;
     }
 
-    editTree(name = '', nameFormID = 'treeNameInput') {
+    editTree(name = "", nameFormID = "treeNameInput") {
 
         const nameInputElement = document.getElementById(nameFormID);
 
-        if (name == '') {
-            nameInputElement.value = '';
-            nameInputElement.oldname = '';
-        } else {
+        if (name == "") {
+            nameInputElement.value = "";
+            nameInputElement.oldname = "";
+        }
+        else {
             nameInputElement.value = name;
             nameInputElement.oldname = name;
         }
-
+        
         nameInputElement.dispatchEvent(new Event('input'));
     }
 
-    saveTree(nameFormID = 'treeNameInput') {
+    saveTree(nameFormID = "treeNameInput") {
 
         const nameInputElement = document.getElementById(nameFormID);
-        if (nameInputElement.value == '')
+        if (nameInputElement.value == "")
             return;
-
-        const oldname = nameInputElement.oldname ?? '';
+        
+        const oldname = nameInputElement.oldname ?? "";
         let newname = nameInputElement.value;
 
         if (this.abilityTrees[newname] != null && newname != oldname) {
@@ -2790,13 +3133,13 @@ class BaseTree {
                     break;
                 }
         }
-
-        if (oldname == '') {
-
+        
+        if (oldname == "") {
+            
             this.abilityTrees[newname] = [];
             this.saveState(`Added tree: ${minecraftToHTML(newname)}`);
             this.selectTree(newname);
-
+            
         } else {
 
             this.abilityTrees[newname] = this.abilityTrees[oldname];
@@ -2811,27 +3154,27 @@ class BaseTree {
 
     deleteTree(name) {
 
-        if (typeof name != 'string' || name == '')
+        if (typeof name != "string" || name == "")
             return;
 
 
         delete this.abilityTrees[name];
 
-        this.ensureDefaultTree();
+        this.ensureDefaultTree(); 
         this.renderTreeNames();
         this.saveState(`Deleted tree: ${minecraftToHTML(name)}`);
 
     }
 
-    renderTreeNames(containerID = 'treeNameContainer') {
+    renderTreeNames(containerID = "treeNameContainer") {
 
         const container = document.getElementById(containerID);
-
-        container.innerHTML = '';
-
+        
+        container.innerHTML = "";
+        
         for (let treeName of Object.keys(this.abilityTrees)) {
 
-            const div = document.createElement('div');
+            const div = document.createElement("div");
             div.classList.add('d-inline-flex', 'minecraftTooltip', 'w-100', 'mb-1');
 
             if (treeName == this.selectedTree) {
@@ -2847,31 +3190,31 @@ class BaseTree {
 
             }
 
-            const text = document.createElement('div');
+            const text = document.createElement("div");
             text.classList.add('flex-fill', 'overflow-hidden');
             text.innerHTML = minecraftToHTML(treeName);
             div.appendChild(text);
-
-            const editbtn = document.createElement('button');
+            
+            const editbtn = document.createElement("button");
             editbtn.classList.add('small-btn', 'me-1', 'ms-2', 'font-default');
-            editbtn.type = 'button';
-            editbtn.style = 'background-color: transparent;';
-            editbtn.title = 'Edit';
-            editbtn.innerHTML = '✒️';
+            editbtn.type = "button";
+            editbtn.style = "background-color: transparent;";
+            editbtn.title = "Edit";
+            editbtn.innerHTML = "✒️";
             editbtn.setAttribute('data-bs-toggle', 'modal');
             editbtn.setAttribute('data-bs-target', '#treeModal');
             editbtn.addEventListener('click', (e) => this.editTree(treeName));
             div.appendChild(editbtn);
-
-            const delbtn = document.createElement('button');
+            
+            const delbtn = document.createElement("button");
             delbtn.classList.add('small-btn', 'font-default');
-            delbtn.type = 'button';
-            delbtn.style = 'background-color: transparent;';
-            delbtn.title = 'Delete';
-            delbtn.innerHTML = '💀';
+            delbtn.type = "button";
+            delbtn.style = "background-color: transparent;";
+            delbtn.title = "Delete";
+            delbtn.innerHTML = "💀";
             delbtn.addEventListener('click', (e) => this.deleteTree(treeName));
             div.appendChild(delbtn);
-
+            
             container.appendChild(div);
 
         }
@@ -2883,7 +3226,7 @@ class BaseTree {
         this.saveState(`Selected '${minecraftToHTML(this.selectedTree)}' tree for allocation`, `${this.selectedTree}`, true);
         this.renderTreeNames();
         this.renderArchetypeCounts();
-        this.renderAbilityPointsUsed();
+        this.renderAbilityPointsUsed()
         this.renderTree();
     }
 
@@ -2892,12 +3235,12 @@ class BaseTree {
         this.compileCurrentTree();
         this.saveState(`Made ${minecraftToHTML(this.abilities[abilityID].name)} the starting ability`);
         this.renderArchetypeCounts();
-        this.renderAbilityPointsUsed();
+        this.renderAbilityPointsUsed()
         this.renderTree();
     }
 
-    renderStartingAbilityList(startingAbilityInputID = 'startingAbilityInput') {
-
+    renderStartingAbilityList(startingAbilityInputID = "startingAbilityInput") {
+        
         const startingAbilityInputElement = document.getElementById(startingAbilityInputID);
 
         startingAbilityInputElement.innerHTML = '';
@@ -2913,57 +3256,66 @@ class BaseTree {
             if (id == this.startingAbilityID)
                 option.selected = true;
 
-            option.classList.add('ability-type-' + this.abilities[id].type);
+            option.classList.add("ability-type-" + this.abilities[id].type);
             startingAbilityInputElement.appendChild(option);
 
         }
     }
 
-    renderAbilityPointsUsed(containerID = 'abilityPointsUsed') {
+    renderAbilityPointsUsed(containerID = "abilityPointsUsed") {
         const container = document.getElementById(containerID);
         container.innerHTML = `AP: ${this.currentTree['abilityPoints']} / ${this.properties.maxAbilityPoints}`;
     }
 
-    renderArchetypeCounts(containerID = 'archetypeCountContainer') {
+    renderArchetypeCounts(containerID = "archetypeCountContainer") {
+
+        let archetypeCounts = {};
+        for (let archetype of this.archetypes) {
+            archetypeCounts[archetype] = 0;
+        }
+        for (let ability of Object.values(this.abilities)) {
+            if (ability.archetype.length > 0)
+                archetypeCounts[ability.archetype]++;
+        }
 
         const container = document.getElementById(containerID);
-
-        container.innerHTML = '';
-
+        
+        container.innerHTML = "";
+        
         for (let archetype of this.archetypes) {
 
-            const div = document.createElement('div');
+            const div = document.createElement("div");
             div.classList.add('d-inline-flex', 'minecraftTooltip', 'w-100', 'mb-1');
 
-            const text = document.createElement('div');
+            const text = document.createElement("div");
             text.classList.add('flex-fill', 'overflow-hidden');
             text.innerHTML = minecraftToHTML(archetype);
             div.appendChild(text);
 
-            const abilityCount = document.createElement('div');
-            abilityCount.innerHTML = this.currentTree['archetypes'][archetype] ?? 0;
+            const abilityCount = document.createElement("div");
+            abilityCount.innerHTML = `${this.currentTree['archetypes'][archetype] ?? 0} / ${archetypeCounts[archetype]}`;
             div.appendChild(abilityCount);
-
+            
             container.appendChild(div);
 
         }
     }
 
-    renderTreeForAllocation(tableBodyID = 'treeTableBody') {
+    renderTreeForAllocation(tableBodyID = "treeTableBody") {
         const table = document.getElementById(tableBodyID);
         if (table == null)
             return;
 
         table.innerHTML = '';
 
-        this.setCurrentPage();
+        this.setcurrentVerticalPage();
 
         const CELLSPERPAGE = this.properties.rowsPerPage * COLUMNS;
 
         const allocatableNodes = this.getAllocatableNodes();
 
-        for (let page = this.currentPage; page < this.currentPage + this.properties.pagesDisplayed; page++) {
-
+        for (let page = this.currentVerticalPage; page < this.currentVerticalPage + this.properties.pagesDisplayed; page++) {
+            
             const pageRow = document.createElement('tr');
             table.appendChild(pageRow);
 
@@ -2972,7 +3324,7 @@ class BaseTree {
             pageRow.appendChild(pageCol);
 
             const pageDiv = document.createElement('div');
-            pageDiv.classList.add('page-display');
+            pageDiv.classList.add("page-display");
             pageDiv.innerHTML = `PAGE ${page}`;
             pageCol.appendChild(pageDiv);
 
@@ -2980,11 +3332,11 @@ class BaseTree {
 
                 const newRow = document.createElement('tr');
                 table.appendChild(newRow);
-
+    
                 for (let col = 1; col <= COLUMNS; col++) {
 
                     const cellKey = (page - 1) * (CELLSPERPAGE) + (row - 1) * COLUMNS + col;
-
+                    
                     const newCol = document.createElement('td');
                     newCol.id = CELLIDPREFIX + cellKey;
                     newRow.appendChild(newCol);
@@ -2997,65 +3349,95 @@ class BaseTree {
 
                         const travelNode = this.currentTree['travelNodes'][cellKey] ?? cell['travelNode'];
                         let allocationStatus = 0;
-                        if (this.currentTree['allocatedNodes'][cell['abilityID']] != null)
+                        if (this.currentTree['allocatedNodes'][ cell['abilityID'] ] != null)
                             allocationStatus = 2;
-                        else if (allocatableNodes[cell['abilityID']] != null)
+                        else if (allocatableNodes[ cell['abilityID'] ] != null)
                             allocationStatus = 1;
+                        else if (this.currentTree['blockedNodes'][ cell['abilityID'] ])
+                            allocationStatus = -1;
 
                         div = generateIconDiv(
-                            this.abilities[cell['abilityID']] ? this.abilities[cell['abilityID']].type : null,
+                            this.abilities[ cell['abilityID'] ] ? this.abilities[ cell['abilityID'] ].type : null,
                             travelNode,
                             this.properties.classs,
                             allocationStatus,
                             true,
-                            true,
+                            true
                         );
 
-                        if (this.abilities[cell['abilityID']] != null) {
-
+                        if (this.abilities[ cell['abilityID'] ] != null) {
+                            
                             switch (allocationStatus) {
                                 case 1:
                                     div.addEventListener('click', (e) => {
-                                            this.allocateNode(cell['abilityID']);
-                                            this.renderTree();
-                                            this.renderArchetypeCounts();
-                                            this.renderAbilityPointsUsed();
-                                        },
+                                        this.allocateNode( cell['abilityID'] );
+                                        this.renderTree();
+                                        this.renderArchetypeCounts();
+                                        this.renderAbilityPointsUsed()}
                                     );
                                     break;
                                 case 2:
                                     div.addEventListener('click', (e) => {
-                                        this.deallocateNode(cell['abilityID']);
+                                        this.deallocateNode( cell['abilityID'] );
                                         this.renderTree();
                                         this.renderArchetypeCounts();
-                                        this.renderAbilityPointsUsed();
-                                    });
+                                        this.renderAbilityPointsUsed()}
+                                    );
                                     break;
                                 default:
                                     break;
                             }
 
-                            div.addEventListener('mouseover', (e) => {
-                                this.renderHoverAbilityTooltip(cell['abilityID']);
-                            });
-                            div.addEventListener('mouseout', (e) => {
-                                this.hideHoverAbilityTooltip();
-                            });
-
-                        }
-
+                            div.addEventListener('pointerover', (e) => {if (e.pointerType !== "touch") this.renderHoverAbilityTooltip(cell['abilityID'])} );
+                            div.addEventListener('pointerout', (e) => {if (e.pointerType !== "touch") this.hideHoverAbilityTooltip()} );
+                            div.addEventListener('touchstart', (e) => {
+                                this.#treeTouchProcessor.processTouch(
+                                    e,
+                                    () => {
+                                        switch (allocationStatus) {
+                                            case 1:
+                                                this.allocateNode( cell['abilityID'] );
+                                                this.renderTree();
+                                                this.renderArchetypeCounts();
+                                                this.renderAbilityPointsUsed();
+                                                break;
+                                            case 2:
+                                                this.deallocateNode( cell['abilityID'] );
+                                                this.renderTree();
+                                                this.renderArchetypeCounts();
+                                                this.renderAbilityPointsUsed();
+                                                break;
+                                            default:
+                                                break;
+                                        }
+                                    },
+                                    () => {}, 
+                                    () => {
+                                        document.body.style.overflow = 'hidden';
+                                        this.renderHoverAbilityTooltip(cell['abilityID']);
+                                        moveTooltip(e.changedTouches[0].clientX, e.changedTouches[0].clientY);
+                                    },
+                                    () => {
+                                        moveTooltip(e.changedTouches[0].clientX, e.changedTouches[0].clientY);
+                                    },
+                                    () => {
+                                        this.hideHoverAbilityTooltip();
+                                        document.body.style.overflow = 'auto';
+                                    }
+                                );
+                                }, {passive: false});
+                            }
                     } else {
                         div = document.createElement('div');
-                        div.classList.add('centered-element-container');
+                        div.classList.add("centered-element-container");
                     }
 
                     div.style.userSelect = 'none';
                     newCol.appendChild(div);
-
+                    
                 }
             }
         }
     }
-
     // #endregion
 }
