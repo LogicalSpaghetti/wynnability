@@ -23,9 +23,9 @@ section {
 
 .centered-element-container * {
   position: absolute;
-  top:50%;
-  left:50%;
-  transform:translate(-50%, -50%);
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
   width: 100%;
   aspect-ratio: 1 / 1;
 }
@@ -130,7 +130,7 @@ section {
   margin: 6px;
   padding: 3px 6px 3px 6px;
   border-color: #0b011b;
-  color:#5c5d5f;
+  color: #5c5d5f;
   text-shadow: none;
 }
 
@@ -147,7 +147,7 @@ section {
 .history-record-not-selected {
   margin: 6px;
   padding: 3px 6px 3px 6px;
-  text-shadow: none;  
+  text-shadow: none;
 }
 
 .page-display {
