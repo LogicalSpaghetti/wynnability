@@ -136,8 +136,6 @@ section {
   background-color: #110111;
   color: white;
   font-family: minecraft, mojangles, unifont, unifontEmoji;
-  -webkit-filter: blur(0);
-  filter: blur(0);
   text-shadow: 0.125rem 0.125rem 0 color-mix(in srgb, currentColor 24%, black);
   min-height: 30px;
   border-radius: 4px;
@@ -145,6 +143,7 @@ section {
   letter-spacing: 0.02rem;
   text-underline-offset: 0.1875rem;
   line-height: 1.25rem;
+  image-rendering: pixelated;
 }
 
 .minecraftTooltip .fw-bold {
@@ -161,7 +160,7 @@ section {
   height: 30px;
 }
 
-.history-record-overriden {
+.history-record-overridden {
   text-decoration: line-through;
   margin: 6px;
   padding: 3px 6px 3px 6px;
