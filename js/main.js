@@ -1,104 +1,79 @@
 import * as utils from './utils.js';
 
-const classDictionary = {
-    'archer' : 'abilities/class/archer',
-    'warrior' : 'abilities/class/warrior',
-    'assassin' : 'abilities/class/assassin',
-    'mage' : 'abilities/class/mage',
-    'shaman' : 'abilities/class/shaman',
-}
+const classNames = ['archer', 'assassin', 'mage', 'shaman', 'warrior'];
 
-export const abilityIconDictionary = {
-    'skill' : 'abilities/class/',
-    'red' : 'abilities/generic/red',
-    'blue' : 'abilities/generic/blue',
-    'purple' : 'abilities/generic/purple',
-    'yellow' : 'abilities/generic/yellow',
-    'white' : 'abilities/generic/white',
-}
+const abilityIconDirectoryPath = `../assets/img/abilities/`;
+
+const nodeNames = ['skill', 'red', 'blue', 'purple', 'yellow', 'white'];
+const altNodeNames = ['skill', 'magenta', 'red', 'blue', 'purple', 'yellow', 'white'];
+
+const abilityIconDictionary = {
+    'skill': 'class/',
+    'red': 'generic/red',
+    'blue': 'generic/blue',
+    'purple': 'generic/purple',
+    'yellow': 'generic/yellow',
+    'white': 'generic/white',
+};
+
 const altAbilityIconDictionary = {
-    'skill' : 'abilities/class/',
-    'magenta' : 'abilities/generic/magenta',
-    'red' : 'abilities/generic/red',
-    'blue' : 'abilities/generic/blue',
-    'purple' : 'abilities/generic/purple',
-    'yellow' : 'abilities/generic/yellow',
-    'white' : 'abilities/generic/white',
-}
+    'skill': 'class/',
+    'magenta': 'generic/magenta',
+    'red': 'generic/red',
+    'blue': 'generic/blue',
+    'purple': 'generic/purple',
+    'yellow': 'generic/yellow',
+    'white': 'generic/white',
+};
 
 const reverseDirectionDictionary = {
-    'up' : 'down',
-    'down' : 'up',
-    'right' : 'left',
-    'left' : 'right',
-}
+    'up': 'down',
+    'down': 'up',
+    'right': 'left',
+    'left': 'right',
+};
 
-function generateIconDiv(type, travelnode = new TravelNode(), classs = "", allocationStatus = 0, bScaleAbilityIcon = false, useAlternativeAbilityIcons = false) {
+function generateIconDiv(type, travelNode = new TravelNode(), classs = "", allocationStatus = 0, bScaleAbilityIcon = false, useAlternativeAbilityIcons = false) {
 
     let result = document.createElement('div');
     result.classList.add('centered-element-container');
 
-    if (travelnode instanceof TravelNode)
-        result.innerHTML = travelnode.generateIconHTML();
+    if (travelNode instanceof TravelNode)
+        result.innerHTML = travelNode.generateIconHTML();
 
-    let url = null;
+    let url = generateIconUrl(type, classs, allocationStatus, useAlternativeAbilityIcons);
 
-    let iconDictionary = abilityIconDictionary;
-    if (useAlternativeAbilityIcons)
-        iconDictionary = altAbilityIconDictionary;
-  
-    if (type == 'skill')
-        switch (allocationStatus) {
-            case -1:
-                url = iconDictionary[type] + classs + '/skill_blocked.png';
-                break;
-            case 0:
-                url = iconDictionary[type] + classs + '/skill_dark.png';
-                break;
-            case 1:
-                url = iconDictionary[type] + classs + '/skill.png';
-                break;
-            case 2:
-                url = iconDictionary[type] + classs + '/skill_a.png';
-                break;
-            default:
-                break;
-        }
-
-    else if (type in iconDictionary)
-        switch (allocationStatus) {
-            case -1:
-                url = iconDictionary[type] + '_blocked.png';
-                break;
-            case 0:
-                url = iconDictionary[type] + '_dark.png';
-                break;
-            case 1:
-                url = iconDictionary[type] + '.png';
-                break;
-            case 2:
-                url = iconDictionary[type] + '_a.png';
-                break;
-            default:
-                break;
-        }
-        
-
-    if (url != null) {
+    if (url) {
         let img = document.createElement('img');
 
         img.src = url;
-        img.style.zIndex = 11;
+        img.style.zIndex = '11';
 
         if (bScaleAbilityIcon) {
             img.style.width = `${img.naturalWidth * 100 / 36}%`;
-            img.onload = (e) => {img.style.width = `${img.naturalWidth * 100 / 36}%`};
+            img.onload = () =>
+                img.style.width = `${img.naturalWidth * 100 / 36}%`;
         }
 
         result.appendChild(img);
     }
 
     return result;
+}
+
+const statusSuffixes = ['_blocked', '_dark', '', '_a'];
+
+export function generateIconUrl(type, classs = "custom", allocationStatus = 0, useAlternativeAbilityIcons = false) {
+
+    let iconDictionary = useAlternativeAbilityIcons
+        ? altAbilityIconDictionary : abilityIconDictionary;
+
+    const suffix = statusSuffixes[allocationStatus + 1];
+
+    return suffix == null ? null
+        : (type === 'skill' ? abilityIconDirectoryPath + iconDictionary[type] + classs + `/skill${suffix}.png`
+            : (type in iconDictionary ? abilityIconDirectoryPath + iconDictionary[type] + `${suffix}.png`
+                : null));
 }
 
 const POINTSREQUIRED_LOWER = -69;
@@ -110,8 +85,8 @@ const ARCHETYPEPOINTSREQUIRED_LOWER = 0;
 const ARCHETYPEPOINTSREQUIRED_UPPER = 420;
 const ARCHETYPEPOINTSREQUIRED_INPUTID = 'archetypePointsRequiredInput';
 utils.enforceMinMax(ARCHETYPEPOINTSREQUIRED_INPUTID, ARCHETYPEPOINTSREQUIRED_LOWER, ARCHETYPEPOINTSREQUIRED_UPPER);
-class Ability
-{   
+
+class Ability {
     /**
      * Top-most text
      * @var string
@@ -166,7 +141,16 @@ class Ability
      */
     requires = -1;
 
-    constructor({name = '', description = '', unlockingWillBlock = [], archetype = '', pointsRequired = POINTSREQUIRED_LOWER, archetypePointsRequired = ARCHETYPEPOINTSREQUIRED_LOWER, type = 'skill', requires = -1} = {}) {
+    constructor({
+                    name = '',
+                    description = '',
+                    unlockingWillBlock = [],
+                    archetype = '',
+                    pointsRequired = POINTSREQUIRED_LOWER,
+                    archetypePointsRequired = ARCHETYPEPOINTSREQUIRED_LOWER,
+                    type = 'skill',
+                    requires = -1,
+                } = {}) {
 
         this.name = String(name) ? String(name) : '';
         this._plainname = utils.stripMinecraftFormatting(this.name);
@@ -183,9 +167,8 @@ class Ability
         this.pointsRequired = isNaN(Number(pointsRequired)) ? POINTSREQUIRED_LOWER : utils.clamp(Number(pointsRequired), POINTSREQUIRED_LOWER, POINTSREQUIRED_UPPER);
 
         this.archetypePointsRequired = isNaN(Number(archetypePointsRequired)) ? ARCHETYPEPOINTSREQUIRED_LOWER : utils.clamp(Number(archetypePointsRequired), ARCHETYPEPOINTSREQUIRED_LOWER, ARCHETYPEPOINTSREQUIRED_UPPER);
-        
-        this.type = Object.keys(abilityIconDictionary).includes(String(type))
-            || Object.keys(altAbilityIconDictionary).includes(String(type))
+
+        this.type = Object.keys(abilityIconDictionary).includes(type) || Object.keys(altAbilityIconDictionary).includes(type)
             ? String(type) : Object.keys(abilityIconDictionary)[0];
 
         this.requires = isNaN(Number(requires)) ? -1 : Number(requires);
@@ -225,6 +208,7 @@ class Ability
 }
 
 const NUMOFVARIANTS = 4;
+
 class TravelNode {
     /**
      * up : empty/0 means unconnected, 1 means connected, 2 means allocated
@@ -275,7 +259,7 @@ class TravelNode {
 
         let result = '';
 
-        let connectionCountMap = {'connected' : 0, 'active' : 0};
+        let connectionCountMap = {'connected': 0, 'active': 0};
         const properties = ['up', 'down', 'left', 'right'];
         for (let property of properties)
             if (this[property] == 1)
@@ -284,17 +268,17 @@ class TravelNode {
                 connectionCountMap['active']++;
 
         if (connectionCountMap['connected'] == 0 && connectionCountMap['active'] == 0)
-            return '<img src="abilities/branch/0000.png" class="ability-icon" style="z-index: 1;"></img>\n';
+            return `<img src="${abilityIconDirectoryPath}branch/0000.png" class="ability-icon" style="z-index: 1;">\n`;
 
         if (connectionCountMap['connected'] > 0)
-            result += `<img src="abilities/branch/${this.up != 0 ? 1 : 0}${this.down != 0 ? 1 : 0}${this.left != 0 ? 1 : 0}${this.right != 0 ? 1 : 0}.png" class="ability-icon" style="z-index: 1;"></img>\n`;
+            result += `<img src="${abilityIconDirectoryPath}branch/${this.up != 0 ? 1 : 0}${this.down != 0 ? 1 : 0}${this.left != 0 ? 1 : 0}${this.right != 0 ? 1 : 0}.png" class="ability-icon" style="z-index: 1;">\n`;
 
         if (connectionCountMap['active'] == 1 || connectionCountMap['active'] == 4)
-            result += `<img src="abilities/branch/${this.up == 2 ? 2 : 0}${this.down == 2 ? 2 : 0}${this.left == 2 ? 2 : 0}${this.right == 2 ? 2 : 0}.png" class="ability-icon" style="z-index: 2;"></img>\n`;
+            result += `<img src="${abilityIconDirectoryPath}branch/${this.up == 2 ? 2 : 0}${this.down == 2 ? 2 : 0}${this.left == 2 ? 2 : 0}${this.right == 2 ? 2 : 0}.png" class="ability-icon" style="z-index: 2;">\n`;
         else if (connectionCountMap['active'] == 2)
-            result += `<img src="abilities/branch/${this.up == 2 ? 2 : 0}${this.down == 2 ? 2 : 0}${this.left == 2 ? 2 : 0}${this.right == 2 ? 2 : 0}/${this.variant}.png" class="ability-icon" style="z-index: 2;"></img>\n`;
+            result += `<img src="${abilityIconDirectoryPath}branch/${this.up == 2 ? 2 : 0}${this.down == 2 ? 2 : 0}${this.left == 2 ? 2 : 0}${this.right == 2 ? 2 : 0}/${this.variant}.png" class="ability-icon" style="z-index: 2;">\n`;
         else if (connectionCountMap['active'] == 3)
-            result += `<img src="abilities/branch/${this.up == 2 ? 2 : 0}${this.down == 2 ? 2 : 0}${this.left == 2 ? 2 : 0}${this.right == 2 ? 2 : 0}/${Math.ceil(this.variant / NUMOFVARIANTS * 2)}.png" class="ability-icon" style="z-index: 2;"></img>\n`;
+            result += `<img src="${abilityIconDirectoryPath}branch/${this.up == 2 ? 2 : 0}${this.down == 2 ? 2 : 0}${this.left == 2 ? 2 : 0}${this.right == 2 ? 2 : 0}/${Math.ceil(this.variant / NUMOFVARIANTS * 2)}.png" class="ability-icon" style="z-index: 2;">\n`;
 
 
         return result;
@@ -334,6 +318,7 @@ const PAGESDISPLAYED_DEFAULT = 2;
 const PAGESDISPLAYED_UPPER = 8;
 const PAGESDISPLAYED_INPUTID = 'pagesDisplayed';
 utils.enforceMinMax(PAGESDISPLAYED_INPUTID, PAGESDISPLAYED_LOWER, PAGESDISPLAYED_UPPER);
+
 class Properties {
     /**
      * Class
@@ -376,7 +361,7 @@ class Properties {
      * @var bool
      */
     loopTree = false;
-    
+
     /**
      * Whether or not you can go up the tree
      * @var bool
@@ -395,9 +380,20 @@ class Properties {
      */
     strictAllocation = true;
 
-    constructor({classs = Object.keys(classDictionary)[0], maxAbilityPoints = MAXABILITYPOINTS_DEFAULT, loopTree = false, pages = PAGES_DEFAULT, horizontalPages = HORIZONTAL_PAGES_DEFAULT, rowsPerPage = ROWSPERPAGE_DEFAULT, pagesDisplayed = PAGESDISPLAYED_DEFAULT, bTravesableUp = false, useAlternativeAbilityIcons = false, strictAllocation = true} = {}) {
-        
-        this.classs = Object.keys(classDictionary).includes(String(classs)) ? String(classs) : Object.keys(classDictionary)[0];
+    constructor({
+                    classs = classNames[0],
+                    maxAbilityPoints = MAXABILITYPOINTS_DEFAULT,
+                    loopTree = false,
+                    pages = PAGES_DEFAULT,
+                    horizontalPages = HORIZONTAL_PAGES_DEFAULT,
+                    rowsPerPage = ROWSPERPAGE_DEFAULT,
+                    pagesDisplayed = PAGESDISPLAYED_DEFAULT,
+                    bTravesableUp = false,
+                    useAlternativeAbilityIcons = false,
+                    strictAllocation = true,
+                } = {}) {
+
+        this.classs = classNames.find(name => name === String(classs)) ?? classNames[0];
 
         this.maxAbilityPoints = isNaN(Number(maxAbilityPoints)) ? MAXABILITYPOINTS_DEFAULT : utils.clamp(Number(maxAbilityPoints), MAXABILITYPOINTS_LOWER, MAXABILITYPOINTS_UPPER);
 
@@ -449,8 +445,7 @@ const MAXSELECTEDCELLS = 40;
 const CELLIDPREFIX = 'cell-';
 const COLUMNS = 9;
 
-export class BaseTree
-{
+export class BaseTree {
     /**
      * Generic properties of the editor
      * @var Properties
@@ -495,7 +490,7 @@ export class BaseTree
 
     /**
      * A map of cells, keys are cell number if counted left to right, up to down, starting at 1
-     * @var {int : {'travelNode' : TravelNode, 'abilityID' : int}}
+     * @var {{ [key: int] : {'travelNode' : TravelNode, 'abilityID' : int} }}
      */
     cellMap = {};
 
@@ -575,7 +570,9 @@ export class BaseTree
             this.writeProperties();
             this.renderEverything();
             this.saveState('Reset tree and settings');
-            window.addEventListener("pointerup", (e) => {this.finallizeEditNode()});
+            window.addEventListener("pointerup", (e) => {
+                this.finallizeEditNode();
+            });
         }
     }
 
@@ -583,7 +580,7 @@ export class BaseTree
     toJSON() {
         var result = {};
         for (var x in this) {
-            if (x !== "history" && x !== "currentHistoryState" && x !== "selectedAbilityID" && x !== "currentVerticalPage"  &&
+            if (x !== "history" && x !== "currentHistoryState" && x !== "selectedAbilityID" && x !== "currentVerticalPage" &&
                 x !== "selectedCells" && x !== "currentTree" && x !== "potentialAllocationMap" && x !== "selectedArchetype" && x !== "treeTouchProcessor") {
                 result[x] = this[x];
             }
@@ -592,7 +589,7 @@ export class BaseTree
     }
 
     readProperties(classSelectId = "classSelect", maxAbilityPointsId = MAXABILITYPOINTS_INPUTID, loopTreeId = "loopTreeSwitch", pagesId = PAGES_INPUTID, horizontalPagesId = HORIZONTAL_PAGES_INPUTID,
-        rowsPerPageId = ROWSPERPAGE_INPUTID, pagesDisplayedId = PAGESDISPLAYED_INPUTID, bTravesableUpId = "travelUpSwitch", useAlternativeAbilityIconsId = "altIconSwitch", strictAllocationId = "strictAllocationSwitch") {
+                   rowsPerPageId = ROWSPERPAGE_INPUTID, pagesDisplayedId = PAGESDISPLAYED_INPUTID, bTravesableUpId = "travelUpSwitch", useAlternativeAbilityIconsId = "altIconSwitch", strictAllocationId = "strictAllocationSwitch") {
 
         if (this.properties != null && this.properties.loopTree != document.getElementById(loopTreeId).checked) {
 
@@ -602,42 +599,42 @@ export class BaseTree
 
                 if (this.cellMap[key] == null || this.cellMap[key]['travelNode'] == null)
                     continue;
-                
+
                 this.cellMap[key]['travelNode']['left'] = 0;
-                
+
             }
 
             for (let key = COLUMNS; key <= totalCells; key += COLUMNS) {
 
                 if (this.cellMap[key] == null || this.cellMap[key]['travelNode'] == null)
                     continue;
-                
+
                 this.cellMap[key]['travelNode']['right'] = 0;
-                
+
             }
 
         }
-        
+
         this.properties = new Properties({
-            classs : document.getElementById(classSelectId).value,
-            maxAbilityPoints : document.getElementById(maxAbilityPointsId).value,
-            pages : document.getElementById(pagesId).value,
-            horizontalPages : document.getElementById(horizontalPagesId).value,
-            rowsPerPage : document.getElementById(rowsPerPageId).value,
-            pagesDisplayed : document.getElementById(pagesDisplayedId).value,
-            loopTree : document.getElementById(loopTreeId).checked,
-            bTravesableUp : document.getElementById(bTravesableUpId).checked,
-            useAlternativeAbilityIcons : document.getElementById(useAlternativeAbilityIconsId).checked,
-            strictAllocation : document.getElementById(strictAllocationId).checked,
+            classs: document.getElementById(classSelectId).value,
+            maxAbilityPoints: document.getElementById(maxAbilityPointsId).value,
+            pages: document.getElementById(pagesId).value,
+            horizontalPages: document.getElementById(horizontalPagesId).value,
+            rowsPerPage: document.getElementById(rowsPerPageId).value,
+            pagesDisplayed: document.getElementById(pagesDisplayedId).value,
+            loopTree: document.getElementById(loopTreeId).checked,
+            bTravesableUp: document.getElementById(bTravesableUpId).checked,
+            useAlternativeAbilityIcons: document.getElementById(useAlternativeAbilityIconsId).checked,
+            strictAllocation: document.getElementById(strictAllocationId).checked,
         });
-        
+
         this.setMode(this.bEditMode);
         this.writeProperties();
         this.saveState('Updated properties');
     }
 
     writeProperties(classSelectId = "classSelect", maxAbilityPointsId = MAXABILITYPOINTS_INPUTID, loopTreeId = "loopTreeSwitch", pagesId = PAGES_INPUTID, horizontalPagesId = HORIZONTAL_PAGES_INPUTID,
-        rowsPerPageId = ROWSPERPAGE_INPUTID, pagesDisplayedId = PAGESDISPLAYED_INPUTID, bTravesableUpId = "travelUpSwitch", useAlternativeAbilityIconsId = "altIconSwitch", strictAllocationId = "strictAllocationSwitch") {
+                    rowsPerPageId = ROWSPERPAGE_INPUTID, pagesDisplayedId = PAGESDISPLAYED_INPUTID, bTravesableUpId = "travelUpSwitch", useAlternativeAbilityIconsId = "altIconSwitch", strictAllocationId = "strictAllocationSwitch") {
 
         document.getElementById(classSelectId).value = this.properties.classs;
         document.getElementById(maxAbilityPointsId).value = this.properties.maxAbilityPoints;
@@ -662,36 +659,36 @@ export class BaseTree
 
         for (let container of containersToHide)
             container.hidden = true;
-        
+
         for (let container of containersToShow)
-          container.hidden = false;
+            container.hidden = false;
 
     }
 
     remapCells(bKeepCurrent) {
-        
+
     }
 
     saveState(change = "", type = "", replaceSameType = false) {
-        
+
         const state = JSON.stringify(this, null, 0);
 
         const replaceLast = replaceSameType && this.history[this.currentHistoryState].type == type;
 
         const numOfPreservedStates = this.currentHistoryState + (replaceLast ? 0 : 1);
 
-        if (this.history.length > numOfPreservedStates) 
+        if (this.history.length > numOfPreservedStates)
             this.history.splice(numOfPreservedStates, this.history.length - numOfPreservedStates);
-        
+
         const maxSaveStates = Number(document.getElementById('maxSaveStates').value) ?? 10;
-        
+
         const removeElementsBeforeID = this.history.length - maxSaveStates + 1;
-        
+
         if (removeElementsBeforeID > 0) {
-            
+
             let newHistory = [];
-            
-            this.history.forEach( (element, index) => {
+
+            this.history.forEach((element, index) => {
 
                 if (index < removeElementsBeforeID)
                     return;
@@ -702,7 +699,7 @@ export class BaseTree
             this.history = newHistory;
         }
 
-        const newStateLog = new StateLog({changeDescription : change, type : type, state : state});
+        const newStateLog = new StateLog({changeDescription: change, type: type, state: state});
 
         this.currentHistoryState = this.history.push(newStateLog) - 1;
 
@@ -732,7 +729,7 @@ export class BaseTree
         if (container == null) {
             return;
         }
-        
+
         container.innerHTML = "";
 
         for (let i = this.history.length - 1; i > this.currentHistoryState; i--) {
@@ -783,7 +780,7 @@ export class BaseTree
 
         for (let container of containersToHide)
             container.hidden = true;
-  
+
         for (let container of containersToShow)
             container.hidden = false;
 
@@ -806,7 +803,7 @@ export class BaseTree
         const timeoutId = setTimeout(() => {
             controller.abort();
             console.log('Fetch request timed out');
-          }, RESPONSETIMEOUT);
+        }, RESPONSETIMEOUT);
 
         fetch(`presets/base/${classSelect.value}.json`, {
 
@@ -815,29 +812,29 @@ export class BaseTree
             mode: 'same-origin',
             method: 'GET',
             headers: {
-                'Accept': 'application/json'
+                'Accept': 'application/json',
             },
 
-        }).then( (response) => {
+        }).then((response) => {
 
             if (!response.ok) {
                 throw new Error(`HTTP error: ${response.status}`);
-              }
+            }
 
             return response.text();
 
-        }).then( (text) => {
+        }).then((text) => {
 
             this.loadFromJSON(text);
             this.saveState(`Loaded default ${classSelect.value} tree`);
 
-        }).catch( (e) => {
-            
+        }).catch((e) => {
+
             if (e != "Couldn't parse")
                 utils.showSmallToast("Load Failed: couldn't reach the server");
 
             console.log(e.stack);
-            
+
         }).finally(() => {
 
             self.classList.remove('btn-secondary');
@@ -861,7 +858,7 @@ export class BaseTree
 
     loadTreeFromDrop(dropEvent) {
         dropEvent.preventDefault();
-        
+
         let file;
 
         if (dropEvent.dataTransfer.items)
@@ -874,11 +871,11 @@ export class BaseTree
 
     loadTreeFromFile(file) {
         file.text()
-            .then( text => {
+            .then(text => {
                 this.loadFromJSON(text);
                 this.saveState(`Loaded tree from ${file.name}`);
             })
-            .catch ((e) => {
+            .catch((e) => {
                 utils.showSmallToast("Wrong file type");
             });
     }
@@ -915,19 +912,19 @@ export class BaseTree
         this.abilities = {};
         const abilities = obj.abilities;
         if (typeof abilities === 'object' && !Array.isArray(abilities) && abilities !== null) {
-            
-            Object.keys(abilities).forEach( id => {
-    
+
+            Object.keys(abilities).forEach(id => {
+
                 this.abilities[id] = new Ability(abilities[id]);
-    
+
             });
         }
 
         this.cellMap = {};
         const cellMap = obj.cellMap;
         if (typeof cellMap === 'object' && !Array.isArray(cellMap) && cellMap !== null) {
-        
-            Object.keys(cellMap).forEach( id => {
+
+            Object.keys(cellMap).forEach(id => {
 
                 this.cellMap[id] = {};
                 this.cellMap[id]['travelNode'] = new TravelNode(cellMap[id]['travelNode']);
@@ -946,12 +943,12 @@ export class BaseTree
         this.abilityTrees = {};
         const abilityTrees = obj.abilityTrees;
         if (typeof abilityTrees === 'object' && !Array.isArray(abilityTrees) && abilityTrees !== null) {
-        
-            Object.keys(abilityTrees).forEach( treeName => {
-    
+
+            Object.keys(abilityTrees).forEach(treeName => {
+
                 if (Array.isArray(abilityTrees[treeName]))
                     this.abilityTrees[treeName] = abilityTrees[treeName];
-    
+
             });
         }
 
@@ -973,24 +970,24 @@ export class BaseTree
         const json = JSON.stringify(this, null, 0);
 
         const link = document.createElement("a");
-        const file = new Blob([json], { type: 'text/plain' });
+        const file = new Blob([json], {type: 'text/plain'});
         link.href = URL.createObjectURL(file);
         link.download = `Wynnability_${this.properties.classs}.json`;
         link.click();
         URL.revokeObjectURL(link.href);
     }
+
     // #endregion
 
     // #region Archetypes
-    editArchetype(name = "", nameFormID = "archetypeNameInput") {   
+    editArchetype(name = "", nameFormID = "archetypeNameInput") {
 
         const nameInputElement = document.getElementById(nameFormID);
 
         if (name == "") {
             nameInputElement.value = "";
             nameInputElement.oldname = "";
-        }
-        else {
+        } else {
             nameInputElement.value = name;
             nameInputElement.oldname = name;
         }
@@ -1001,17 +998,17 @@ export class BaseTree
     saveArchetype(nameFormID = "archetypeNameInput") {
 
         const nameInputElement = document.getElementById(nameFormID);
-        if (nameInputElement.value == "" || this.archetypes.includes(nameInputElement.value) )
+        if (nameInputElement.value == "" || this.archetypes.includes(nameInputElement.value))
             return;
-        
+
         const oldname = nameInputElement.oldname ?? "";
         const newname = nameInputElement.value;
-        
+
         if (oldname == "") {
-            
+
             this.archetypes.push(newname);
             this.saveState(`Added archetype: ${utils.minecraftToHTML(newname)}`);
-            
+
         } else {
 
             const existingIndex = this.archetypes.indexOf(oldname);
@@ -1020,7 +1017,7 @@ export class BaseTree
             this.saveState(`Renamed archetype: ${utils.minecraftToHTML(oldname)} -> ${utils.minecraftToHTML(newname)}`);
 
         }
-        
+
         this.renderArchetypes();
 
     }
@@ -1029,12 +1026,12 @@ export class BaseTree
 
         if (typeof name != "string" || name == "")
             return;
-        
+
         const index = this.archetypes.indexOf(name);
         if (index > -1)
             this.archetypes.splice(index, 1);
 
-        this.updateArchetype(name);        
+        this.updateArchetype(name);
         this.renderArchetypes();
         this.saveState(`Deleted archetype: ${utils.minecraftToHTML(name)}`);
 
@@ -1045,7 +1042,7 @@ export class BaseTree
         const container = document.getElementById(containerID);
 
         let archetypeCounts = {};
-        let placedArchetypeCounts = {"" : 0};
+        let placedArchetypeCounts = {"": 0};
         let neutralCount = 0;
         for (let archetype of this.archetypes) {
             archetypeCounts[archetype] = 0;
@@ -1058,13 +1055,13 @@ export class BaseTree
             else
                 neutralCount++;
         }
-        for(let cellKey of Object.keys(this.cellMap)) {
+        for (let cellKey of Object.keys(this.cellMap)) {
             if (this.cellMap[cellKey]['abilityID'] != null)
-                placedArchetypeCounts[ this.abilities[ this.cellMap[cellKey]['abilityID'] ]['archetype'] ]++;
+                placedArchetypeCounts[this.abilities[this.cellMap[cellKey]['abilityID']]['archetype']]++;
         }
-        
+
         container.innerHTML = "";
-        
+
         for (let archetype of this.archetypes) {
 
             const div = document.createElement("div");
@@ -1095,7 +1092,7 @@ export class BaseTree
             const abilityCount = document.createElement("div");
             abilityCount.innerHTML = placedArchetypeCounts[archetype] + '/' + archetypeCounts[archetype];
             div.appendChild(abilityCount);
-            
+
             const editbtn = document.createElement("button");
             editbtn.classList.add('small-btn', 'me-1', 'ms-2', 'font-default');
             editbtn.type = "button";
@@ -1106,7 +1103,7 @@ export class BaseTree
             editbtn.setAttribute('data-bs-target', '#archetypeModal');
             editbtn.addEventListener('click', (e) => this.editArchetype(archetype));
             div.appendChild(editbtn);
-            
+
             const delbtn = document.createElement("button");
             delbtn.classList.add('small-btn', 'font-default');
             delbtn.type = "button";
@@ -1115,7 +1112,7 @@ export class BaseTree
             delbtn.innerHTML = "💀";
             delbtn.addEventListener('click', (e) => this.deleteArchetype(archetype));
             div.appendChild(delbtn);
-            
+
             container.appendChild(div);
 
         }
@@ -1141,7 +1138,7 @@ export class BaseTree
         const abilityCount = document.createElement("div");
         abilityCount.innerHTML = utils.minecraftToHTML("§f§lNeutral ") + placedArchetypeCounts[""] + '/' + neutralCount;
         div.appendChild(abilityCount);
-        
+
         const neutralContainer = document.getElementById(neutralContainerID);
         neutralContainer.innerHTML = "";
         neutralContainer.appendChild(div);
@@ -1165,6 +1162,7 @@ export class BaseTree
         this.renderAbilities();
 
     }
+
     // #endregion
 
     // #region Abilities
@@ -1175,23 +1173,25 @@ export class BaseTree
         container.innerHTML = "";
         container.value = selected;
 
-        let iconDictionary = abilityIconDictionary;
-        if (this.properties.useAlternativeAbilityIcons)
-            iconDictionary = altAbilityIconDictionary;
+        let iconDictionary = this.properties.useAlternativeAbilityIcons
+            ? altAbilityIconDictionary : abilityIconDictionary;
 
-        Object.keys(iconDictionary).forEach( (type) => {
+        Object.keys(iconDictionary).forEach((type) => {
             const div = generateIconDiv(type, null, this.properties.classs, type == selected ? 2 : 1, false, this.properties.useAlternativeAbilityIcons);
             div.classList.add('ability-type-selector');
             container.appendChild(div);
-            div.addEventListener("click", (e) => { this.renderAbilityTypeSelector(type); this.renderEditorAbilityTooltip() });
+            div.addEventListener("click", (e) => {
+                this.renderAbilityTypeSelector(type);
+                this.renderEditorAbilityTooltip();
+            });
         });
 
     }
 
     renderEditorAbilityTooltip(scaleDown = true, nameFormID = "abilityNameInput", descriptionFormID = "abilityDescriptionInput", archetypeFormID = "abilityArchetypeInput",
-        pointsRequiredFormID = POINTSREQUIRED_INPUTID, archetypePointsRequiredFormID = ARCHETYPEPOINTSREQUIRED_INPUTID, containerId = "editAbilityTooltip",
-        prerequisiteFormID = "abilityPrerequiseteInput", abilityBlockCountDisplayID="abilityBlockCountDisplay", typeFormID = "abilityTypeInput") {
-        
+                               pointsRequiredFormID = POINTSREQUIRED_INPUTID, archetypePointsRequiredFormID = ARCHETYPEPOINTSREQUIRED_INPUTID, containerId = "editAbilityTooltip",
+                               prerequisiteFormID = "abilityPrerequiseteInput", abilityBlockCountDisplayID = "abilityBlockCountDisplay", typeFormID = "abilityTypeInput") {
+
         const nameInputElement = document.getElementById(nameFormID);
         const descriptionInputElement = document.getElementById(descriptionFormID);
         const archetypeInputElement = document.getElementById(archetypeFormID);
@@ -1200,7 +1200,7 @@ export class BaseTree
         const typeInputElement = document.getElementById(typeFormID);
         const prerequisiteInputElement = document.getElementById(prerequisiteFormID);
         const container = document.getElementById(containerId);
-        
+
         const abilityBlockCountDisplay = document.getElementById(abilityBlockCountDisplayID);
 
         let blockedAbilities = this.getBlockedAbilities();
@@ -1208,16 +1208,16 @@ export class BaseTree
             abilityBlockCountDisplay.innerHTML = blockedAbilities.length;
 
         const content = this._getAbilityTooltipHTML(new Ability({
-            name : nameInputElement.value,
-            description : descriptionInputElement.value,
-            unlockingWillBlock : blockedAbilities,
-            archetype : archetypeInputElement.value,
-            pointsRequired : pointsRequiredInputElement.value,
-            archetypePointsRequired : archetypePointsRequiredInputElement.value,
-            type : typeInputElement.value,
-            requires : prerequisiteInputElement.value
+            name: nameInputElement.value,
+            description: descriptionInputElement.value,
+            unlockingWillBlock: blockedAbilities,
+            archetype: archetypeInputElement.value,
+            pointsRequired: pointsRequiredInputElement.value,
+            archetypePointsRequired: archetypePointsRequiredInputElement.value,
+            type: typeInputElement.value,
+            requires: prerequisiteInputElement.value,
         }));
-        
+
         if (scaleDown) {
             container.innerHTML = '';
             const div = document.createElement('div');
@@ -1242,7 +1242,7 @@ export class BaseTree
 
         if (this.selectedCells.length > 0 || ability == null)
             return;
-        
+
         container.hidden = false;
 
         container.innerHTML = this._getAbilityTooltipHTML(ability);
@@ -1272,19 +1272,19 @@ export class BaseTree
             result += `${utils.minecraftToHTML(ability.archetype + ' Archetype')}<br><br>`;
 
         result += `<span style="color:${utils.codeDictionaryColor['7']}">Ability&nbsp;Points:&nbsp;</span>${ability.pointsRequired}<br>`;
-        
+
         if (this.abilities[ability.requires] != null)
             result += `<span style="color:${utils.codeDictionaryColor['7']}">Required&nbsp;Ability:&nbsp;</span>${utils.anyToHTML(this.abilities[ability.requires].getPlainName())}<br>`;
 
         if (ability.archetype != "" && ability.archetypePointsRequired > 0)
             result += `<span style="color:${utils.codeDictionaryColor['7']}">Min&nbsp;${utils.anyToHTML(utils.stripMinecraftFormatting(ability.archetype))}&nbsp;Archetype:&nbsp;</span>${ability.archetypePointsRequired}`;
-            
+
         return result;
     }
 
     editAbility(abilityID = -1,
-        nameFormID = "abilityNameInput", descriptionFormID = "abilityDescriptionInput", abilityBlockFormID = "abilityBlockInput", archetypeFormID = "abilityArchetypeInput",
-        pointsRequiredFormID = POINTSREQUIRED_INPUTID, archetypePointsRequiredFormID = ARCHETYPEPOINTSREQUIRED_INPUTID, prerequisiteFormID = "abilityPrerequiseteInput") {   
+                nameFormID = "abilityNameInput", descriptionFormID = "abilityDescriptionInput", abilityBlockFormID = "abilityBlockInput", archetypeFormID = "abilityArchetypeInput",
+                pointsRequiredFormID = POINTSREQUIRED_INPUTID, archetypePointsRequiredFormID = ARCHETYPEPOINTSREQUIRED_INPUTID, prerequisiteFormID = "abilityPrerequiseteInput") {
 
         const nameInputElement = document.getElementById(nameFormID);
         const descriptionInputElement = document.getElementById(descriptionFormID);
@@ -1354,7 +1354,7 @@ export class BaseTree
                 if (archetype == this.abilities[abilityID].archetype)
                     option.selected = true;
                 archetypeInputElement.appendChild(option);
-            
+
             }
 
             let blockedAbilitiesMap = {};
@@ -1398,7 +1398,7 @@ export class BaseTree
             pointsRequiredInputElement.value = this.abilities[abilityID].pointsRequired;
             archetypePointsRequiredInputElement.value = this.abilities[abilityID].archetypePointsRequired;
             this.renderAbilityTypeSelector(this.abilities[abilityID].type);
-            
+
         }
     }
 
@@ -1409,10 +1409,10 @@ export class BaseTree
         let copy = new Ability(this.abilities[abilityID]);
 
         let maxId = Object.keys(this.abilities).length + 1;
-            for (abilityID = 1; abilityID <= maxId; abilityID++) {
-                if (this.abilities[abilityID] == null)
-                    break;
-            }
+        for (abilityID = 1; abilityID <= maxId; abilityID++) {
+            if (this.abilities[abilityID] == null)
+                break;
+        }
 
         this.abilities[abilityID] = copy;
 
@@ -1436,7 +1436,7 @@ export class BaseTree
     }
 
     saveAbility(nameFormID = "abilityNameInput", descriptionFormID = "abilityDescriptionInput", archetypeFormID = "abilityArchetypeInput", pointsRequiredFormID = POINTSREQUIRED_INPUTID,
-    archetypePointsRequiredFormID = ARCHETYPEPOINTSREQUIRED_INPUTID, typeFormID = "abilityTypeInput", prerequisiteFormID = "abilityPrerequiseteInput") {
+                archetypePointsRequiredFormID = ARCHETYPEPOINTSREQUIRED_INPUTID, typeFormID = "abilityTypeInput", prerequisiteFormID = "abilityPrerequiseteInput") {
 
         const nameInputElement = document.getElementById(nameFormID);
         const descriptionInputElement = document.getElementById(descriptionFormID);
@@ -1447,23 +1447,23 @@ export class BaseTree
         const prerequisiteInputElement = document.getElementById(prerequisiteFormID);
 
         if (nameInputElement.value == '') {
-            nameInputElement.value = 'UNNAMED'
+            nameInputElement.value = 'UNNAMED';
         }
 
         const newAbility = new Ability({
-            name : nameInputElement.value,
-            description : descriptionInputElement.value,
-            unlockingWillBlock : this.getBlockedAbilities(),
-            archetype : archetypeInputElement.value,
-            pointsRequired : pointsRequiredInputElement.value,
-            archetypePointsRequired : archetypePointsRequiredInputElement.value,
-            type : typeInputElement.value,
-            requires : prerequisiteInputElement.value
+            name: nameInputElement.value,
+            description: descriptionInputElement.value,
+            unlockingWillBlock: this.getBlockedAbilities(),
+            archetype: archetypeInputElement.value,
+            pointsRequired: pointsRequiredInputElement.value,
+            archetypePointsRequired: archetypePointsRequiredInputElement.value,
+            type: typeInputElement.value,
+            requires: prerequisiteInputElement.value,
         });
-        
+
         let abilityID = nameInputElement.abilityId;
-        
-        
+
+
         if (this.abilities[abilityID] == null) {
 
             let maxId = Object.keys(this.abilities).length + 1;
@@ -1483,7 +1483,7 @@ export class BaseTree
 
             this.abilities[abilityID] = newAbility;
 
-            this.saveState(`Edited ability: ${utils.minecraftToHTML(oldName)} -> ${utils.minecraftToHTML(nameInputElement.value)}`);            
+            this.saveState(`Edited ability: ${utils.minecraftToHTML(oldName)} -> ${utils.minecraftToHTML(nameInputElement.value)}`);
         }
 
         this.renderAbilities();
@@ -1523,41 +1523,41 @@ export class BaseTree
     sortAbilities() {
 
         let priorityMap = {};
-        Object.keys(altAbilityIconDictionary).forEach( (elem, i) => {
+        Object.keys(altAbilityIconDictionary).forEach((elem, i) => {
             priorityMap[elem] = i;
         });
-        
+
         let sortedAbilityIDs = Object.keys(this.abilities).sort((a, b) => {
-            
+
             if (this.abilities[a].type == null)
                 return 1;
             if (this.abilities[b].type == null)
                 return -1;
-            
+
             const priorityDif = priorityMap[this.abilities[a].type] - priorityMap[this.abilities[b].type];
 
             if (priorityDif != 0)
                 return priorityDif;
-            
+
             return this.abilities[a].getPlainName().localeCompare(this.abilities[b].getPlainName()) || 1;
-        })
+        });
 
         return sortedAbilityIDs;
 
     }
-    
+
     renderAbilities(containerID = "abilityContainer", searchFieldID = "abilitySearch", notOnTreeFilterID = "notOnTreeFilter") {
-        
+
         const container = document.getElementById(containerID);
         if (container == null)
             return;
-        
+
         container.innerHTML = "";
 
         let sortedAbilityIDs = this.sortAbilities();
 
         if (this.selectedArchetype != null) {
-            sortedAbilityIDs = sortedAbilityIDs.filter( (id) => {
+            sortedAbilityIDs = sortedAbilityIDs.filter((id) => {
                 return this.abilities[id].archetype == this.selectedArchetype;
             });
         }
@@ -1567,7 +1567,7 @@ export class BaseTree
 
             const filterSubstring = String(searchContainer.value).toLowerCase();
 
-            sortedAbilityIDs = sortedAbilityIDs.filter( (id) => {
+            sortedAbilityIDs = sortedAbilityIDs.filter((id) => {
                 return this.abilities[id].getPlainName().toLowerCase().includes(filterSubstring);
             });
         }
@@ -1576,9 +1576,9 @@ export class BaseTree
         let bFilterNotOnTree = notOnTreeFilter != null && !notOnTreeFilter.checked;
 
         let abilitiesOnTree = {};
-        for(let cellKey of Object.keys(this.cellMap)) {
+        for (let cellKey of Object.keys(this.cellMap)) {
             if (this.cellMap[cellKey]['abilityID'] != null)
-                abilitiesOnTree[ this.cellMap[cellKey]['abilityID'] ] = true;
+                abilitiesOnTree[this.cellMap[cellKey]['abilityID']] = true;
         }
 
         for (let id of sortedAbilityIDs) {
@@ -1612,13 +1612,19 @@ export class BaseTree
             div.appendChild(imgholder);
             imgholder.appendChild(generateIconDiv(this.abilities[id].type, null, this.properties.classs, abilitiesOnTree[id] ? 2 : 1, false, true));
 
-            imgholder.addEventListener('pointerover', (e) => {if (e.pointerType !== "touch") this.renderHoverAbilityTooltip(id); });
-            imgholder.addEventListener('pointerout', (e) => {if (e.pointerType !== "touch") utils.hideHoverAbilityTooltip(); });
+            imgholder.addEventListener('pointerover', (e) => {
+                if (e.pointerType !== "touch") this.renderHoverAbilityTooltip(id);
+            });
+            imgholder.addEventListener('pointerout', (e) => {
+                if (e.pointerType !== "touch") utils.hideHoverAbilityTooltip();
+            });
             imgholder.addEventListener('touchstart', (e) => {
                 this.#treeTouchProcessor.processTouch(
                     e,
-                    () => {},
-                    () => {}, 
+                    () => {
+                    },
+                    () => {
+                    },
                     () => {
                         document.body.style.overflow = 'hidden';
                         this.renderHoverAbilityTooltip(id);
@@ -1630,7 +1636,7 @@ export class BaseTree
                     () => {
                         utils.hideHoverAbilityTooltip();
                         document.body.style.overflow = 'auto';
-                    }
+                    },
                 );
             }, {passive: false});
 
@@ -1647,7 +1653,7 @@ export class BaseTree
             clonebtn.innerHTML = "📋";
             clonebtn.addEventListener('click', (e) => this.cloneAbility(id));
             div.appendChild(clonebtn);
-            
+
             const editbtn = document.createElement("button");
             editbtn.classList.add('small-btn', 'me-1', 'font-default');
             editbtn.type = "button";
@@ -1658,7 +1664,7 @@ export class BaseTree
             editbtn.setAttribute('data-bs-target', '#abilityModal');
             editbtn.addEventListener('click', (e) => this.editAbility(id));
             div.appendChild(editbtn);
-            
+
             const delbtn = document.createElement("button");
             delbtn.classList.add('small-btn', 'font-default');
             delbtn.type = "button";
@@ -1667,14 +1673,14 @@ export class BaseTree
             delbtn.innerHTML = "💀";
             delbtn.addEventListener('click', (e) => this.deleteAbility(id));
             div.appendChild(delbtn);
-            
+
             div.addEventListener('dblclick', (e) => {
                 editbtn.click();
             });
 
             container.appendChild(div);
 
-        }   
+        }
     }
 
     selectAbility(abilityID = -1) {
@@ -1704,7 +1710,7 @@ export class BaseTree
         if (selected == null)
             return;
 
-        container.scrollTo({top: selected.offsetTop - 10, behavior: "instant"})
+        container.scrollTo({top: selected.offsetTop - 10, behavior: "instant"});
         //selected.scrollIntoView({block: "center", inline: "center", behavior: "instant"});
 
     }
@@ -1725,8 +1731,8 @@ export class BaseTree
             if (this.cellMap[cell]['abilityID'] != null)
                 delete this.cellMap[cell]['travelNode'];
             else
-                delete this.cellMap[cell]
-        
+                delete this.cellMap[cell];
+
         this.saveState(`Removed all paths from the tree`);
         this.renderTree();
     }
@@ -1736,8 +1742,8 @@ export class BaseTree
             if (this.cellMap[cell]['travelNode'] != null)
                 delete this.cellMap[cell]['abilityID'];
             else
-                delete this.cellMap[cell]
-        
+                delete this.cellMap[cell];
+
         this.saveState(`Removed all abilities from the tree`);
         this.renderAbilities();
         this.renderArchetypes();
@@ -1801,14 +1807,14 @@ export class BaseTree
             case "left":
                 if (this.cellPositionInRow(cellKey) > 1)
                     return cellKey - 1;
-                else if(this.properties.loopTree)
+                else if (this.properties.loopTree)
                     return cellKey - 1 + COLUMNS;
                 break;
 
             case "right":
                 if (this.cellPositionInRow(cellKey) < COLUMNS)
                     return cellKey + 1;
-                else if(this.properties.loopTree)
+                else if (this.properties.loopTree)
                     return cellKey + 1 - COLUMNS;
                 break;
 
@@ -1832,7 +1838,7 @@ export class BaseTree
                     result[direction] = adjacentCell;
             }
         }
-        
+
         return result;
     }
 
@@ -1844,14 +1850,14 @@ export class BaseTree
             return {};
 
         const adjacent = this.getAdjacentCells(cellKey, false);
-        
+
         for (let direction of Object.keys(adjacent)) {
             const cellID = adjacent[direction];
 
             const otherCell = this.cellMap[cellID];
             const reverseDirection = reverseDirectionDictionary[direction];
-            
-            if   ( otherCell == null
+
+            if (otherCell == null
                 || otherCell['travelNode'] == null
                 || cell['travelNode'][direction] == 0
                 || otherCell['travelNode'][reverseDirection] == 0)
@@ -1877,9 +1883,9 @@ export class BaseTree
             const position1 = this.cellPositionInRow(cellKey1);
             const position2 = this.cellPositionInRow(cellKey2);
 
-            if ( dif == (COLUMNS - 1) && position1 == 1 && position2 == COLUMNS )
+            if (dif == (COLUMNS - 1) && position1 == 1 && position2 == COLUMNS)
                 return 'left';
-            if (dif == (1 - COLUMNS) && position2 == 1 && position1 == COLUMNS )
+            if (dif == (1 - COLUMNS) && position2 == 1 && position1 == COLUMNS)
                 return 'right';
         }
 
@@ -1897,7 +1903,7 @@ export class BaseTree
     }
 
     connectCells(cellKey1, cellKey2, bDisconnectIfConnected = true) {
-        
+
         const direction = this.determineCellRelation(cellKey1, cellKey2);
 
         if (direction == null)
@@ -1910,11 +1916,11 @@ export class BaseTree
 
         if (this.cellMap[cellKey1]['travelNode'] == null)
             this.cellMap[cellKey1]['travelNode'] = new TravelNode();
-        
+
         if (this.cellMap[cellKey2]['travelNode'] == null)
             this.cellMap[cellKey2]['travelNode'] = new TravelNode();
-            
-        if ( bDisconnectIfConnected && this.cellMap[cellKey1]['travelNode'][direction] != 0 && this.cellMap[cellKey2]['travelNode'][reverseDirection] != 0 ) {
+
+        if (bDisconnectIfConnected && this.cellMap[cellKey1]['travelNode'][direction] != 0 && this.cellMap[cellKey2]['travelNode'][reverseDirection] != 0) {
 
             this.cellMap[cellKey1]['travelNode'][direction] = 0;
             this.cellMap[cellKey2]['travelNode'][reverseDirection] = 0;
@@ -1941,14 +1947,14 @@ export class BaseTree
         this.selectedCells.push(cellKey);
 
         const cellElem = document.getElementById(CELLIDPREFIX + cellKey).firstChild;
-        cellElem.innerHTML += `<img class="ability-icon ${EDITPATHTEMPCLASS} ${EDITPATHTEMPCLASS + this.selectedCells.length - 1}" src="abilities/generic/travel_center_6_a.png" style="z-index: 26;" draggable="false"></img>\n`;
-    
+        cellElem.innerHTML += `<img class="ability-icon ${EDITPATHTEMPCLASS} ${EDITPATHTEMPCLASS + this.selectedCells.length - 1}" src="${abilityIconDirectoryPath}generic/travel_center_6_a.png" style="z-index: 26;" draggable="false">\n`;
+
     }
 
     continueEditWithloopedNode(direction = 1) {
 
         const selectedCellsLength = this.selectedCells.length;
-        
+
         if (selectedCellsLength == 0 || !(this.properties.loopTree))
             return;
 
@@ -1968,7 +1974,7 @@ export class BaseTree
                     this.continueEditNode(lastCellKey + COLUMNS - 1);
                 break;
 
-            case 1: 
+            case 1:
                 if (cellPositionInRow == COLUMNS)
                     this.continueEditNode(lastCellKey - COLUMNS + 1);
                 break;
@@ -1991,22 +1997,22 @@ export class BaseTree
             return;
 
         }
-        
+
         const adjacentCellsMap = this.getAdjacentCells(cellKey, true);
         const prevCellKey = this.selectedCells[selectedCellsLength - 1];
-        
+
         // if cell is not adjacent to the last one - ignore it
-        if ( adjacentCellsMap[prevCellKey] == null )
+        if (adjacentCellsMap[prevCellKey] == null)
             return;
-        
+
         // if backtracked - remove last element and visuals
         if (cellKey == this.selectedCells[selectedCellsLength - 2]) {
 
-            const collection = document.getElementsByClassName( EDITPATHTEMPCLASS + (selectedCellsLength - 1) );
+            const collection = document.getElementsByClassName(EDITPATHTEMPCLASS + (selectedCellsLength - 1));
 
-            while(collection[0])
+            while (collection[0])
                 collection[0].parentNode.removeChild(collection[0]);
-            
+
             this.selectedCells.splice(selectedCellsLength - 1, 1);
 
         } else {
@@ -2016,30 +2022,30 @@ export class BaseTree
 
             // add center image to the cell
             if (!this.selectedCells.includes(cellKey))
-                newCellElem.innerHTML += `<img class="ability-icon ${EDITPATHTEMPCLASS} ${EDITPATHTEMPCLASS + selectedCellsLength}" src="abilities/generic/travel_center_6_a.png" style="z-index: 26;"></img>\n`;
-            
+                newCellElem.innerHTML += `<img class="ability-icon ${EDITPATHTEMPCLASS} ${EDITPATHTEMPCLASS + selectedCellsLength}" src="${abilityIconDirectoryPath}generic/travel_center_6_a.png" style="z-index: 26;">\n`;
+
             // add connection images to this and previous cell
             switch (adjacentCellsMap[prevCellKey]) {
                 case 'up':
-                    newCellElem.innerHTML += `<img class="ability-icon ${EDITPATHTEMPCLASS} ${EDITPATHTEMPCLASS + selectedCellsLength}" src="abilities/generic/travel_up_10_a.png" style="z-index: 30;"></img>\n`;
-                    prevCellElem.innerHTML += `<img class="ability-icon ${EDITPATHTEMPCLASS} ${EDITPATHTEMPCLASS + selectedCellsLength}" src="abilities/generic/travel_down_8_a.png" style="z-index: 28;"></img>\n`;
+                    newCellElem.innerHTML += `<img class="ability-icon ${EDITPATHTEMPCLASS} ${EDITPATHTEMPCLASS + selectedCellsLength}" src="${abilityIconDirectoryPath}generic/travel_up_10_a.png" style="z-index: 30;">\n`;
+                    prevCellElem.innerHTML += `<img class="ability-icon ${EDITPATHTEMPCLASS} ${EDITPATHTEMPCLASS + selectedCellsLength}" src="${abilityIconDirectoryPath}generic/travel_down_8_a.png" style="z-index: 28;">\n`;
                     break;
-                    
+
                 case 'down':
-                    newCellElem.innerHTML += `<img class="ability-icon ${EDITPATHTEMPCLASS} ${EDITPATHTEMPCLASS + selectedCellsLength}" src="abilities/generic/travel_down_8_a.png" style="z-index: 28;"></img>\n`;
-                    prevCellElem.innerHTML += `<img class="ability-icon ${EDITPATHTEMPCLASS} ${EDITPATHTEMPCLASS + selectedCellsLength}" src="abilities/generic/travel_up_10_a.png" style="z-index: 30;"></img>\n`;
+                    newCellElem.innerHTML += `<img class="ability-icon ${EDITPATHTEMPCLASS} ${EDITPATHTEMPCLASS + selectedCellsLength}" src="${abilityIconDirectoryPath}generic/travel_down_8_a.png" style="z-index: 28;">\n`;
+                    prevCellElem.innerHTML += `<img class="ability-icon ${EDITPATHTEMPCLASS} ${EDITPATHTEMPCLASS + selectedCellsLength}" src="${abilityIconDirectoryPath}generic/travel_up_10_a.png" style="z-index: 30;">\n`;
                     break;
 
                 case 'left':
-                    newCellElem.innerHTML += `<img class="ability-icon ${EDITPATHTEMPCLASS} ${EDITPATHTEMPCLASS + selectedCellsLength}" src="abilities/generic/travel_left_7_a.png" style="z-index: 27;"></img>\n`;
-                    prevCellElem.innerHTML += `<img class="ability-icon ${EDITPATHTEMPCLASS} ${EDITPATHTEMPCLASS + selectedCellsLength}" src="abilities/generic/travel_right_9_a.png" style="z-index: 29;"></img>\n`;
+                    newCellElem.innerHTML += `<img class="ability-icon ${EDITPATHTEMPCLASS} ${EDITPATHTEMPCLASS + selectedCellsLength}" src="${abilityIconDirectoryPath}generic/travel_left_7_a.png" style="z-index: 27;">\n`;
+                    prevCellElem.innerHTML += `<img class="ability-icon ${EDITPATHTEMPCLASS} ${EDITPATHTEMPCLASS + selectedCellsLength}" src="${abilityIconDirectoryPath}generic/travel_right_9_a.png" style="z-index: 29;">\n`;
                     break;
 
                 case 'right':
-                    newCellElem.innerHTML += `<img class="ability-icon ${EDITPATHTEMPCLASS} ${EDITPATHTEMPCLASS + selectedCellsLength}" src="abilities/generic/travel_right_9_a.png" style="z-index: 29;"></img>\n`;
-                    prevCellElem.innerHTML += `<img class="ability-icon ${EDITPATHTEMPCLASS} ${EDITPATHTEMPCLASS + selectedCellsLength}" src="abilities/generic/travel_left_7_a.png" style="z-index: 27;"></img>\n`;
+                    newCellElem.innerHTML += `<img class="ability-icon ${EDITPATHTEMPCLASS} ${EDITPATHTEMPCLASS + selectedCellsLength}" src="${abilityIconDirectoryPath}generic/travel_right_9_a.png" style="z-index: 29;">\n`;
+                    prevCellElem.innerHTML += `<img class="ability-icon ${EDITPATHTEMPCLASS} ${EDITPATHTEMPCLASS + selectedCellsLength}" src="${abilityIconDirectoryPath}generic/travel_left_7_a.png" style="z-index: 27;">\n`;
                     break;
-                
+
                 default:
                     break;
             }
@@ -2049,10 +2055,10 @@ export class BaseTree
 
         }
 
-    }    
+    }
 
     finallizeEditNode() {
-        
+
         const selectedCellsLength = this.selectedCells.length;
 
         let editSummary = '';
@@ -2060,7 +2066,7 @@ export class BaseTree
         switch (selectedCellsLength) {
             case 0:
                 return;
-            
+
             case 1:
                 const cellKey = this.selectedCells[0];
 
@@ -2072,7 +2078,7 @@ export class BaseTree
                     this.cellMap[cellKey]['abilityID'] = this.selectedAbilityID;
                     editSummary = `Positioned ${utils.minecraftToHTML(this.abilities[this.selectedAbilityID].name)} on tree`;
                     this.selectedAbilityID = -1;
-                    
+
                 } else {
 
                     if (this.cellMap[cellKey]['abilityID'] != null) {
@@ -2083,8 +2089,8 @@ export class BaseTree
                         editSummary = `Removed ${utils.minecraftToHTML(this.abilities[abilityID].name)} from tree`;
 
                     } else if (this.cellMap[cellKey]['travelNode'] == null) {
-                
-                        this.cellMap[cellKey]['travelNode'] = new TravelNode({up : 0, down : 0, left : 0, right : 0});
+
+                        this.cellMap[cellKey]['travelNode'] = new TravelNode({up: 0, down: 0, left: 0, right: 0});
 
                         editSummary = `Added empty tree node on page ${Math.ceil(cellKey / (this.properties.rowsPerPage * COLUMNS))}`;
 
@@ -2107,7 +2113,7 @@ export class BaseTree
                 break;
 
             default:
-                for(let cellKey = 0; cellKey < selectedCellsLength - 1; cellKey++) {
+                for (let cellKey = 0; cellKey < selectedCellsLength - 1; cellKey++) {
 
                     const cellKey1 = this.selectedCells[cellKey];
                     const cellKey2 = this.selectedCells[cellKey + 1];
@@ -2120,9 +2126,9 @@ export class BaseTree
                 break;
         }
 
-        const collection = document.getElementsByClassName( EDITPATHTEMPCLASS );
+        const collection = document.getElementsByClassName(EDITPATHTEMPCLASS);
 
-        while(collection[0])
+        while (collection[0])
             collection[0].parentNode.removeChild(collection[0]);
 
         this.selectedCells = [];
@@ -2136,14 +2142,14 @@ export class BaseTree
     removeCellFromTree(cellKey) {
 
         const connected = this.getConnectedCells(cellKey);
-        
+
         for (let key of Object.keys(connected)) {
             const cellID = connected[key];
 
             if (this.cellMap[cellID]['travelNode'] == null)
                 continue;
 
-            this.cellMap[cellID]['travelNode'][ reverseDirectionDictionary[ key ] ] = 0;
+            this.cellMap[cellID]['travelNode'][reverseDirectionDictionary[key]] = 0;
 
             if (!this.cellMap[cellID]['travelNode'].hasConnections())
                 delete this.cellMap[cellID];
@@ -2159,7 +2165,7 @@ export class BaseTree
         for (let cellKey of Object.keys(this.cellMap)) {
 
             if (this.cellMap[cellKey] != null && this.cellMap[cellKey]['abilityID'] == abilityID) {
-                
+
                 if (this.cellMap[cellKey]['travelNode'] == null) {
 
                     this.removeCellFromTree(cellKey);
@@ -2168,7 +2174,7 @@ export class BaseTree
                 }
 
                 const connected = Object.keys(this.getConnectedCells(cellKey));
-                
+
                 if (connected.length == 0)
                     delete this.cellMap[cellKey];
                 else
@@ -2190,7 +2196,7 @@ export class BaseTree
         const CELLSPERPAGE = this.properties.rowsPerPage * COLUMNS;
 
         for (let page = this.currentVerticalPage; page < this.currentVerticalPage + this.properties.pagesDisplayed; page++) {
-            
+
             const pageRow = document.createElement('tr');
             table.appendChild(pageRow);
 
@@ -2207,11 +2213,11 @@ export class BaseTree
 
                 const newRow = document.createElement('tr');
                 table.appendChild(newRow);
-    
+
                 for (let col = 1; col <= COLUMNS; col++) {
 
                     const cellKey = (page - 1) * (CELLSPERPAGE) + (row - 1) * COLUMNS + col;
-                    
+
                     const newCol = document.createElement('td');
                     newCol.id = CELLIDPREFIX + cellKey;
                     newCol.cellKey = cellKey;
@@ -2224,20 +2230,24 @@ export class BaseTree
                     if (cell != null) {
 
                         div = generateIconDiv(
-                            this.abilities[ cell['abilityID'] ] ? this.abilities[ cell['abilityID'] ].type : null,
+                            this.abilities[cell['abilityID']] ? this.abilities[cell['abilityID']].type : null,
                             cell['travelNode'],
                             this.properties.classs,
                             1,
                             true,
-                            true
+                            true,
                         );
 
-                        if (this.abilities[ cell['abilityID'] ] != null) {
+                        if (this.abilities[cell['abilityID']] != null) {
 
-                            div.addEventListener('pointerover', (e) => {if (e.pointerType !== "touch") this.renderHoverAbilityTooltip(cell['abilityID'])});
-                            
-                            div.addEventListener('pointerout', (e) => {if (e.pointerType !== "touch") utils.hideHoverAbilityTooltip()});
-    
+                            div.addEventListener('pointerover', (e) => {
+                                if (e.pointerType !== "touch") this.renderHoverAbilityTooltip(cell['abilityID']);
+                            });
+
+                            div.addEventListener('pointerout', (e) => {
+                                if (e.pointerType !== "touch") utils.hideHoverAbilityTooltip();
+                            });
+
                         }
 
                     } else {
@@ -2246,8 +2256,12 @@ export class BaseTree
                     }
 
                     div.style.userSelect = 'none';
-                    div.addEventListener('pointerdown', (e) => {if (e.pointerType !== "touch") this.initializeEditNode(cellKey)});
-                    div.addEventListener('pointerenter', (e) => {if (e.pointerType !== "touch") this.continueEditNode(cellKey)});
+                    div.addEventListener('pointerdown', (e) => {
+                        if (e.pointerType !== "touch") this.initializeEditNode(cellKey);
+                    });
+                    div.addEventListener('pointerenter', (e) => {
+                        if (e.pointerType !== "touch") this.continueEditNode(cellKey);
+                    });
                     div.addEventListener('touchstart', (e) => {
                         this.#treeTouchProcessor.processTouch(
                             e,
@@ -2263,16 +2277,19 @@ export class BaseTree
                                     this.renderAbilities();
                                     this.renderArchetypes();
                                     this.renderTree();
-                                    
+
                                 } else {
                                     const td = e.target.closest("td");
                                     try {
                                         this.renderHoverAbilityTooltip(this.cellMap[td.cellKey]['abilityID']);
                                         utils.movetooltip(e.changedTouches[0].clientX, e.changedTouches[0].clientY);
-                                    } catch (e) {};
+                                    } catch (e) {
+                                    }
+                                    ;
                                 }
                             },
-                            () => {}, 
+                            () => {
+                            },
                             () => {
                                 utils.hideHoverAbilityTooltip();
                                 //document.body.style.overflow = 'hidden';
@@ -2297,11 +2314,11 @@ export class BaseTree
                             () => {
                                 //document.body.style.overflow = 'auto';
                                 this.finallizeEditNode();
-                            }
+                            },
                         );
-                        }, {passive: false});
+                    }, {passive: false});
                     newCol.appendChild(div);
-                    
+
                 }
             }
         }
@@ -2330,7 +2347,7 @@ export class BaseTree
     }
 
     ensureStartingAbility() {
-        if (this.startingAbilityID != null && this.abilities[ this.startingAbilityID ] != null)
+        if (this.startingAbilityID != null && this.abilities[this.startingAbilityID] != null)
             return;
 
         const abilityList = Object.keys(this.abilities);
@@ -2338,7 +2355,7 @@ export class BaseTree
             return;
         this.startingAbilityID = abilityList[0];
     }
-    
+
     ensureDefaultTree() {
 
         if (Object.keys(this.abilityTrees).length == 0) {
@@ -2366,7 +2383,7 @@ export class BaseTree
             directedConnectionsMap = undirectedConnectionsMap;
         else {
             for (let key of Object.keys(undirectedConnectionsMap)) {
-                
+
                 directedConnectionsMap[key] = Object.assign({}, undirectedConnectionsMap[key]);
 
                 if (!this.properties.bTravesableUp)
@@ -2380,7 +2397,7 @@ export class BaseTree
         for (let cellID of Object.keys(this.cellMap)) {
             if (this.cellMap[cellID]["abilityID"] != null) {
                 pathwayMap[cellID] = pathwayMap[cellID] ?? {};
-                pathwayMap[cellID][ this.cellMap[cellID]["abilityID"] ] = {'distance' : 0, 'restrictSides' : false};
+                pathwayMap[cellID][this.cellMap[cellID]["abilityID"]] = {'distance': 0, 'restrictSides': false};
             }
         }
 
@@ -2410,32 +2427,35 @@ export class BaseTree
 
                             for (let parentAbilityID of pendingAbilityIDs) {
 
-                                    if ( pathwayMap[cellID][parentAbilityID]['restrictSides'] && (connectedCellDirection == 'left' || connectedCellDirection == 'right') )
-                                        continue;
+                                if (pathwayMap[cellID][parentAbilityID]['restrictSides'] && (connectedCellDirection == 'left' || connectedCellDirection == 'right'))
+                                    continue;
 
-                                    pathwayMap[connectedCellNumber][parentAbilityID] = pathwayMap[connectedCellNumber][parentAbilityID] ?? {'distance' : currentProcessingTarget + 1, restrictSides};
+                                pathwayMap[connectedCellNumber][parentAbilityID] = pathwayMap[connectedCellNumber][parentAbilityID] ?? {
+                                    'distance': currentProcessingTarget + 1,
+                                    restrictSides,
+                                };
                             }
 
                         } else {
                             for (let parentAbilityID of pendingAbilityIDs) {
 
-                                if ( pathwayMap[cellID][parentAbilityID]['restrictSides'] && (connectedCellDirection == 'left' || connectedCellDirection == 'right') )
+                                if (pathwayMap[cellID][parentAbilityID]['restrictSides'] && (connectedCellDirection == 'left' || connectedCellDirection == 'right'))
                                     continue;
 
                                 const childAbilityID = this.cellMap[connectedCellNumber]["abilityID"];
 
                                 if (parentAbilityID == childAbilityID)
                                     continue;
-                                
+
                                 this.potentialAllocationMap[parentAbilityID] = this.potentialAllocationMap[parentAbilityID] ?? {};
 
                                 if (this.potentialAllocationMap[parentAbilityID][childAbilityID] == null) {
-                                    
+
                                     this.potentialAllocationMap[parentAbilityID][childAbilityID] = {};
 
                                     let backtrackProcessingTarget = currentProcessingTarget;
                                     let currentCell = connectedCellNumber;
-                                    let lastTravelNode = new TravelNode( this.cellMap[currentCell]['travelNode'] );
+                                    let lastTravelNode = new TravelNode(this.cellMap[currentCell]['travelNode']);
 
                                     for (backtrackProcessingTarget; backtrackProcessingTarget >= 0; backtrackProcessingTarget--) {
 
@@ -2451,7 +2471,7 @@ export class BaseTree
                                                 this.potentialAllocationMap[parentAbilityID][childAbilityID][currentCell] = lastTravelNode;
 
                                                 currentCell = cellID;
-                                                lastTravelNode = new TravelNode( this.cellMap[currentCell]['travelNode'] );
+                                                lastTravelNode = new TravelNode(this.cellMap[currentCell]['travelNode']);
                                                 lastTravelNode[reverseDirectionDictionary[direction]] = 2;
                                                 break;
                                             }
@@ -2473,7 +2493,14 @@ export class BaseTree
     compileCurrentTree() {
         this.ensureStartingAbility();
         this.ensureSelectedTree();
-        this.currentTree = {'allocatedNodes' : {}, 'connectedNodes' : {}, 'blockedNodes' : {}, 'archetypes' : {}, 'abilityPoints' : 0, 'travelNodes' : {}};
+        this.currentTree = {
+            'allocatedNodes': {},
+            'connectedNodes': {},
+            'blockedNodes': {},
+            'archetypes': {},
+            'abilityPoints': 0,
+            'travelNodes': {},
+        };
         if (this.startingAbilityID == null || this.abilities[this.startingAbilityID] == null)
             return;
 
@@ -2493,15 +2520,15 @@ export class BaseTree
             }
 
             allocatableNodes = [];
-            for (let abilityID of Object.keys( this.currentTree['connectedNodes'] )) {
+            for (let abilityID of Object.keys(this.currentTree['connectedNodes'])) {
                 if (this.currentTree['allocatedNodes'][abilityID] == false &&
                     this.isAllocatable(abilityID))
                     allocatableNodes.push(abilityID);
             }
         } while (allocatableNodes.length > 0);
 
-        for (let abilityID of Object.keys( this.currentTree['allocatedNodes'] ))
-            if ( !this.currentTree['allocatedNodes'][abilityID] )
+        for (let abilityID of Object.keys(this.currentTree['allocatedNodes']))
+            if (!this.currentTree['allocatedNodes'][abilityID])
                 delete this.currentTree['allocatedNodes'][abilityID];
     }
 
@@ -2511,11 +2538,11 @@ export class BaseTree
             return false;
 
         if (this.abilities[abilityID].archetype != '' &&
-            this.currentTree['archetypes'][ this.abilities[abilityID].archetype ] < this.abilities[abilityID].archetypePointsRequired)
+            this.currentTree['archetypes'][this.abilities[abilityID].archetype] < this.abilities[abilityID].archetypePointsRequired)
             return false;
 
         if (this.abilities[abilityID].requires != -1 &&
-            !this.currentTree['allocatedNodes'][ this.abilities[abilityID].requires ])
+            !this.currentTree['allocatedNodes'][this.abilities[abilityID].requires])
             return false;
 
         return this.currentTree['connectedNodes'][abilityID] != null
@@ -2527,7 +2554,7 @@ export class BaseTree
         for (let blockedID of this.abilities[abilityID].unlockingWillBlock)
             this.currentTree['blockedNodes'][blockedID] = true;
         if (this.abilities[abilityID].archetype != '')
-            this.currentTree['archetypes'][ this.abilities[abilityID].archetype ] += 1;
+            this.currentTree['archetypes'][this.abilities[abilityID].archetype] += 1;
         this.currentTree['abilityPoints'] += this.abilities[abilityID].pointsRequired;
         this.currentTree['allocatedNodes'][abilityID] = true;
         this.abilityTrees[this.selectedTree].push(abilityID);
@@ -2543,7 +2570,7 @@ export class BaseTree
     }
 
     deallocateNode(abilityID) {
-        this.abilityTrees[this.selectedTree].splice( this.abilityTrees[this.selectedTree].indexOf(abilityID) , 1);
+        this.abilityTrees[this.selectedTree].splice(this.abilityTrees[this.selectedTree].indexOf(abilityID), 1);
         this.compileCurrentTree();
         this.saveState(`Reallocated nodes on '${utils.minecraftToHTML(this.selectedTree)}'`, 'treeAllocation', true);
     }
@@ -2551,8 +2578,8 @@ export class BaseTree
     addConnectedNodes(abilityID) {
         if (this.potentialAllocationMap[abilityID] == null)
             return;
-        
-        for (let connectedAbilityID of Object.keys( this.potentialAllocationMap[abilityID] )) {
+
+        for (let connectedAbilityID of Object.keys(this.potentialAllocationMap[abilityID])) {
 
             if (this.currentTree['allocatedNodes'][connectedAbilityID])
                 this.allocateTravelNodes(abilityID, connectedAbilityID);
@@ -2573,7 +2600,7 @@ export class BaseTree
             if (this.currentTree['travelNodes'][cellID] == null)
                 this.currentTree['travelNodes'][cellID] = new TravelNode(travelNodeMap[cellID]);
             else
-                this.currentTree['travelNodes'][cellID].mergeTravelNodes( travelNodeMap[cellID] );
+                this.currentTree['travelNodes'][cellID].mergeTravelNodes(travelNodeMap[cellID]);
         }
     }
 
@@ -2592,12 +2619,11 @@ export class BaseTree
         if (name == "") {
             nameInputElement.value = "";
             nameInputElement.oldname = "";
-        }
-        else {
+        } else {
             nameInputElement.value = name;
             nameInputElement.oldname = name;
         }
-        
+
         nameInputElement.dispatchEvent(new Event('input'));
     }
 
@@ -2606,7 +2632,7 @@ export class BaseTree
         const nameInputElement = document.getElementById(nameFormID);
         if (nameInputElement.value == "")
             return;
-        
+
         const oldname = nameInputElement.oldname ?? "";
         let newname = nameInputElement.value;
 
@@ -2617,13 +2643,13 @@ export class BaseTree
                     break;
                 }
         }
-        
+
         if (oldname == "") {
-            
+
             this.abilityTrees[newname] = [];
             this.saveState(`Added tree: ${utils.minecraftToHTML(newname)}`);
             this.selectTree(newname);
-            
+
         } else {
 
             this.abilityTrees[newname] = this.abilityTrees[oldname];
@@ -2644,7 +2670,7 @@ export class BaseTree
 
         delete this.abilityTrees[name];
 
-        this.ensureSelectedTree(); 
+        this.ensureSelectedTree();
         this.renderTreeNames();
         this.saveState(`Deleted tree: ${utils.minecraftToHTML(name)}`);
 
@@ -2653,9 +2679,9 @@ export class BaseTree
     renderTreeNames(containerID = "treeNameContainer") {
 
         const container = document.getElementById(containerID);
-        
+
         container.innerHTML = "";
-        
+
         for (let treeName of Object.keys(this.abilityTrees)) {
 
             const div = document.createElement("div");
@@ -2678,7 +2704,7 @@ export class BaseTree
             text.classList.add('flex-fill', 'overflow-hidden');
             text.innerHTML = utils.minecraftToHTML(treeName);
             div.appendChild(text);
-            
+
             const editbtn = document.createElement("button");
             editbtn.classList.add('small-btn', 'me-1', 'ms-2', 'font-default');
             editbtn.type = "button";
@@ -2689,7 +2715,7 @@ export class BaseTree
             editbtn.setAttribute('data-bs-target', '#treeModal');
             editbtn.addEventListener('click', (e) => this.editTree(treeName));
             div.appendChild(editbtn);
-            
+
             const delbtn = document.createElement("button");
             delbtn.classList.add('small-btn', 'font-default');
             delbtn.type = "button";
@@ -2698,7 +2724,7 @@ export class BaseTree
             delbtn.innerHTML = "💀";
             delbtn.addEventListener('click', (e) => this.deleteTree(treeName));
             div.appendChild(delbtn);
-            
+
             container.appendChild(div);
 
         }
@@ -2710,7 +2736,7 @@ export class BaseTree
         this.saveState(`Selected '${utils.minecraftToHTML(this.selectedTree)}' tree for allocation`, `${this.selectedTree}`, true);
         this.renderTreeNames();
         this.renderArchetypeCounts();
-        this.renderAbilityPointsUsed()
+        this.renderAbilityPointsUsed();
         this.renderTree();
     }
 
@@ -2719,12 +2745,12 @@ export class BaseTree
         this.compileCurrentTree();
         this.saveState(`Made ${utils.minecraftToHTML(this.abilities[abilityID].name)} the starting ability`);
         this.renderArchetypeCounts();
-        this.renderAbilityPointsUsed()
+        this.renderAbilityPointsUsed();
         this.renderTree();
     }
 
     renderStartingAbilityList(startingAbilityInputID = "startingAbilityInput") {
-        
+
         const startingAbilityInputElement = document.getElementById(startingAbilityInputID);
 
         startingAbilityInputElement.innerHTML = '';
@@ -2763,9 +2789,9 @@ export class BaseTree
         }
 
         const container = document.getElementById(containerID);
-        
+
         container.innerHTML = "";
-        
+
         for (let archetype of this.archetypes) {
 
             const div = document.createElement("div");
@@ -2779,7 +2805,7 @@ export class BaseTree
             const abilityCount = document.createElement("div");
             abilityCount.innerHTML = `${this.currentTree['archetypes'][archetype] ?? 0} / ${archetypeCounts[archetype]}`;
             div.appendChild(abilityCount);
-            
+
             container.appendChild(div);
 
         }
@@ -2799,7 +2825,7 @@ export class BaseTree
         const allocatableNodes = this.getAllocatableNodes();
 
         for (let page = this.currentVerticalPage; page < this.currentVerticalPage + this.properties.pagesDisplayed; page++) {
-            
+
             const pageRow = document.createElement('tr');
             table.appendChild(pageRow);
 
@@ -2816,11 +2842,11 @@ export class BaseTree
 
                 const newRow = document.createElement('tr');
                 table.appendChild(newRow);
-    
+
                 for (let col = 1; col <= COLUMNS; col++) {
 
                     const cellKey = (page - 1) * (CELLSPERPAGE) + (row - 1) * COLUMNS + col;
-                    
+
                     const newCol = document.createElement('td');
                     newCol.id = CELLIDPREFIX + cellKey;
                     newRow.appendChild(newCol);
@@ -2833,60 +2859,66 @@ export class BaseTree
 
                         const travelNode = this.currentTree['travelNodes'][cellKey] ?? cell['travelNode'];
                         let allocationStatus = 0;
-                        if (this.currentTree['allocatedNodes'][ cell['abilityID'] ] != null)
+                        if (this.currentTree['allocatedNodes'][cell['abilityID']] != null)
                             allocationStatus = 2;
-                        else if (allocatableNodes[ cell['abilityID'] ] != null)
+                        else if (allocatableNodes[cell['abilityID']] != null)
                             allocationStatus = 1;
-                        else if (this.currentTree['blockedNodes'][ cell['abilityID'] ])
+                        else if (this.currentTree['blockedNodes'][cell['abilityID']])
                             allocationStatus = -1;
 
                         div = generateIconDiv(
-                            this.abilities[ cell['abilityID'] ] ? this.abilities[ cell['abilityID'] ].type : null,
+                            this.abilities[cell['abilityID']] ? this.abilities[cell['abilityID']].type : null,
                             travelNode,
                             this.properties.classs,
                             allocationStatus,
                             true,
-                            true
+                            true,
                         );
 
-                        if (this.abilities[ cell['abilityID'] ] != null) {
-                            
+                        if (this.abilities[cell['abilityID']] != null) {
+
                             switch (allocationStatus) {
                                 case 1:
                                     div.addEventListener('click', (e) => {
-                                        this.allocateNode( cell['abilityID'] );
-                                        this.renderTree();
-                                        this.renderArchetypeCounts();
-                                        this.renderAbilityPointsUsed()}
+                                            this.allocateNode(cell['abilityID']);
+                                            this.renderTree();
+                                            this.renderArchetypeCounts();
+                                            this.renderAbilityPointsUsed();
+                                        },
                                     );
                                     break;
                                 case 2:
                                     div.addEventListener('click', (e) => {
-                                        this.deallocateNode( cell['abilityID'] );
-                                        this.renderTree();
-                                        this.renderArchetypeCounts();
-                                        this.renderAbilityPointsUsed()}
+                                            this.deallocateNode(cell['abilityID']);
+                                            this.renderTree();
+                                            this.renderArchetypeCounts();
+                                            this.renderAbilityPointsUsed();
+                                        },
                                     );
                                     break;
                                 default:
                                     break;
                             }
 
-                            div.addEventListener('pointerover', (e) => {if (e.pointerType !== "touch") this.renderHoverAbilityTooltip(cell['abilityID'])} );
-                            div.addEventListener('pointerout', (e) => {if (e.pointerType !== "touch") utils.hideHoverAbilityTooltip()} );
+                            div.addEventListener('pointerover', (e) => {
+                                if (e.pointerType !== "touch") this.renderHoverAbilityTooltip(cell['abilityID']);
+                            });
+                            div.addEventListener('pointerout', (e) => {
+                                if (e.pointerType !== "touch") utils.hideHoverAbilityTooltip();
+                            });
                             div.addEventListener('touchstart', (e) => {
                                 this.#treeTouchProcessor.processTouch(
                                     e,
                                     () => {
                                         switch (allocationStatus) {
                                             case 1:
-                                                this.allocateNode( cell['abilityID'] );
+                                                this.allocateNode(cell['abilityID']);
                                                 this.renderTree();
                                                 this.renderArchetypeCounts();
                                                 this.renderAbilityPointsUsed();
                                                 break;
                                             case 2:
-                                                this.deallocateNode( cell['abilityID'] );
+                                                this.deallocateNode(cell['abilityID']);
                                                 this.renderTree();
                                                 this.renderArchetypeCounts();
                                                 this.renderAbilityPointsUsed();
@@ -2895,7 +2927,8 @@ export class BaseTree
                                                 break;
                                         }
                                     },
-                                    () => {}, 
+                                    () => {
+                                    },
                                     () => {
                                         document.body.style.overflow = 'hidden';
                                         this.renderHoverAbilityTooltip(cell['abilityID']);
@@ -2907,10 +2940,10 @@ export class BaseTree
                                     () => {
                                         utils.hideHoverAbilityTooltip();
                                         document.body.style.overflow = 'auto';
-                                    }
+                                    },
                                 );
-                                }, {passive: false});
-                            }
+                            }, {passive: false});
+                        }
                     } else {
                         div = document.createElement('div');
                         div.classList.add("centered-element-container");
@@ -2918,10 +2951,11 @@ export class BaseTree
 
                     div.style.userSelect = 'none';
                     newCol.appendChild(div);
-                    
+
                 }
             }
         }
     }
+
     // #endregion
 }

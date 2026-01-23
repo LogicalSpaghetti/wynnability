@@ -1,5 +1,6 @@
 import * as utils from './utils.js';
 import * as main from './main.js';
+import {generateIconUrl} from "./main.js";
 
 let sortedPresets = [];
 let treeCache = {};
@@ -26,9 +27,9 @@ async function getPresets() {
     const timeoutId = setTimeout(() => {
         controller.abort();
         console.log('Fetch request timed out');
-        }, 5000);
+    }, 5000);
 
-    return await fetch(`presets.json`, {
+    return await fetch(`presets/presets.json`, {
 
         signal,
         cache: 'no-store',
@@ -36,21 +37,21 @@ async function getPresets() {
         method: 'GET',
         headers: {
             'Accept': 'application/json'
-        },
+        }
 
-    }).then( (response) => {
+    }).then((response) => {
 
         if (!response.ok) {
             throw new Error(`HTTP error: ${response.status}`);
-            }
+        }
 
         return response.text();
 
-    }).then( (text) => {
+    }).then((text) => {
 
         return JSON.parse(text);
 
-    }).catch( (e) => {
+    }).catch((e) => {
         console.log(e.stack);
         utils.showSmallToast("Load Failed: couldn't reach the server");
         return null;
@@ -66,9 +67,9 @@ function sortPresets(presetArray) {
             return 1;
         if (dif < 0)
             return -1;
-        
+
         return a["title"].localeCompare(b["title"]);
-    })
+    });
 }
 
 function filterResults(searchID = "customSearch", classSelectID = "customClassSelect") {
@@ -76,16 +77,18 @@ function filterResults(searchID = "customSearch", classSelectID = "customClassSe
     let classs = document.getElementById(classSelectID).value;
     let filteredArray;
 
-    if (classs == 'all')
+    if (classs === 'all')
         filteredArray = sortedPresets;
     else
-        filteredArray = sortedPresets.filter( (preset) => {return preset['class'] == classs});
+        filteredArray = sortedPresets.filter((preset) => {
+            return preset['class'] == classs;
+        });
 
-    if (filterSubstring != '')
-        filteredArray = filteredArray.filter( (preset) => {
-                return preset['credit'].toLowerCase().includes(filterSubstring) || preset['title'].toLowerCase().includes(filterSubstring);
-            });
-    
+    if (filterSubstring !== '')
+        filteredArray = filteredArray.filter((preset) => {
+            return preset['credit'].toLowerCase().includes(filterSubstring) || preset['title'].toLowerCase().includes(filterSubstring);
+        });
+
     return filteredArray;
 }
 
@@ -111,7 +114,7 @@ async function getPreset(filename) {
     const timeoutId = setTimeout(() => {
         controller.abort();
         console.log('Fetch request timed out');
-        }, 5000);
+    }, 5000);
 
     treeCache[filename] = fetch(`presets/custom/${filename}.json`, {
 
@@ -121,24 +124,24 @@ async function getPreset(filename) {
         method: 'GET',
         headers: {
             'Accept': 'application/json'
-        },
+        }
 
-    }).then( (response) => {
+    }).then((response) => {
 
         if (!response.ok) {
             throw new Error(`HTTP error: ${response.status}`);
-            }
+        }
 
         return response.text();
 
-    }).then( (text) => {
+    }).then((text) => {
 
         let tree = new main.BaseTree(false);
         tree.loadFromJSON(text, false, false);
         cacheTree(filename, tree);
         return tree;
 
-    }).catch( (e) => {
+    }).catch((e) => {
         console.log(e);
         treeCache[filename] = null;
     }).finally(() => {
@@ -152,9 +155,9 @@ async function getRandomNodeOfType(filename, type = "red") {
     let tree = await getPreset(filename);
     if (tree == null)
         return -1;
-    
+
     let filteredAbilities = [];
-    for(let id of Object.keys(tree.abilities)) {
+    for (let id of Object.keys(tree.abilities)) {
         if (tree.abilities[id].type == type)
             filteredAbilities.push(id);
     }
@@ -162,13 +165,13 @@ async function getRandomNodeOfType(filename, type = "red") {
     return filteredAbilities[Math.floor(Math.random() * filteredAbilities.length)] ?? -1;
 }
 
-async function renderRandomAbilityTooltip(filename, type = "red", signal = {cancel : false}, containerId = "cursorTooltip") {
+async function renderRandomAbilityTooltip(filename, type = "red", signal = {cancel: false}, containerId = "cursorTooltip") {
 
     const container = document.getElementById(containerId);
     container.hidden = false;
     container.innerHTML = "Loading random ability...";
 
-    (async ()=>{
+    (async () => {
         const randomAbilityID = await getRandomNodeOfType(filename, type);
         if (randomAbilityID == -1)
             return;
@@ -176,41 +179,8 @@ async function renderRandomAbilityTooltip(filename, type = "red", signal = {canc
         if (!signal.cancel) {
             tree.renderHoverAbilityTooltip(randomAbilityID);
             utils.adjustTooltipSize();
-        }    
+        }
     })();
-}
-
-function generateIconUrl(type, classs = "custom", allocationStatus = 0) {
-    
-    let iconDictionary = main.abilityIconDictionary;
-    
-    if (type == 'skill')
-        switch (allocationStatus) {
-            case 0:
-                return iconDictionary[type] + classs + '/skill_dark.png';
-            case 1:
-                return iconDictionary[type] + classs + '/skill.png';
-            case 2:
-                return iconDictionary[type] + classs + '/skill_a.png';
-            default:
-                break;
-        }
-
-    else if (type in iconDictionary)
-        switch (allocationStatus) {
-            case -1:
-                return iconDictionary[type] + '_blocked.png';
-            case 0:
-                return iconDictionary[type] + '_dark.png';
-            case 1:
-                return iconDictionary[type] + '.png';
-            case 2:
-                return iconDictionary[type] + '_a.png';
-            default:
-                break;
-        }
-    
-    return null;
 }
 
 export async function renderSearchResults(containerID = "customPresetContainer") {
@@ -239,10 +209,10 @@ export async function renderSearchResults(containerID = "customPresetContainer")
             }
         });
         div.addEventListener('touchstart', (e) => {
-            if (e.target.tagName == "IMG" || !document.getElementById("cursorTooltip").hidden)
+            if (e.target.tagName === "IMG" || !document.getElementById("cursorTooltip").hidden)
                 return;
             TOUCHPROCESSOR.processTouch(
-                e, 
+                e,
                 async () => {
                     const tree = await getPreset(preset['filename']);
                     window.tree.loadFromJSON(JSON.stringify(tree, null, 0));
@@ -277,24 +247,24 @@ export async function renderSearchResults(containerID = "customPresetContainer")
         description.classList.add("customDescription");
         description.innerHTML = utils.sanitizeHTML(preset['description']);
         div.appendChild(description);
-        
+
         let icons;
-        if (preset['class'] == 'custom')
+        if (preset['class'] === 'custom')
             icons = ['yellow', 'purple', 'blue', 'red', 'skill'];
         else
             icons = ['yellow', 'purple', 'blue', 'red'];
-        
+
         imgholder.id = "customAbilityPreview";
-        icons.forEach( (type) => {
+        icons.forEach((type) => {
             const div = document.createElement("div");
             div.classList.add('ability-type-selector', 'ms-1', 'centered-element-container');
 
             const img = document.createElement('img');
             img.src = generateIconUrl(type, preset['baseclass'], 1);
-            img.style.zIndex = 11;
+            img.style.zIndex = "11";
             div.appendChild(img);
 
-            const cancelRender = {cancel : false};
+            const cancelRender = {cancel: false};
             div.addEventListener('pointerover', (e) => {
                 if (e.pointerType !== "touch") {
                     cancelRender.cancel = false;
@@ -310,20 +280,21 @@ export async function renderSearchResults(containerID = "customPresetContainer")
                 }
             });
             div.addEventListener('touchstart', (e) => {
-                
+
                 cancelRender.cancel = false;
 
                 TOUCHPROCESSOR.processTouch(
-                    e, 
+                    e,
                     () => {
                         img.src = generateIconUrl(type, preset['baseclass'], 2);
                         document.body.style.overflow = 'hidden';
                         renderRandomAbilityTooltip(preset['filename'], type, cancelRender);
                         utils.movetooltip(e.changedTouches[0].clientX, e.changedTouches[0].clientY);
-                        
-                        document.addEventListener( 'touchstart', (event) => {
-                            if (e.target != event.target)
-                                cancelRender.cancel = true; img.src = generateIconUrl(type, preset['baseclass'], 1);
+
+                        document.addEventListener('touchstart', (event) => {
+                            if (e.target !== event.target)
+                                cancelRender.cancel = true;
+                            img.src = generateIconUrl(type, preset['baseclass'], 1);
                         }, {once: true});
                     }
                 );

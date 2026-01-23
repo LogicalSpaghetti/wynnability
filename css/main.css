@@ -200,7 +200,7 @@ section {
 }
 
 .page-display {
-  background-image: url(background/divider.png);
+  background-image: url(../assets/img/background/divider.png);
   background-repeat: no-repeat;
   background-size: 100% auto;
   aspect-ratio: 348 / 47;
@@ -253,19 +253,19 @@ section {
 }
 
 .page-up-arrow:hover {
-  content: url("background/page_up_a.png");
+  content: url("../assets/img/background/page_up_a.png");
 }
 
 .page-down-arrow:hover {
-  content: url("background/page_down_a.png");
+  content: url("../assets/img/background/page_down_a.png");
 }
 
 .orb-edit:hover {
-  content: url("background/orb_edit_a.png");
+  content: url("../assets/img/background/orb_edit_a.png");
 }
 
 .orb-allocate:hover {
-  content: url("background/orb_allocate_a.png");
+  content: url("../assets/img/background/orb_allocate_a.png");
 }
 
 @media screen and (max-width: 530px) {
@@ -282,7 +282,7 @@ section {
 
 @font-face {
   font-family: 'minecraft';
-  src: url('minecraft.woff');
+  src: url('../assets/font/minecraft.woff');
   font-weight: normal;
   font-style: normal;
   font-display: block;
@@ -291,7 +291,7 @@ section {
 
 @font-face {
   font-family: 'icons';
-  src: url('icons.woff');
+  src: url('../assets/font/icons.woff');
   font-weight: normal;
   font-style: normal;
   font-display: block;
@@ -300,7 +300,7 @@ section {
 
 @font-face {
   font-family: 'minecraft';
-  src: url('minecraft_bold.woff');
+  src: url('../assets/font/minecraft_bold.woff');
   font-weight: 900;
   font-style: normal;
   font-display: block;
@@ -309,7 +309,7 @@ section {
 
 @font-face {
   font-family: 'mojangles';
-  src: url('mojangles.otf');
+  src: url('../assets/font/mojangles.otf');
   font-weight: normal;
   font-style: normal;
   font-display: block;
@@ -318,7 +318,7 @@ section {
 
 @font-face {
   font-family: 'unifont';
-  src: url('unifont.otf');
+  src: url('../assets/font/unifont.otf');
   font-weight: normal;
   font-style: normal;
   font-display: block;
@@ -327,7 +327,7 @@ section {
 
 @font-face {
   font-family: 'unifontEmoji';
-  src: url('unifontEmoji.otf');
+  src: url('../assets/font/unifontEmoji.otf');
   font-weight: normal;
   font-style: normal;
   font-display: block;
