@@ -13,7 +13,7 @@ const abilityIconDictionary = {
     'white': 'generic/white',
 };
 
-const nodeDictionary = {
+const nodeDictionary: { [key: string]: {path: string, color_tag: string} } = {
     'skill': {
         'path': 'class/',
         'color_tag': 'g',
@@ -106,15 +106,15 @@ export function generateIconUrl(type, classs = "custom", allocationStatus = 0, u
                 : null));
 }
 
-const POINTSREQUIRED_LOWER = -69;
-const POINTSREQUIRED_UPPER = 69;
-const POINTSREQUIRED_INPUTID = 'pointsRequiredInput';
-utils.enforceMinMax(POINTSREQUIRED_INPUTID, POINTSREQUIRED_LOWER, POINTSREQUIRED_UPPER);
+const POINTS_REQUIRED_LOWER = -69;
+const POINTS_REQUIRED_UPPER = 69;
+const POINTS_REQUIRED_INPUT_ID = 'pointsRequiredInput';
+utils.enforceMinMax(POINTS_REQUIRED_INPUT_ID, POINTS_REQUIRED_LOWER, POINTS_REQUIRED_UPPER);
 
-const ARCHETYPEPOINTSREQUIRED_LOWER = 0;
-const ARCHETYPEPOINTSREQUIRED_UPPER = 420;
-const ARCHETYPEPOINTSREQUIRED_INPUTID = 'archetypePointsRequiredInput';
-utils.enforceMinMax(ARCHETYPEPOINTSREQUIRED_INPUTID, ARCHETYPEPOINTSREQUIRED_LOWER, ARCHETYPEPOINTSREQUIRED_UPPER);
+const ARCHETYPE_POINTS_REQUIRED_LOWER = 0;
+const ARCHETYPE_POINTS_REQUIRED_UPPER = 420;
+const ARCHETYPE_POINTS_REQUIRED_INPUT_ID = 'archetypePointsRequiredInput';
+utils.enforceMinMax(ARCHETYPE_POINTS_REQUIRED_INPUT_ID, ARCHETYPE_POINTS_REQUIRED_LOWER, ARCHETYPE_POINTS_REQUIRED_UPPER);
 
 class Ability {
     /**
@@ -151,13 +151,13 @@ class Ability {
      * Ability point requirement
      * @var int
      */
-    pointsRequired = POINTSREQUIRED_LOWER;
+    pointsRequired = POINTS_REQUIRED_LOWER;
 
     /**
      * Min archetype points required
      * @var int
      */
-    archetypePointsRequired = ARCHETYPEPOINTSREQUIRED_LOWER;
+    archetypePointsRequired = ARCHETYPE_POINTS_REQUIRED_LOWER;
 
     /**
      * Ability type
@@ -176,8 +176,8 @@ class Ability {
                     description = '',
                     unlockingWillBlock = [],
                     archetype = '',
-                    pointsRequired = POINTSREQUIRED_LOWER,
-                    archetypePointsRequired = ARCHETYPEPOINTSREQUIRED_LOWER,
+                    pointsRequired = POINTS_REQUIRED_LOWER,
+                    archetypePointsRequired = ARCHETYPE_POINTS_REQUIRED_LOWER,
                     type = 'skill',
                     requires = -1,
                 } = {}) {
@@ -194,9 +194,9 @@ class Ability {
                     this.unlockingWillBlock.push(Number(element));
             });
 
-        this.pointsRequired = isNaN(Number(pointsRequired)) ? POINTSREQUIRED_LOWER : utils.clamp(Number(pointsRequired), POINTSREQUIRED_LOWER, POINTSREQUIRED_UPPER);
+        this.pointsRequired = isNaN(Number(pointsRequired)) ? POINTS_REQUIRED_LOWER : utils.clamp(Number(pointsRequired), POINTS_REQUIRED_LOWER, POINTS_REQUIRED_UPPER);
 
-        this.archetypePointsRequired = isNaN(Number(archetypePointsRequired)) ? ARCHETYPEPOINTSREQUIRED_LOWER : utils.clamp(Number(archetypePointsRequired), ARCHETYPEPOINTSREQUIRED_LOWER, ARCHETYPEPOINTSREQUIRED_UPPER);
+        this.archetypePointsRequired = isNaN(Number(archetypePointsRequired)) ? ARCHETYPE_POINTS_REQUIRED_LOWER : utils.clamp(Number(archetypePointsRequired), ARCHETYPE_POINTS_REQUIRED_LOWER, ARCHETYPE_POINTS_REQUIRED_UPPER);
 
         this.type = Object.keys(abilityIconDictionary).includes(type) || Object.keys(altAbilityIconDictionary).includes(type)
             ? String(type) : Object.keys(abilityIconDictionary)[0];
@@ -1189,7 +1189,7 @@ export class BaseTree {
     }
 
     renderEditorAbilityTooltip(scaleDown = true, nameFormID = "abilityNameInput", descriptionFormID = "abilityDescriptionInput", archetypeFormID = "abilityArchetypeInput",
-                               pointsRequiredFormID = POINTSREQUIRED_INPUTID, archetypePointsRequiredFormID = ARCHETYPEPOINTSREQUIRED_INPUTID, containerId = "editAbilityTooltip",
+                               pointsRequiredFormID = POINTS_REQUIRED_INPUT_ID, archetypePointsRequiredFormID = ARCHETYPE_POINTS_REQUIRED_INPUT_ID, containerId = "editAbilityTooltip",
                                prerequisiteFormID = "abilityPrerequiseteInput", abilityBlockCountDisplayID = "abilityBlockCountDisplay", typeFormID = "abilityTypeInput") {
 
         const nameInputElement = document.getElementById(nameFormID);
@@ -1284,7 +1284,7 @@ export class BaseTree {
 
     editAbility(abilityID = -1,
                 nameFormID = "abilityNameInput", descriptionFormID = "abilityDescriptionInput", abilityBlockFormID = "abilityBlockInput", archetypeFormID = "abilityArchetypeInput",
-                pointsRequiredFormID = POINTSREQUIRED_INPUTID, archetypePointsRequiredFormID = ARCHETYPEPOINTSREQUIRED_INPUTID, prerequisiteFormID = "abilityPrerequiseteInput") {
+                pointsRequiredFormID = POINTS_REQUIRED_INPUT_ID, archetypePointsRequiredFormID = ARCHETYPE_POINTS_REQUIRED_INPUT_ID, prerequisiteFormID = "abilityPrerequiseteInput") {
 
         const nameInputElement = document.getElementById(nameFormID);
         const descriptionInputElement = document.getElementById(descriptionFormID);
@@ -1435,8 +1435,8 @@ export class BaseTree {
         return blockedAbilities;
     }
 
-    saveAbility(nameFormID = "abilityNameInput", descriptionFormID = "abilityDescriptionInput", archetypeFormID = "abilityArchetypeInput", pointsRequiredFormID = POINTSREQUIRED_INPUTID,
-                archetypePointsRequiredFormID = ARCHETYPEPOINTSREQUIRED_INPUTID, typeFormID = "abilityTypeInput", prerequisiteFormID = "abilityPrerequiseteInput") {
+    saveAbility(nameFormID = "abilityNameInput", descriptionFormID = "abilityDescriptionInput", archetypeFormID = "abilityArchetypeInput", pointsRequiredFormID = POINTS_REQUIRED_INPUT_ID,
+                archetypePointsRequiredFormID = ARCHETYPE_POINTS_REQUIRED_INPUT_ID, typeFormID = "abilityTypeInput", prerequisiteFormID = "abilityPrerequiseteInput") {
 
         const nameInputElement = document.getElementById(nameFormID);
         const descriptionInputElement = document.getElementById(descriptionFormID);
@@ -1628,10 +1628,10 @@ export class BaseTree {
                     () => {
                         document.body.style.overflow = 'hidden';
                         this.renderHoverAbilityTooltip(id);
-                        utils.movetooltip(e.changedTouches[0].clientX, e.changedTouches[0].clientY);
+                        utils.moveTooltip(e.changedTouches[0].clientX, e.changedTouches[0].clientY);
                     },
                     () => {
-                        utils.movetooltip(e.changedTouches[0].clientX, e.changedTouches[0].clientY);
+                        utils.moveTooltip(e.changedTouches[0].clientX, e.changedTouches[0].clientY);
                     },
                     () => {
                         utils.hideHoverAbilityTooltip();
@@ -2282,7 +2282,7 @@ export class BaseTree {
                                     const td = e.target.closest("td");
                                     try {
                                         this.renderHoverAbilityTooltip(this.cellMap[td.cellKey]['abilityID']);
-                                        utils.movetooltip(e.changedTouches[0].clientX, e.changedTouches[0].clientY);
+                                        utils.moveTooltip(e.changedTouches[0].clientX, e.changedTouches[0].clientY);
                                     } catch (e) {
                                     }
                                     ;
@@ -2932,10 +2932,10 @@ export class BaseTree {
                                     () => {
                                         document.body.style.overflow = 'hidden';
                                         this.renderHoverAbilityTooltip(cell['abilityID']);
-                                        utils.movetooltip(e.changedTouches[0].clientX, e.changedTouches[0].clientY);
+                                        utils.moveTooltip(e.changedTouches[0].clientX, e.changedTouches[0].clientY);
                                     },
                                     () => {
-                                        utils.movetooltip(e.changedTouches[0].clientX, e.changedTouches[0].clientY);
+                                        utils.moveTooltip(e.changedTouches[0].clientX, e.changedTouches[0].clientY);
                                     },
                                     () => {
                                         utils.hideHoverAbilityTooltip();

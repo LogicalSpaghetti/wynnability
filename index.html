@@ -1,25 +1,24 @@
 <!doctype html>
 <html lang="en">
 <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Wynnability</title>
-    <link href="css/main.css" rel="stylesheet">
-    <link rel="icon" href="assets/img/icons/wynnability.png"/>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Wynnability</title>
+  <link rel="icon" href="assets/img/icons/wynnability.png"/>
 </head>
 <body id="dropzone" class="generic-background" data-bs-theme="light"
       ondrop="tree.loadTreeFromDrop(event); loadModal.hide()">
 
 <section class="mt-2 pb-2 pt-2">
 
-    <div class="d-flex justify-content-start align-items-center ps-1 pe-1">
+  <div class="d-flex justify-content-start align-items-center ps-1 pe-1">
 
-        <button type="button" class="btn btn-primary me-auto" data-bs-toggle="collapse" data-bs-target="#extraSettings"
-                aria-expanded="false" aria-controls="extraSettings">Class Settings
-        </button>
+    <button type="button" class="btn btn-primary me-auto" data-bs-toggle="collapse" data-bs-target="#extraSettings"
+            aria-expanded="false" aria-controls="extraSettings">Class Settings
+    </button>
 
-        <div class="ms-1 me-auto d-flex align-items-center" style="height: 40px;"
-             onpointerover="
+    <div class="ms-1 me-auto d-flex align-items-center" style="height: 40px;"
+         onpointerover="
             const container = document.getElementById('cursorTooltip');
             container.hidden = false;
             container.innerHTML = `
@@ -27,500 +26,500 @@
                   <span style='color:#ffff55'>✧&nbsp;</span><span style='color:#aaaaaa'>Effect:&nbsp;</span><span style='color:#ffffff'>Blindness&nbsp;(</span><span style='color:#ff5555'>⬣</span><span style='color:#ffffff'>)&nbsp;to&nbsp;Self</span>
             `
           "
-             onpointerout="utils.hideHoverAbilityTooltip()"
-        >
+         onpointerout="utils.hideHoverAbilityTooltip()"
+    >
 
-            <img id="themeSwitchDark" hidden src="assets/img/abilities/generic/purple.png"
-                 onclick="switchTheme('light'); this.hidden = true; changeHidden(false, [], ['themeSwitchLight']);">
+      <img id="themeSwitchDark" hidden src="assets/img/abilities/generic/purple.png"
+           onclick="switchTheme('light'); this.hidden = true; changeHidden(false, [], ['themeSwitchLight']);">
 
-            <img id="themeSwitchLight" src="assets/img/abilities/generic/purple_a.png"
-                 onclick="switchTheme('dark'); this.hidden = true; changeHidden(false, [], ['themeSwitchDark']);">
-
-        </div>
-
-        <button type="button" class="btn btn-primary ms-1 me-2" data-bs-toggle="modal" data-bs-target="#loadModal"
-                onclick="changeHidden(false, [], ['loadinterface']); changeHidden(true, [], ['libraryinterface']);"
-        >Load
-        </button>
-
-        <div class="dropdown">
-
-            <button type="button" class="btn btn-primary dropdown-toggle" title="Display sharing options"
-                    data-bs-toggle="dropdown">Share
-            </button>
-
-            <ul class="p-0 dropdown-menu share-dropdown">
-                <li>
-                    <button type="button" onclick="navigator.clipboard.writeText(JSON.stringify(tree, null, 0))"
-                            class="dropdown-item mb-1" title="Copies a shareable JSON">Copy
-                    </button>
-                </li>
-                <li>
-                    <button type="button" onclick="tree.downloadJSON()" class="dropdown-item"
-                            title="Saves current configuration in a shareable file">Download
-                    </button>
-                </li>
-            </ul>
-
-        </div>
+      <img id="themeSwitchLight" src="assets/img/abilities/generic/purple_a.png"
+           onclick="switchTheme('dark'); this.hidden = true; changeHidden(false, [], ['themeSwitchDark']);">
 
     </div>
 
-    <div class="collapse" id="extraSettings">
+    <button type="button" class="btn btn-primary ms-1 me-2" data-bs-toggle="modal" data-bs-target="#loadModal"
+            onclick="changeHidden(false, [], ['loadinterface']); changeHidden(true, [], ['libraryinterface']);"
+    >Load
+    </button>
 
-        <form>
-            <!-- Prevent implicit submission of the form -->
-            <button type="submit" disabled style="display: none" aria-hidden="true"></button>
+    <div class="dropdown">
 
-            <div class="row">
+      <button type="button" class="btn btn-primary dropdown-toggle" title="Display sharing options"
+              data-bs-toggle="dropdown">Share
+      </button>
 
-                <div class="col-xs-12 col-sm-6 col-lg-3 d-flex flex-column align-items-center justify-content-center">
+      <ul class="p-0 dropdown-menu share-dropdown">
+        <li>
+          <button type="button" onclick="navigator.clipboard.writeText(JSON.stringify(tree, null, 0))"
+                  class="dropdown-item mb-1" title="Copies a shareable JSON">Copy
+          </button>
+        </li>
+        <li>
+          <button type="button" onclick="tree.downloadJSON()" class="dropdown-item"
+                  title="Saves current configuration in a shareable file">Download
+          </button>
+        </li>
+      </ul>
 
-                    <div class="pt-2" style="width:85%">
+    </div>
 
-                        <select class="form-select form-select-sm mt-1" aria-label="Class selection" id="classSelect"
-                                oninput="tree.readProperties()" title="Affects ability icons and default tree">
+  </div>
 
-                            <option selected value="archer">Archer</option>
-                            <option value="warrior">Warrior</option>
-                            <option value="assassin">Assassin</option>
-                            <option value="mage">Mage</option>
-                            <option value="shaman">Shaman</option>
+  <div class="collapse" id="extraSettings">
 
-                        </select>
+    <form>
+      <!-- Prevent implicit submission of the form -->
+      <button type="submit" disabled style="display: none" aria-hidden="true"></button>
 
-                        <div class="d-flex flex-row">
+      <div class="row">
 
-                            <button type="button" class="btn btn-primary mt-2 me-1" style="min-width: 150px; width: 67%"
-                                    onclick="tree.loadTreeFromPreset(this)"
-                                    title="Loads the in-game tree for the selected class">Load default tree
-                            </button>
+        <div class="col-xs-12 col-sm-6 col-lg-3 d-flex flex-column align-items-center justify-content-center">
 
-                            <button type="button" class="btn btn-primary mt-2 flex-grow-1" style="overflow: hidden"
-                                    onclick="tree.loadEmptyTree()" title="Completely clears tree and settings">Reset
-                            </button>
+          <div class="pt-2" style="width:85%">
 
-                        </div>
+            <select class="form-select form-select-sm mt-1" aria-label="Class selection" id="classSelect"
+                    oninput="tree.readProperties()" title="Affects ability icons and default tree">
 
-                        <div class="d-flex flex-row">
+              <option selected value="archer">Archer</option>
+              <option value="warrior">Warrior</option>
+              <option value="assassin">Assassin</option>
+              <option value="mage">Mage</option>
+              <option value="shaman">Shaman</option>
 
-                            <button type="button" class="btn btn-primary mt-2 me-1 col" style="overflow: hidden"
-                                    onclick="tree.removeAllAbilityNodes()"
-                                    title="Removes all abilities from the tree (but not from the menu)">Clear abilities
-                            </button>
+            </select>
 
-                            <button type="button" class="btn btn-primary mt-2 col" style="overflow: hidden"
-                                    onclick="tree.removeAllTravelNodes()" title="Removes all connections from the tree">
-                                Clear paths
-                            </button>
+            <div class="d-flex flex-row">
 
-                        </div>
-                        <div class="d-flex flex-row">
+              <button type="button" class="btn btn-primary mt-2 me-1" style="min-width: 150px; width: 67%"
+                      onclick="tree.loadTreeFromPreset(this)"
+                      title="Loads the in-game tree for the selected class">Load default tree
+              </button>
 
-                            <button type="button" class="btn btn-primary mt-2 col" style="overflow: hidden"
-                                    onclick="tree.autoformatAbilityNames()"
-                                    title="Reformats ability names to match in-game color">Autoformat ability names
-                            </button>
-
-                        </div>
-
-                    </div>
-
-                </div>
-
-                <div class="col-xs-12 col-sm-6 col-lg-3 pt-3 d-flex flex-column align-items-center">
-
-                    <div class="d-flex flex-row ps-3 align-items-center justify-content-between" style="width:85%">
-
-                        <div class="me-5 text-light"><label for="maxAbilityPoints" class="form-label">Ability
-                            Points</label></div>
-                        <div><input type="number" class="form-control integer settingNumberInput" id="maxAbilityPoints"
-                                    onchange="tree.readProperties()"></div>
-
-                    </div>
-
-                    <div class="d-flex flex-row pt-3 ps-3 align-items-center justify-content-between" style="width:85%">
-
-                        <div class="me-5 text-light"><label for="treePages" class="form-label">Vertical Pages</label>
-                        </div>
-                        <div><input type="number" class="form-control integer settingNumberInput" id="treePages"
-                                    onchange="tree.readProperties()"></div>
-
-                    </div>
-
-                    <div class="d-flex flex-row pt-3 ps-3 align-items-center justify-content-between" style="width:85%">
-
-                        <div class="me-5 text-light"><label for="horizontalPages" class="form-label">Horizontal
-                            Pages</label></div>
-                        <div><input type="number" class="form-control integer settingNumberInput" id="horizontalPages"
-                                    disabled onchange="tree.readProperties()"></div>
-
-                    </div>
-
-                </div>
-
-                <div class="col-xs-12 col-sm-6 col-lg-3 pt-3 d-flex flex-column align-items-center">
-
-                    <div class="d-flex flex-row ps-3 align-items-center justify-content-between" style="width:85%">
-
-                        <div class="me-5 text-light"><label for="rowsPerPage" class="form-label">Rows Per Page</label>
-                        </div>
-                        <div><input type="number" class="form-control integer settingNumberInput" id="rowsPerPage"
-                                    onchange="tree.readProperties()"></div>
-
-                    </div>
-
-                    <div class="d-flex flex-row pt-3 ps-3 align-items-center justify-content-between" style="width:85%">
-
-                        <div class="me-5 text-light"><label for="pagesDisplayed" class="form-label">Pages
-                            displayed</label></div>
-                        <div><input type="number" class="form-control integer settingNumberInput" id="pagesDisplayed"
-                                    onchange="tree.readProperties()"></div>
-
-                    </div>
-
-                    <div class="d-flex flex-row pt-3 ps-3 align-items-center justify-content-between" style="width:85%">
-
-                        <div class="me-5 text-light"><label for="startingPage" class="form-label">Starting Page</label>
-                        </div>
-                        <div><input type="number" class="form-control integer settingNumberInput" id="startingPage"
-                                    onchange="tree.readProperties()" disabled></div>
-
-                    </div>
-
-                </div>
-
-                <div class="col-xs-12 col-sm-6 col-lg-3 pt-4 d-flex flex-column align-items-center">
-
-                    <div class="d-flex flex-row ps-3 align-items-center justify-content-between form-check form-switch"
-                         style="width:85%" title="Whether left and right borders can connect">
-
-                        <label class="form-check-label text-light" for="loopTreeSwitch">Loop tree</label>
-                        <input class="form-check-input me-4" type="checkbox" role="switch" id="loopTreeSwitch"
-                               oninput="tree.readProperties()">
-
-                    </div>
-
-                    <div class="d-flex flex-row mt-3 ps-3 align-items-center justify-content-between form-check form-switch"
-                         style="width:85%" title="Allows allocating nodes directly above">
-
-                        <label class="form-check-label text-light" for="travelUpSwitch">Travel Up</label>
-                        <input class="form-check-input me-4" type="checkbox" role="switch" id="travelUpSwitch"
-                               oninput="tree.readProperties()">
-
-                    </div>
-
-                    <div class="d-flex flex-row mt-3 ps-3 align-items-center justify-content-between form-check form-switch"
-                         style="width:85%" title="Makes L-Shaped connections illegal (like in-game)">
-
-                        <label class="form-check-label text-light" for="strictAllocationSwitch">Strict
-                            Allocation</label>
-                        <input class="form-check-input me-4" type="checkbox" role="switch" id="strictAllocationSwitch"
-                               oninput="tree.readProperties()">
-
-                    </div>
-
-                    <div class="d-flex flex-row mt-3 ps-3 align-items-center justify-content-between form-check form-switch"
-                         style="width:85%" title="Feels warm to the touch">
-
-                        <label class="form-check-label text-light" for="altIconSwitch">Extra Ability Icons</label>
-                        <input class="form-check-input me-4" type="checkbox" role="switch" id="altIconSwitch"
-                               oninput="tree.readProperties()">
-
-                    </div>
-
-                </div>
+              <button type="button" class="btn btn-primary mt-2 flex-grow-1" style="overflow: hidden"
+                      onclick="tree.loadEmptyTree()" title="Completely clears tree and settings">Reset
+              </button>
 
             </div>
 
-        </form>
+            <div class="d-flex flex-row">
 
-    </div>
+              <button type="button" class="btn btn-primary mt-2 me-1 col" style="overflow: hidden"
+                      onclick="tree.removeAllAbilityNodes()"
+                      title="Removes all abilities from the tree (but not from the menu)">Clear abilities
+              </button>
+
+              <button type="button" class="btn btn-primary mt-2 col" style="overflow: hidden"
+                      onclick="tree.removeAllTravelNodes()" title="Removes all connections from the tree">
+                Clear paths
+              </button>
+
+            </div>
+            <div class="d-flex flex-row">
+
+              <button type="button" class="btn btn-primary mt-2 col" style="overflow: hidden"
+                      onclick="tree.autoformatAbilityNames()"
+                      title="Reformats ability names to match in-game color">Autoformat ability names
+              </button>
+
+            </div>
+
+          </div>
+
+        </div>
+
+        <div class="col-xs-12 col-sm-6 col-lg-3 pt-3 d-flex flex-column align-items-center">
+
+          <div class="d-flex flex-row ps-3 align-items-center justify-content-between" style="width:85%">
+
+            <div class="me-5 text-light"><label for="maxAbilityPoints" class="form-label">Ability
+              Points</label></div>
+            <div><input type="number" class="form-control integer settingNumberInput" id="maxAbilityPoints"
+                        onchange="tree.readProperties()"></div>
+
+          </div>
+
+          <div class="d-flex flex-row pt-3 ps-3 align-items-center justify-content-between" style="width:85%">
+
+            <div class="me-5 text-light"><label for="treePages" class="form-label">Vertical Pages</label>
+            </div>
+            <div><input type="number" class="form-control integer settingNumberInput" id="treePages"
+                        onchange="tree.readProperties()"></div>
+
+          </div>
+
+          <div class="d-flex flex-row pt-3 ps-3 align-items-center justify-content-between" style="width:85%">
+
+            <div class="me-5 text-light"><label for="horizontalPages" class="form-label">Horizontal
+              Pages</label></div>
+            <div><input type="number" class="form-control integer settingNumberInput" id="horizontalPages"
+                        disabled onchange="tree.readProperties()"></div>
+
+          </div>
+
+        </div>
+
+        <div class="col-xs-12 col-sm-6 col-lg-3 pt-3 d-flex flex-column align-items-center">
+
+          <div class="d-flex flex-row ps-3 align-items-center justify-content-between" style="width:85%">
+
+            <div class="me-5 text-light"><label for="rowsPerPage" class="form-label">Rows Per Page</label>
+            </div>
+            <div><input type="number" class="form-control integer settingNumberInput" id="rowsPerPage"
+                        onchange="tree.readProperties()"></div>
+
+          </div>
+
+          <div class="d-flex flex-row pt-3 ps-3 align-items-center justify-content-between" style="width:85%">
+
+            <div class="me-5 text-light"><label for="pagesDisplayed" class="form-label">Pages
+              displayed</label></div>
+            <div><input type="number" class="form-control integer settingNumberInput" id="pagesDisplayed"
+                        onchange="tree.readProperties()"></div>
+
+          </div>
+
+          <div class="d-flex flex-row pt-3 ps-3 align-items-center justify-content-between" style="width:85%">
+
+            <div class="me-5 text-light"><label for="startingPage" class="form-label">Starting Page</label>
+            </div>
+            <div><input type="number" class="form-control integer settingNumberInput" id="startingPage"
+                        onchange="tree.readProperties()" disabled></div>
+
+          </div>
+
+        </div>
+
+        <div class="col-xs-12 col-sm-6 col-lg-3 pt-4 d-flex flex-column align-items-center">
+
+          <div class="d-flex flex-row ps-3 align-items-center justify-content-between form-check form-switch"
+               style="width:85%" title="Whether left and right borders can connect">
+
+            <label class="form-check-label text-light" for="loopTreeSwitch">Loop tree</label>
+            <input class="form-check-input me-4" type="checkbox" role="switch" id="loopTreeSwitch"
+                   oninput="tree.readProperties()">
+
+          </div>
+
+          <div class="d-flex flex-row mt-3 ps-3 align-items-center justify-content-between form-check form-switch"
+               style="width:85%" title="Allows allocating nodes directly above">
+
+            <label class="form-check-label text-light" for="travelUpSwitch">Travel Up</label>
+            <input class="form-check-input me-4" type="checkbox" role="switch" id="travelUpSwitch"
+                   oninput="tree.readProperties()">
+
+          </div>
+
+          <div class="d-flex flex-row mt-3 ps-3 align-items-center justify-content-between form-check form-switch"
+               style="width:85%" title="Makes L-Shaped connections illegal (like in-game)">
+
+            <label class="form-check-label text-light" for="strictAllocationSwitch">Strict
+              Allocation</label>
+            <input class="form-check-input me-4" type="checkbox" role="switch" id="strictAllocationSwitch"
+                   oninput="tree.readProperties()">
+
+          </div>
+
+          <div class="d-flex flex-row mt-3 ps-3 align-items-center justify-content-between form-check form-switch"
+               style="width:85%" title="Feels warm to the touch">
+
+            <label class="form-check-label text-light" for="altIconSwitch">Extra Ability Icons</label>
+            <input class="form-check-input me-4" type="checkbox" role="switch" id="altIconSwitch"
+                   oninput="tree.readProperties()">
+
+          </div>
+
+        </div>
+
+      </div>
+
+    </form>
+
+  </div>
 
 </section>
 
 <section class="mt-2 pb-2" oncontextmenu="event.preventDefault()">
 
-    <div class="row justify-content-center ms-2 me-2">
+  <div class="row justify-content-center ms-2 me-2">
 
-        <div class="col-xs-12 col-sm-12 col-md-6 p-0" style="max-width: 500px;">
+    <div class="col-xs-12 col-sm-12 col-md-6 p-0" style="max-width: 500px;">
 
-            <div class="text-center col shown-on-single-horizontal-page">
+      <div class="text-center col shown-on-single-horizontal-page">
 
-                <img src="assets/img/background/page_up.png" class="page-up-arrow" width="auto" height="40"
-                     onclick="tree.incrementVerticalPage(-1)">
-                <img src="assets/img/background/orb_edit.png" class="orb-edit shown-on-tree-edit" width="auto"
-                     height="40" onclick="tree.setMode(false)">
-                <img src="assets/img/background/orb_allocate.png" class="orb-allocate shown-on-allocation" width="auto"
-                     height="40" onclick="tree.setMode(true)">
-                <img src="assets/img/background/page_down.png" class="page-down-arrow" width="auto" height="40"
-                     onclick="tree.incrementVerticalPage(1)">
+        <img src="assets/img/background/page_up.png" class="page-up-arrow" width="auto" height="40"
+             onclick="tree.incrementVerticalPage(-1)">
+        <img src="assets/img/background/orb_edit.png" class="orb-edit shown-on-tree-edit" width="auto"
+             height="40" onclick="tree.setMode(false)">
+        <img src="assets/img/background/orb_allocate.png" class="orb-allocate shown-on-allocation" width="auto"
+             height="40" onclick="tree.setMode(true)">
+        <img src="assets/img/background/page_down.png" class="page-down-arrow" width="auto" height="40"
+             onclick="tree.incrementVerticalPage(1)">
 
-            </div>
+      </div>
 
-            <div class="text-center col shown-on-multi-horizontal-page">
+      <div class="text-center col shown-on-multi-horizontal-page">
 
-                <img src="assets/img/background/page_up.png" class="page-up-arrow" width="auto" height="40"
-                     onclick="tree.incrementVerticalPage(-1)">
-                <img src="assets/img/background/page_down.png" class="page-down-arrow" width="auto" height="40"
-                     onclick="tree.incrementVerticalPage(1)">
-                <img src="assets/img/background/orb_edit.png" class="orb-edit shown-on-tree-edit" width="auto"
-                     height="40" onclick="tree.setMode(false)">
-                <img src="assets/img/background/orb_allocate.png" class="orb-allocate shown-on-allocation" width="auto"
-                     height="40" onclick="tree.setMode(true)">
-                <img src="assets/img/background/page_left.png" class="page-left-arrow" width="auto" height="40"
-                     onclick="tree.incrementHorizontalPage(-1)">
-                <img src="assets/img/background/page_right.png" class="page-right-arrow" width="auto" height="40"
-                     onclick="tree.incrementHorizontalPage(1)">
+        <img src="assets/img/background/page_up.png" class="page-up-arrow" width="auto" height="40"
+             onclick="tree.incrementVerticalPage(-1)">
+        <img src="assets/img/background/page_down.png" class="page-down-arrow" width="auto" height="40"
+             onclick="tree.incrementVerticalPage(1)">
+        <img src="assets/img/background/orb_edit.png" class="orb-edit shown-on-tree-edit" width="auto"
+             height="40" onclick="tree.setMode(false)">
+        <img src="assets/img/background/orb_allocate.png" class="orb-allocate shown-on-allocation" width="auto"
+             height="40" onclick="tree.setMode(true)">
+        <img src="assets/img/background/page_left.png" class="page-left-arrow" width="auto" height="40"
+             onclick="tree.incrementHorizontalPage(-1)">
+        <img src="assets/img/background/page_right.png" class="page-right-arrow" width="auto" height="40"
+             onclick="tree.incrementHorizontalPage(1)">
 
-            </div>
+      </div>
 
-            <div class="w-100 h-auto"
-                 style="aspect-ratio: 406 / 44; background-image: url(assets/img/background/tree_top.png); background-repeat: no-repeat; background-size: 100% auto;">
+      <div class="w-100 h-auto"
+           style="aspect-ratio: 406 / 44; background-image: url(assets/img/background/tree_top.png); background-repeat: no-repeat; background-size: 100% auto;">
 
-            </div>
+      </div>
 
-            <div class="w-100 h-auto d-flex flex-row"
-                 style="background-image: url(assets/img/background/tree_scroll.png); background-repeat: repeat-y; background-size: 100% auto;">
+      <div class="w-100 h-auto d-flex flex-row"
+           style="background-image: url(assets/img/background/tree_scroll.png); background-repeat: repeat-y; background-size: 100% auto;">
 
-                <div style="width: calc(100% / 406 * 32);" onpointerenter="tree.continueEditWithloopedNode(-1)">
-
-                </div>
-
-                <table class="w-100 m-0" style="table-layout: fixed"
-                       onwheel="event.preventDefault(); tree.incrementVerticalPage( event.deltaY > 0 ? 1 : -1 )">
-
-                    <tbody id="treeTableBody"></tbody>
-
-                </table>
-
-                <div style="width: calc(100% / 406 * 34);" onpointerenter="tree.continueEditWithloopedNode(1)"
-                     id="rightTreeBoundary">
-
-                </div>
-
-            </div>
-
-            <div class="w-100 h-auto"
-                 style="aspect-ratio: 406 / 44; background-image: url(assets/img/background/tree_bot.png); background-repeat: no-repeat; background-size: 100% auto;">
-
-            </div>
-
-            <div class="text-center col shown-on-single-horizontal-page">
-
-                <img src="assets/img/background/page_up.png" class="page-up-arrow" width="auto" height="40"
-                     onclick="tree.incrementVerticalPage(-1)">
-                <img src="assets/img/background/orb_edit.png" class="orb-edit shown-on-tree-edit" width="auto"
-                     height="40" onclick="tree.setMode(false)">
-                <img src="assets/img/background/orb_allocate.png" class="orb-allocate shown-on-allocation" width="auto"
-                     height="40" onclick="tree.setMode(true)">
-                <img src="assets/img/background/page_down.png" class="page-down-arrow" width="auto" height="40"
-                     onclick="tree.incrementVerticalPage(1)">
-
-            </div>
-
-            <div class="text-center col shown-on-multi-horizontal-page">
-
-                <img src="assets/img/background/page_up.png" class="page-up-arrow" width="auto" height="40"
-                     onclick="tree.incrementVerticalPage(-1)">
-                <img src="assets/img/background/page_down.png" class="page-down-arrow" width="auto" height="40"
-                     onclick="tree.incrementVerticalPage(1)">
-                <img src="assets/img/background/orb_edit.png" class="orb-edit shown-on-tree-edit" width="auto"
-                     height="40" onclick="tree.setMode(false)">
-                <img src="assets/img/background/orb_allocate.png" class="orb-allocate shown-on-allocation" width="auto"
-                     height="40" onclick="tree.setMode(true)">
-                <img src="assets/img/background/page_left.png" class="page-left-arrow" width="auto" height="40"
-                     onclick="tree.incrementHorizontalPage(-1)">
-                <img src="assets/img/background/page_right.png" class="page-right-arrow" width="auto" height="40"
-                     onclick="tree.incrementHorizontalPage(1)">
-
-            </div>
+        <div style="width: calc(100% / 406 * 32);" onpointerenter="tree.continueEditWithloopedNode(-1)">
 
         </div>
 
-        <div class="d-flex flex-column col-xs-12 col-sm-12 col-md-5 col-lg-5 ms-md-4 p-0" style="max-width: 500px;">
+        <table class="w-100 m-0" style="table-layout: fixed"
+               onwheel="event.preventDefault(); tree.incrementVerticalPage( event.deltaY > 0 ? 1 : -1 )">
 
-            <div class="normal-container shown-on-tree-edit">
+          <tbody id="treeTableBody"></tbody>
 
-                <div class="d-flex justify-content-end align-items-center ps-2 pe-2 mt-1">
+        </table>
 
-                    <div id="neutralContainer" class="mt-1 overflow-hidden rtl"></div>
-
-                    <div class="flex-fill"></div>
-
-                    <div class="text-light ms-2">
-
-                        ARCHETYPES
-
-                    </div>
-
-                    <button class="btn btn-secondary btn-sm ms-2" data-bs-toggle="modal"
-                            data-bs-target="#archetypeModal" onclick="tree.editArchetype()">
-                        +
-                    </button>
-
-                </div>
-
-                <div class="ms-2 me-2 mt-1 mb-1 overflow-auto" style="max-height: 108px;" id="archetypeContainer"></div>
-
-            </div>
-
-            <div class="flex-grow-1 position-relative mt-2 mb-2 shown-on-tree-edit" style="min-height: 400px;">
-
-                <div class="position-absolute normal-container" style="left: 0; top: 0; width: 100%; height: 100%">
-
-                    <div class="d-flex justify-content-end align-items-center ps-2 pe-2 mt-2">
-
-                        <input type="text" class="generic-background text-light" style="min-width: 60px;"
-                               id="abilitySearch" placeholder="Search..."
-                               oninput="tree.selectedAbility = -1; tree.renderAbilities()">
-
-                        <div class="me-auto ms-2">
-
-                            <input class="btn-check" type="checkbox" id="notOnTreeFilter" hidden
-                                   style="position: absolute;"
-                                   oninput="tree.selectedAbility = -1; tree.renderAbilities();" checked="true">
-                            <label class="btn btn-outline-success" style="height: 25px; width: 25px;"
-                                   for="notOnTreeFilter" title="Filter abilities that are not on the tree"><span
-                                    style="position: relative; top: -18px; left: -13.5px; font-size: 30px;">❁</span></label>
-
-                        </div>
-
-                        <div class="text-light ms-2">
-
-                            ABILITIES
-
-                        </div>
-
-                        <button class="btn btn-secondary btn-sm ms-2" data-bs-toggle="modal"
-                                data-bs-target="#abilityModal" onclick="tree.editAbility()">
-                            +
-                        </button>
-
-                    </div>
-
-                    <div class="m-2 overflow-auto position-relative" style="height: calc(100% - 51px)"
-                         id="abilityContainer"></div>
-
-                </div>
-
-            </div>
-
-            <div class="shown-on-allocation normal-container">
-
-                <div class="d-flex justify-content-end align-items-center ps-2 pe-2 mt-1 mb-2">
-
-                    <div class="text-light me-2 text-center w-50">
-                        Starting Ability:
-                    </div>
-
-                    <select class="form-select mt-2 focusable" id="startingAbilityInput" aria-label="Starting ability"
-                            oninput="tree.selectStartingAbility(this.value)"></select>
-
-                </div>
-
-            </div>
-
-            <div class="shown-on-allocation mt-2 normal-container">
-
-                <div class="m-2 mb-1 overflow-auto" style="max-height: 204px;" id="archetypeCountContainer"></div>
-
-            </div>
-
-            <div class="flex-grow-1 position-relative mt-2 mb-2 shown-on-allocation" style="min-height: 400px;">
-
-                <div class="position-absolute normal-container" style="left: 0; top: 0; width: 100%; height: 100%">
-
-                    <div class="d-flex justify-content-between align-items-center ps-2 pe-2 mt-2">
-
-                        <div class="minecraftTooltip pt-2 overflow-hidden col" style="background: none; border: none;">
-
-                            <span class="shown-on-allocation" id="abilityPointsUsed"></span>
-
-                        </div>
-
-                        <div class="text-light ms-2 me-2">
-                            TREES
-                        </div>
-
-                        <button class="btn btn-secondary btn-sm" data-bs-toggle="modal" data-bs-target="#treeModal"
-                                onclick="tree.editTree()">
-                            +
-                        </button>
-
-                    </div>
-
-                    <div class="m-2 overflow-auto position-relative" style="height: calc(100% - 51px)"
-                         id="treeNameContainer"></div>
-
-                </div>
-
-            </div>
+        <div style="width: calc(100% / 406 * 34);" onpointerenter="tree.continueEditWithloopedNode(1)"
+             id="rightTreeBoundary">
 
         </div>
+
+      </div>
+
+      <div class="w-100 h-auto"
+           style="aspect-ratio: 406 / 44; background-image: url(assets/img/background/tree_bot.png); background-repeat: no-repeat; background-size: 100% auto;">
+
+      </div>
+
+      <div class="text-center col shown-on-single-horizontal-page">
+
+        <img src="assets/img/background/page_up.png" class="page-up-arrow" width="auto" height="40"
+             onclick="tree.incrementVerticalPage(-1)">
+        <img src="assets/img/background/orb_edit.png" class="orb-edit shown-on-tree-edit" width="auto"
+             height="40" onclick="tree.setMode(false)">
+        <img src="assets/img/background/orb_allocate.png" class="orb-allocate shown-on-allocation" width="auto"
+             height="40" onclick="tree.setMode(true)">
+        <img src="assets/img/background/page_down.png" class="page-down-arrow" width="auto" height="40"
+             onclick="tree.incrementVerticalPage(1)">
+
+      </div>
+
+      <div class="text-center col shown-on-multi-horizontal-page">
+
+        <img src="assets/img/background/page_up.png" class="page-up-arrow" width="auto" height="40"
+             onclick="tree.incrementVerticalPage(-1)">
+        <img src="assets/img/background/page_down.png" class="page-down-arrow" width="auto" height="40"
+             onclick="tree.incrementVerticalPage(1)">
+        <img src="assets/img/background/orb_edit.png" class="orb-edit shown-on-tree-edit" width="auto"
+             height="40" onclick="tree.setMode(false)">
+        <img src="assets/img/background/orb_allocate.png" class="orb-allocate shown-on-allocation" width="auto"
+             height="40" onclick="tree.setMode(true)">
+        <img src="assets/img/background/page_left.png" class="page-left-arrow" width="auto" height="40"
+             onclick="tree.incrementHorizontalPage(-1)">
+        <img src="assets/img/background/page_right.png" class="page-right-arrow" width="auto" height="40"
+             onclick="tree.incrementHorizontalPage(1)">
+
+      </div>
 
     </div>
+
+    <div class="d-flex flex-column col-xs-12 col-sm-12 col-md-5 col-lg-5 ms-md-4 p-0" style="max-width: 500px;">
+
+      <div class="normal-container shown-on-tree-edit">
+
+        <div class="d-flex justify-content-end align-items-center ps-2 pe-2 mt-1">
+
+          <div id="neutralContainer" class="mt-1 overflow-hidden rtl"></div>
+
+          <div class="flex-fill"></div>
+
+          <div class="text-light ms-2">
+
+            ARCHETYPES
+
+          </div>
+
+          <button class="btn btn-secondary btn-sm ms-2" data-bs-toggle="modal"
+                  data-bs-target="#archetypeModal" onclick="tree.editArchetype()">
+            +
+          </button>
+
+        </div>
+
+        <div class="ms-2 me-2 mt-1 mb-1 overflow-auto" style="max-height: 108px;" id="archetypeContainer"></div>
+
+      </div>
+
+      <div class="flex-grow-1 position-relative mt-2 mb-2 shown-on-tree-edit" style="min-height: 400px;">
+
+        <div class="position-absolute normal-container" style="left: 0; top: 0; width: 100%; height: 100%">
+
+          <div class="d-flex justify-content-end align-items-center ps-2 pe-2 mt-2">
+
+            <input type="text" class="generic-background text-light" style="min-width: 60px;"
+                   id="abilitySearch" placeholder="Search..."
+                   oninput="tree.selectedAbility = -1; tree.renderAbilities()">
+
+            <div class="me-auto ms-2">
+
+              <input class="btn-check" type="checkbox" id="notOnTreeFilter" hidden
+                     style="position: absolute;"
+                     oninput="tree.selectedAbility = -1; tree.renderAbilities();" checked="true">
+              <label class="btn btn-outline-success" style="height: 25px; width: 25px;"
+                     for="notOnTreeFilter" title="Filter abilities that are not on the tree"><span
+                  style="position: relative; top: -18px; left: -13.5px; font-size: 30px;">❁</span></label>
+
+            </div>
+
+            <div class="text-light ms-2">
+
+              ABILITIES
+
+            </div>
+
+            <button class="btn btn-secondary btn-sm ms-2" data-bs-toggle="modal"
+                    data-bs-target="#abilityModal" onclick="tree.editAbility()">
+              +
+            </button>
+
+          </div>
+
+          <div class="m-2 overflow-auto position-relative" style="height: calc(100% - 51px)"
+               id="abilityContainer"></div>
+
+        </div>
+
+      </div>
+
+      <div class="shown-on-allocation normal-container">
+
+        <div class="d-flex justify-content-end align-items-center ps-2 pe-2 mt-1 mb-2">
+
+          <div class="text-light me-2 text-center w-50">
+            Starting Ability:
+          </div>
+
+          <select class="form-select mt-2 focusable" id="startingAbilityInput" aria-label="Starting ability"
+                  oninput="tree.selectStartingAbility(this.value)"></select>
+
+        </div>
+
+      </div>
+
+      <div class="shown-on-allocation mt-2 normal-container">
+
+        <div class="m-2 mb-1 overflow-auto" style="max-height: 204px;" id="archetypeCountContainer"></div>
+
+      </div>
+
+      <div class="flex-grow-1 position-relative mt-2 mb-2 shown-on-allocation" style="min-height: 400px;">
+
+        <div class="position-absolute normal-container" style="left: 0; top: 0; width: 100%; height: 100%">
+
+          <div class="d-flex justify-content-between align-items-center ps-2 pe-2 mt-2">
+
+            <div class="minecraftTooltip pt-2 overflow-hidden col" style="background: none; border: none;">
+
+              <span class="shown-on-allocation" id="abilityPointsUsed"></span>
+
+            </div>
+
+            <div class="text-light ms-2 me-2">
+              TREES
+            </div>
+
+            <button class="btn btn-secondary btn-sm" data-bs-toggle="modal" data-bs-target="#treeModal"
+                    onclick="tree.editTree()">
+              +
+            </button>
+
+          </div>
+
+          <div class="m-2 overflow-auto position-relative" style="height: calc(100% - 51px)"
+               id="treeNameContainer"></div>
+
+        </div>
+
+      </div>
+
+    </div>
+
+  </div>
 
 </section>
 
 <section class="mt-2 d-flex p-3 justify-content-center">
 
-    <div class="text-light d-flex flex-column justify-content-between align-items-center" style="width: 100px">
+  <div class="text-light d-flex flex-column justify-content-between align-items-center" style="width: 100px">
 
-        <div class="d-flex flex-column align-items-center">
+    <div class="d-flex flex-column align-items-center">
 
-            <div class="fw-bold mb-1">HISTORY</div>
+      <div class="fw-bold mb-1">HISTORY</div>
 
-            <div>
+      <div>
 
-                <button title="Undo" onclick="tree.loadStateIncrementally(-1)">&lt</button>
+        <button title="Undo" onclick="tree.loadStateIncrementally(-1)">&lt</button>
 
-                <button title="Redo" onclick="tree.loadStateIncrementally(1)">&gt</button>
+        <button title="Redo" onclick="tree.loadStateIncrementally(1)">&gt</button>
 
-            </div>
-
-        </div>
-
-        <div class="mt-5 mb-2 d-flex flex-column align-items-center">
-
-            <div class="text-light"><label for="maxSaveStates" class="form-label">Record last</label></div>
-
-            <div><input type="number" value="10" class="form-control integer" style="width: 80px" id="maxSaveStates">
-            </div>
-
-            <div class="mt-1">changes</div>
-
-        </div>
+      </div>
 
     </div>
 
+    <div class="mt-5 mb-2 d-flex flex-column align-items-center">
+
+      <div class="text-light"><label for="maxSaveStates" class="form-label">Record last</label></div>
+
+      <div><input type="number" value="10" class="form-control integer" style="width: 80px" id="maxSaveStates">
+      </div>
+
+      <div class="mt-1">changes</div>
+
     </div>
 
-    <div class="ms-3 p-1 text-light overflow-auto generic-background" id="historyContainer"
-         style="width: 100%; max-height: 352px; max-width: 900px">
+  </div>
 
-    </div>
+  </div>
+
+  <div class="ms-3 p-1 text-light overflow-auto generic-background" id="historyContainer"
+       style="width: 100%; max-height: 352px; max-width: 900px">
+
+  </div>
 
 </section>
 
 <div class="modal" id="loadModal" tabindex="-1" aria-labelledby="Load Modal" aria-hidden="true">
-    <div class="modal-dialog">
+  <div class="modal-dialog">
 
-        <div class="modal-content">
+    <div class="modal-content">
 
-            <div class="modal-header text-light" data-bs-theme="dark">
-                <h1 class="modal-title fs-5 overflow-hidden text-nowrap" id="exampleModalLabel">Load a custom tree</h1>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
+      <div class="modal-header text-light" data-bs-theme="dark">
+        <h1 class="modal-title fs-5 overflow-hidden text-nowrap" id="exampleModalLabel">Load a custom tree</h1>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
 
-            <div class="modal-body">
+      <div class="modal-body">
 
-                <div id="loadinterface">
+        <div id="loadinterface">
 
-                    <input type="text" id="json-container" class="overflow-hidden generic-background text-light"
-                           style="min-width: 40px; width: 100%" onfocus="this.value = ''"
-                           placeholder="Paste the JSON here"
-                           onpaste="setTimeout( () => {
+          <input type="text" id="json-container" class="overflow-hidden generic-background text-light"
+                 style="min-width: 40px; width: 100%" onfocus="this.value = ''"
+                 placeholder="Paste the JSON here"
+                 onpaste="setTimeout( () => {
                   try {
                     tree.loadTreeFromField();
                     loadModal.hide();
@@ -529,392 +528,385 @@
                   };
                   this.value = '';
                 }, 0)"
-                    >
+          >
 
-                    <div class="d-flex mt-2 mb-2">
+          <div class="d-flex mt-2 mb-2">
 
-                        <button type="button" class="btn btn-primary me-2 flex-fill"
-                                onclick="document.getElementById('autofileinput').click()"
-                                onmouseover="changeHidden(false, [], ['selectfiletip']); changeHidden(true, [], ['browselibrarytip']);"
-                        >Select a file
-                        </button>
-                        <input hidden type="file" id="autofileinput" accept=".json,.txt"
-                               onchange="tree.loadTreeFromFile(this.files[0]); loadModal.hide()"/>
+            <button type="button" class="btn btn-primary me-2 flex-fill"
+                    onclick="document.getElementById('autofileinput').click()"
+                    onmouseover="changeHidden(false, [], ['selectfiletip']); changeHidden(true, [], ['browselibrarytip']);"
+            >Select a file
+            </button>
+            <input hidden type="file" id="autofileinput" accept=".json,.txt"
+                   onchange="tree.loadTreeFromFile(this.files[0]); loadModal.hide()"/>
 
-                        <button type="button" class="btn btn-primary flex-fill"
-                                onmouseover="changeHidden(false, [], ['browselibrarytip']); changeHidden(true, [], ['selectfiletip']);"
-                                onclick="changeHidden(false, [], ['libraryinterface']); changeHidden(true, [], ['loadinterface']); custom.renderSearchResults();">
-                            Browse library
-                        </button>
+            <button type="button" class="btn btn-primary flex-fill"
+                    onmouseover="changeHidden(false, [], ['browselibrarytip']); changeHidden(true, [], ['selectfiletip']);"
+                    onclick="changeHidden(false, [], ['libraryinterface']); changeHidden(true, [], ['loadinterface']); custom.renderSearchResults();">
+              Browse library
+            </button>
 
-                    </div>
+          </div>
 
-                    <div class="minecraftTooltip p-2 hide-cursor-coarse hide-cursor-none">
+          <div class="minecraftTooltip p-2 hide-cursor-coarse hide-cursor-none">
 
-                        <div id="selectfiletip">
-                            <p>Select a file from your device</p>
-                            <p>TIP: Dragging and dropping the file onto the page also works</p>
-                        </div>
-
-                        <div id="browselibrarytip" hidden>
-                            <p>Custom classes and reworks made by the community</p>
-                            <p>TIP: If you want your work to be featured, contact me (punscake) on discord</p>
-                        </div>
-
-                    </div>
-
-                </div>
-
-                <div id="libraryinterface" hidden>
-
-
-                    <input type="text" id="customSearch" class="overflow-hidden generic-background text-light"
-                           style="min-width: 40px; width: 100%" placeholder="Search..."
-                           oninput="custom.renderSearchResults()"
-                    >
-
-                    <div class="d-flex mt-2 mb-2">
-
-                        <select class="form-select form-select-sm me-3" aria-label="Class filter" id="customClassSelect"
-                                oninput="custom.renderSearchResults()" title="Select reworked class">
-
-                            <option value="all">All</option>
-                            <option value="archer">Archer</option>
-                            <option value="warrior">Warrior</option>
-                            <option value="assassin">Assassin</option>
-                            <option value="mage">Mage</option>
-                            <option value="shaman">Shaman</option>
-                            <option value="custom">Custom</option>
-
-                        </select>
-
-                        <button type="button" class="btn btn-primary col-5 ms-2"
-                                onmouseover="changeHidden(false, [], ['browselibrarytip']); changeHidden(true, [], ['selectfiletip']);"
-                                onclick="changeHidden(false, [], ['loadinterface']); changeHidden(true, [], ['libraryinterface']);"
-                        >Back
-                        </button>
-
-                    </div>
-
-                    <div id="customPresetContainer" class="p-2 generic-background"
-                         style="border-radius: 2px; max-height: 50vh; overflow: auto;">
-
-                    </div>
-
-
-                </div>
-
+            <div id="selectfiletip">
+              <p>Select a file from your device</p>
+              <p>TIP: Dragging and dropping the file onto the page also works</p>
             </div>
 
-            </form>
+            <div id="browselibrarytip" hidden>
+              <p>Custom classes and reworks made by the community</p>
+              <p>TIP: If you want your work to be featured, contact me (punscake) on discord</p>
+            </div>
+
+          </div>
 
         </div>
 
+        <div id="libraryinterface" hidden>
+
+
+          <input type="text" id="customSearch" class="overflow-hidden generic-background text-light"
+                 style="min-width: 40px; width: 100%" placeholder="Search..."
+                 oninput="custom.renderSearchResults()"
+          >
+
+          <div class="d-flex mt-2 mb-2">
+
+            <select class="form-select form-select-sm me-3" aria-label="Class filter" id="customClassSelect"
+                    oninput="custom.renderSearchResults()" title="Select reworked class">
+
+              <option value="all">All</option>
+              <option value="archer">Archer</option>
+              <option value="warrior">Warrior</option>
+              <option value="assassin">Assassin</option>
+              <option value="mage">Mage</option>
+              <option value="shaman">Shaman</option>
+              <option value="custom">Custom</option>
+
+            </select>
+
+            <button type="button" class="btn btn-primary col-5 ms-2"
+                    onmouseover="changeHidden(false, [], ['browselibrarytip']); changeHidden(true, [], ['selectfiletip']);"
+                    onclick="changeHidden(false, [], ['loadinterface']); changeHidden(true, [], ['libraryinterface']);"
+            >Back
+            </button>
+
+          </div>
+
+          <div id="customPresetContainer" class="p-2 generic-background"
+               style="border-radius: 2px; max-height: 50vh; overflow: auto;">
+
+          </div>
+
+
+        </div>
+
+      </div>
+
+      </form>
+
     </div>
+
+  </div>
 
 </div>
 
 <div class="modal fade" id="archetypeModal" tabindex="-1" aria-labelledby="Archetype Edit" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered"
-         onpointerdown="event.target.classList.contains('focusable') ? function() {} : event.preventDefault()">
+  <div class="modal-dialog modal-dialog-centered"
+       onpointerdown="event.target.classList.contains('focusable') ? function() {} : event.preventDefault()">
 
-        <div class="modal-content">
+    <div class="modal-content">
 
-            <form>
-                <!-- Prevent implicit submission of the form -->
-                <button type="submit" disabled style="display: none" aria-hidden="true"></button>
+      <form>
+        <!-- Prevent implicit submission of the form -->
+        <button type="submit" disabled style="display: none" aria-hidden="true"></button>
 
-                <div class="modal-header justify-content-end">
+        <div class="modal-header justify-content-end">
 
-                    <h1 class="modal-title fs-5 text-light ms-1 me-auto" id="archetypeModalLabel">Archetype</h1>
-                    <div>
+          <h1 class="modal-title fs-5 text-light ms-1 me-auto" id="archetypeModalLabel">Archetype</h1>
+          <div>
 
-                        <div class="colorContainer" style="text-align: end;"></div>
+            <div class="colorContainer" style="text-align: end;"></div>
 
-                        <div class="row justify-content-end mt-2" style="text-align: end;">
-                            <!--<button type="button" class="btn btn-secondary me-2 medium-btn" style="width: 100px;" onclick="utils.insertStringBeforeSelected(utils.preferredDelimiter + 'r')">Reset style</button>-->
-                            <button type="button" class="btn btn-secondary me-2 fw-bold medium-btn" title="Bold"
-                                    onclick="utils.insertStringBeforeSelected(utils.preferredDelimiter + 'l')">B
-                            </button>
-                            <button type="button" class="btn btn-secondary me-2 fst-italic medium-btn" title="Italic"
-                                    onclick="utils.insertStringBeforeSelected(utils.preferredDelimiter + 'o')">I
-                            </button>
-                            <button type="button" class="btn btn-secondary me-2 text-decoration-underline medium-btn"
-                                    title="Underline"
-                                    onclick="utils.insertStringBeforeSelected(utils.preferredDelimiter + 'n')">U
-                            </button>
-                            <button type="button" class="btn btn-secondary me-2 text-decoration-line-through medium-btn"
-                                    title="Strikethrough"
-                                    onclick="utils.insertStringBeforeSelected(utils.preferredDelimiter + 'm')">S
-                            </button>
-                            <input type="color" style="height: 25px; width: 25px;"
-                                   class="form-control form-control-color me-3" value="#18f7d1" title="Custom color"
-                                   onchange="utils.insertStringBeforeSelected(utils.preferredDelimiter + value)">
-                        </div>
+            <div class="row justify-content-end mt-2" style="text-align: end;">
+              <!--<button type="button" class="btn btn-secondary me-2 medium-btn" style="width: 100px;" onclick="utils.insertStringBeforeSelected(utils.preferredDelimiter + 'r')">Reset style</button>-->
+              <button type="button" class="btn btn-secondary me-2 fw-bold medium-btn" title="Bold"
+                      onclick="utils.insertStringBeforeSelected(utils.preferredDelimiter + 'l')">B
+              </button>
+              <button type="button" class="btn btn-secondary me-2 fst-italic medium-btn" title="Italic"
+                      onclick="utils.insertStringBeforeSelected(utils.preferredDelimiter + 'o')">I
+              </button>
+              <button type="button" class="btn btn-secondary me-2 text-decoration-underline medium-btn"
+                      title="Underline"
+                      onclick="utils.insertStringBeforeSelected(utils.preferredDelimiter + 'n')">U
+              </button>
+              <button type="button" class="btn btn-secondary me-2 text-decoration-line-through medium-btn"
+                      title="Strikethrough"
+                      onclick="utils.insertStringBeforeSelected(utils.preferredDelimiter + 'm')">S
+              </button>
+              <input type="color" style="height: 25px; width: 25px;"
+                     class="form-control form-control-color me-3" value="#18f7d1" title="Custom color"
+                     onchange="utils.insertStringBeforeSelected(utils.preferredDelimiter + value)">
+            </div>
 
-                    </div>
-
-                </div>
-
-                <div class="modal-body">
-
-                    <div class="form-floating">
-
-                        <input type="text" class="form-control focusable" id="archetypeNameInput" autocomplete="off"
-                               placeholder="ex. Boltslinger"
-                               oninput="utils.convertToMinecraftTooltip(value, 'archetypeTooltip')" maxlength="150">
-                        <label class="maxlength-label" for="archetypeNameInput">ex. Boltslinger</label>
-
-                    </div>
-
-                    <div class="mt-3 mb-3" style="background-color: #110111; height: 1px;"></div>
-
-                    <div class="minecraftTooltip overflow-hidden" id="archetypeTooltip"></div>
-
-                </div>
-
-                <div class="modal-footer">
-
-                    <button type="button" class="btn btn-outline-danger focusable" data-bs-dismiss="modal">Close
-                    </button>
-                    <button type="button" class="btn btn-outline-success ms-4 focusable" data-bs-dismiss="modal"
-                            onclick="tree.saveArchetype()">Save
-                    </button>
-
-                </div>
-
-            </form>
+          </div>
 
         </div>
 
+        <div class="modal-body">
+
+          <div class="form-floating">
+
+            <input type="text" class="form-control focusable" id="archetypeNameInput" autocomplete="off"
+                   placeholder="ex. Boltslinger"
+                   oninput="utils.convertToMinecraftTooltip(value, 'archetypeTooltip')" maxlength="150">
+            <label class="maxlength-label" for="archetypeNameInput">ex. Boltslinger</label>
+
+          </div>
+
+          <div class="mt-3 mb-3" style="background-color: #110111; height: 1px;"></div>
+
+          <div class="minecraftTooltip overflow-hidden" id="archetypeTooltip"></div>
+
+        </div>
+
+        <div class="modal-footer">
+
+          <button type="button" class="btn btn-outline-danger focusable" data-bs-dismiss="modal">Close
+          </button>
+          <button type="button" class="btn btn-outline-success ms-4 focusable" data-bs-dismiss="modal"
+                  onclick="tree.saveArchetype()">Save
+          </button>
+
+        </div>
+
+      </form>
+
     </div>
+
+  </div>
 
 </div>
 
 <div class="modal fade modal-lg" id="abilityModal" tabindex="-1" aria-labelledby="Ability Edit" aria-hidden="true"
      data-bs-backdrop="static">
-    <div class="modal-dialog modal-dialog-centered" style="max-width: 600px;"
-         onpointerdown="event.target.classList.contains('focusable') ? function() {} : event.preventDefault()">
+  <div class="modal-dialog modal-dialog-centered" style="max-width: 600px;"
+       onpointerdown="event.target.classList.contains('focusable') ? function() {} : event.preventDefault()">
 
-        <div class="modal-content">
+    <div class="modal-content">
 
-            <form>
-                <!-- Prevent implicit submission of the form -->
-                <button type="submit" disabled style="display: none" aria-hidden="true"></button>
+      <form>
+        <!-- Prevent implicit submission of the form -->
+        <button type="submit" disabled style="display: none" aria-hidden="true"></button>
 
-                <div class="modal-header justify-content-end">
+        <div class="modal-header justify-content-end">
 
-                    <div>
+          <div>
 
-                        <div class="genericUnicodeContainer" style="text-align: end;"></div>
+            <div class="genericUnicodeContainer" style="text-align: end;"></div>
 
-                        <div class="classUnicodeContainer mt-1" style="text-align: end;"></div>
+            <div class="classUnicodeContainer mt-1" style="text-align: end;"></div>
 
-                        <div class="commonAbilityUnicodeContainer mt-1" style="text-align: end;"></div>
+            <div class="commonAbilityUnicodeContainer mt-1" style="text-align: end;"></div>
 
-                        <div class="colorContainer mt-1" style="text-align: end;"></div>
+            <div class="colorContainer mt-1" style="text-align: end;"></div>
 
-                        <div class="row justify-content-end mt-2" style="text-align: end;">
-                            <!--<button type="button" class="btn btn-secondary me-2 medium-btn" style="width: 100px;" onclick="utils.insertStringBeforeSelected(utils.preferredDelimiter + 'r')">Reset style</button>-->
-                            <button type="button" class="btn btn-secondary me-2 fw-bold medium-btn" title="Bold"
-                                    onclick="utils.insertStringBeforeSelected(utils.preferredDelimiter + 'l')">B
-                            </button>
-                            <button type="button" class="btn btn-secondary me-2 fst-italic medium-btn" title="Italic"
-                                    onclick="utils.insertStringBeforeSelected(utils.preferredDelimiter + 'o')">I
-                            </button>
-                            <button type="button" class="btn btn-secondary me-2 text-decoration-underline medium-btn"
-                                    title="Underline"
-                                    onclick="utils.insertStringBeforeSelected(utils.preferredDelimiter + 'n')">U
-                            </button>
-                            <button type="button" class="btn btn-secondary me-2 text-decoration-line-through medium-btn"
-                                    title="Strikethrough"
-                                    onclick="utils.insertStringBeforeSelected(utils.preferredDelimiter + 'm')">S
-                            </button>
-                            <input type="color" style="height: 25px; width: 25px;"
-                                   class="form-control form-control-color me-3" value="#18f7d1" title="Custom color"
-                                   onchange="utils.insertStringBeforeSelected(utils.preferredDelimiter + value)">
-                        </div>
+            <div class="row justify-content-end mt-2" style="text-align: end;">
+              <!--<button type="button" class="btn btn-secondary me-2 medium-btn" style="width: 100px;" onclick="utils.insertStringBeforeSelected(utils.preferredDelimiter + 'r')">Reset style</button>-->
+              <button type="button" class="btn btn-secondary me-2 fw-bold medium-btn" title="Bold"
+                      onclick="utils.insertStringBeforeSelected(utils.preferredDelimiter + 'l')">B
+              </button>
+              <button type="button" class="btn btn-secondary me-2 fst-italic medium-btn" title="Italic"
+                      onclick="utils.insertStringBeforeSelected(utils.preferredDelimiter + 'o')">I
+              </button>
+              <button type="button" class="btn btn-secondary me-2 text-decoration-underline medium-btn"
+                      title="Underline"
+                      onclick="utils.insertStringBeforeSelected(utils.preferredDelimiter + 'n')">U
+              </button>
+              <button type="button" class="btn btn-secondary me-2 text-decoration-line-through medium-btn"
+                      title="Strikethrough"
+                      onclick="utils.insertStringBeforeSelected(utils.preferredDelimiter + 'm')">S
+              </button>
+              <input type="color" style="height: 25px; width: 25px;"
+                     class="form-control form-control-color me-3" value="#18f7d1" title="Custom color"
+                     onchange="utils.insertStringBeforeSelected(utils.preferredDelimiter + value)">
+            </div>
 
-                    </div>
+          </div>
 
-                </div>
+        </div>
 
-                <div class="modal-body">
+        <div class="modal-body">
 
-                    <div class="form-floating">
+          <div class="form-floating">
 
-                        <input type="text" class="form-control focusable" id="abilityNameInput" autocomplete="off"
-                               placeholder="Name" oninput="tree.renderEditorAbilityTooltip()" maxlength="200">
-                        <label class="maxlength-label" for="abilityNameInput">Name</label>
+            <input type="text" class="form-control focusable" id="abilityNameInput" autocomplete="off"
+                   placeholder="Name" oninput="tree.renderEditorAbilityTooltip()" maxlength="200">
+            <label class="maxlength-label" for="abilityNameInput">Name</label>
 
-                    </div>
+          </div>
 
-                    <div class="form-floating mt-2">
+          <div class="form-floating mt-2">
 
                         <textarea type="text" style="min-height: 200px;" class="form-control focusable"
                                   id="abilityDescriptionInput" autocomplete="off" placeholder="Description"
                                   oninput="tree.renderEditorAbilityTooltip()" maxlength="1500"></textarea>
-                        <label class="maxlength-label" for="abilityDescriptionInput">Description</label>
+            <label class="maxlength-label" for="abilityDescriptionInput">Description</label>
 
-                    </div>
+          </div>
 
-                    <div class="btn-group dropup w-100 mt-2">
+          <div class="btn-group dropup w-100 mt-2">
 
-                        <button class="form-select" type="button" data-bs-toggle="dropdown" data-bs-auto-close="outside"
-                                aria-expanded="false" style="text-align: start;" type="button">
-                            Unlocking will block (<span id="abilityBlockCountDisplay"></span>)
-                        </button>
-                        <ul class="dropdown-menu w-100" id="abilityBlockInput"
-                            style="max-height: 363px; overflow-y: auto; overflow-x: hidden;"></ul>
+            <button class="form-select" type="button" data-bs-toggle="dropdown" data-bs-auto-close="outside"
+                    aria-expanded="false" style="text-align: start;" type="button">
+              Unlocking will block (<span id="abilityBlockCountDisplay"></span>)
+            </button>
+            <ul class="dropdown-menu w-100" id="abilityBlockInput"
+                style="max-height: 363px; overflow-y: auto; overflow-x: hidden;"></ul>
 
-                    </div>
+          </div>
 
-                    <select class="form-select mt-2 focusable" id="abilityArchetypeInput" aria-label="Archetype"
-                            oninput="tree.renderEditorAbilityTooltip()"></select>
+          <select class="form-select mt-2 focusable" id="abilityArchetypeInput" aria-label="Archetype"
+                  oninput="tree.renderEditorAbilityTooltip()"></select>
 
-                    <div class="d-flex align-items-center justify-content-between w-100 mt-2 ps-1">
+          <div class="d-flex align-items-center justify-content-between w-100 mt-2 ps-1">
 
-                        <div class="me-5 text-light"><label for="pointsRequiredInput" class="form-label">Points
-                            Required</label></div>
-                        <div><input type="number" min="0" max="8" value="1" class="form-control focusable integer"
-                                    style="width: 80px" id="pointsRequiredInput"
-                                    onchange="tree.renderEditorAbilityTooltip()"></div>
+            <div class="me-5 text-light"><label for="pointsRequiredInput" class="form-label">Points
+              Required</label></div>
+            <div><input type="number" min="0" max="8" value="1" class="form-control focusable integer"
+                        style="width: 80px" id="pointsRequiredInput"
+                        onchange="tree.renderEditorAbilityTooltip()"></div>
 
-                    </div>
+          </div>
 
-                    <div class="d-flex align-items-center justify-content-between w-100 mt-2 ps-1">
+          <div class="d-flex align-items-center justify-content-between w-100 mt-2 ps-1">
 
-                        <div class="me-5 text-light"><label for="archetypePointsRequiredInput" class="form-label">Archetype
-                            Points Required</label></div>
-                        <div><input type="number" min="0" max="8" value="0" class="form-control focusable integer"
-                                    style="width: 80px" id="archetypePointsRequiredInput"
-                                    onchange="tree.renderEditorAbilityTooltip()"></div>
+            <div class="me-5 text-light"><label for="archetypePointsRequiredInput" class="form-label">Archetype
+              Points Required</label></div>
+            <div><input type="number" min="0" max="8" value="0" class="form-control focusable integer"
+                        style="width: 80px" id="archetypePointsRequiredInput"
+                        onchange="tree.renderEditorAbilityTooltip()"></div>
 
-                    </div>
+          </div>
 
-                    <select class="form-select mt-2 focusable" id="abilityPrerequiseteInput"
-                            aria-label="Prerequisite ability" oninput="tree.renderEditorAbilityTooltip()"></select>
+          <select class="form-select mt-2 focusable" id="abilityPrerequiseteInput"
+                  aria-label="Prerequisite ability" oninput="tree.renderEditorAbilityTooltip()"></select>
 
-                    <div class="mt-3 mb-3" style="background-color: #110111; height: 1px;"></div>
+          <div class="mt-3 mb-3" style="background-color: #110111; height: 1px;"></div>
 
-                    <div class="minecraftTooltip" id="editAbilityTooltip"></div>
-
-                </div>
-
-                <div class="modal-footer justify-content-between">
-
-                    <div class="d-flex justify-content-between align-items-center flex-fill"
-                         id="abilityTypeInput"></div>
-
-                    <div>
-
-                        <button type="button" class="btn btn-outline-danger focusable" data-bs-dismiss="modal">Close
-                        </button>
-                        <button type="button" class="btn btn-outline-success ms-4 focusable"
-                                onclick="tree.saveAbility()" data-bs-dismiss="modal">Save
-                        </button>
-
-                    </div>
-
-                </div>
-
-            </form>
+          <div class="minecraftTooltip" id="editAbilityTooltip"></div>
 
         </div>
 
+        <div class="modal-footer justify-content-between">
+
+          <div class="d-flex justify-content-between align-items-center flex-fill"
+               id="abilityTypeInput"></div>
+
+          <div>
+
+            <button type="button" class="btn btn-outline-danger focusable" data-bs-dismiss="modal">Close
+            </button>
+            <button type="button" class="btn btn-outline-success ms-4 focusable"
+                    onclick="tree.saveAbility()" data-bs-dismiss="modal">Save
+            </button>
+
+          </div>
+
+        </div>
+
+      </form>
+
     </div>
+
+  </div>
 
 </div>
 
 <div class="modal fade" id="treeModal" tabindex="-1" aria-labelledby="Tree name edit" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered"
-         onpointerdown="event.target.classList.contains('focusable') ? function() {} : event.preventDefault()">
+  <div class="modal-dialog modal-dialog-centered"
+       onpointerdown="event.target.classList.contains('focusable') ? function() {} : event.preventDefault()">
 
-        <div class="modal-content">
+    <div class="modal-content">
 
-            <form>
-                <!-- Prevent implicit submission of the form -->
-                <button type="submit" disabled style="display: none" aria-hidden="true"></button>
+      <form>
+        <!-- Prevent implicit submission of the form -->
+        <button type="submit" disabled style="display: none" aria-hidden="true"></button>
 
-                <div class="modal-header justify-content-end">
+        <div class="modal-header justify-content-end">
 
-                    <h1 class="modal-title fs-5 text-light ms-1 me-auto" id="treeModalLabel">Tree Name</h1>
-                    <div>
+          <h1 class="modal-title fs-5 text-light ms-1 me-auto" id="treeModalLabel">Tree Name</h1>
+          <div>
 
-                        <div class="colorContainer" style="text-align: end;"></div>
+            <div class="colorContainer" style="text-align: end;"></div>
 
-                        <div class="row justify-content-end mt-2" style="text-align: end;">
-                            <!--<button type="button" class="btn btn-secondary me-2 medium-btn" style="width: 100px;" onclick="utils.insertStringBeforeSelected(utils.preferredDelimiter + 'r')">Reset style</button>-->
-                            <button type="button" class="btn btn-secondary me-2 fw-bold medium-btn" title="Bold"
-                                    onclick="utils.insertStringBeforeSelected(utils.preferredDelimiter + 'l')">B
-                            </button>
-                            <button type="button" class="btn btn-secondary me-2 fst-italic medium-btn" title="Italic"
-                                    onclick="utils.insertStringBeforeSelected(utils.preferredDelimiter + 'o')">I
-                            </button>
-                            <button type="button" class="btn btn-secondary me-2 text-decoration-underline medium-btn"
-                                    title="Underline"
-                                    onclick="utils.insertStringBeforeSelected(utils.preferredDelimiter + 'n')">U
-                            </button>
-                            <button type="button" class="btn btn-secondary me-3 text-decoration-line-through medium-btn"
-                                    title="Strikethrough"
-                                    onclick="utils.insertStringBeforeSelected(utils.preferredDelimiter + 'm')">S
-                            </button>
-                            <!--<input type="color" style="height: 25px; width: 25px;" class="form-control form-control-color me-3" value="#18f7d1" title="Custom color" onchange="utils.insertStringBeforeSelected(utils.preferredDelimiter + value)">-->
-                        </div>
+            <div class="row justify-content-end mt-2" style="text-align: end;">
+              <!--<button type="button" class="btn btn-secondary me-2 medium-btn" style="width: 100px;" onclick="utils.insertStringBeforeSelected(utils.preferredDelimiter + 'r')">Reset style</button>-->
+              <button type="button" class="btn btn-secondary me-2 fw-bold medium-btn" title="Bold"
+                      onclick="utils.insertStringBeforeSelected(utils.preferredDelimiter + 'l')">B
+              </button>
+              <button type="button" class="btn btn-secondary me-2 fst-italic medium-btn" title="Italic"
+                      onclick="utils.insertStringBeforeSelected(utils.preferredDelimiter + 'o')">I
+              </button>
+              <button type="button" class="btn btn-secondary me-2 text-decoration-underline medium-btn"
+                      title="Underline"
+                      onclick="utils.insertStringBeforeSelected(utils.preferredDelimiter + 'n')">U
+              </button>
+              <button type="button" class="btn btn-secondary me-3 text-decoration-line-through medium-btn"
+                      title="Strikethrough"
+                      onclick="utils.insertStringBeforeSelected(utils.preferredDelimiter + 'm')">S
+              </button>
+              <!--<input type="color" style="height: 25px; width: 25px;" class="form-control form-control-color me-3" value="#18f7d1" title="Custom color" onchange="utils.insertStringBeforeSelected(utils.preferredDelimiter + value)">-->
+            </div>
 
-                    </div>
-
-                </div>
-
-                <div class="modal-body">
-
-                    <div class="form-floating">
-
-                        <input type="text" class="form-control focusable" id="treeNameInput" autocomplete="off"
-                               placeholder="ex. Mango Tree"
-                               oninput="utils.convertToMinecraftTooltip(value, 'treeTooltip')" maxlength="100">
-                        <label class="maxlength-label" for="treeNameInput">ex. Mango Tree</label>
-
-                    </div>
-
-                    <div class="mt-3 mb-3" style="background-color: #110111; height: 1px;"></div>
-
-                    <div class="minecraftTooltip overflow-hidden" id="treeTooltip"></div>
-
-                </div>
-
-                <div class="modal-footer">
-
-                    <button type="button" class="btn btn-outline-danger focusable" data-bs-dismiss="modal">Close
-                    </button>
-                    <button type="button" class="btn btn-outline-success ms-4 focusable" data-bs-dismiss="modal"
-                            onclick="tree.saveTree()">Save
-                    </button>
-
-                </div>
-
-            </form>
+          </div>
 
         </div>
 
+        <div class="modal-body">
+
+          <div class="form-floating">
+
+            <input type="text" class="form-control focusable" id="treeNameInput" autocomplete="off"
+                   placeholder="ex. Mango Tree"
+                   oninput="utils.convertToMinecraftTooltip(value, 'treeTooltip')" maxlength="100">
+            <label class="maxlength-label" for="treeNameInput">ex. Mango Tree</label>
+
+          </div>
+
+          <div class="mt-3 mb-3" style="background-color: #110111; height: 1px;"></div>
+
+          <div class="minecraftTooltip overflow-hidden" id="treeTooltip"></div>
+
+        </div>
+
+        <div class="modal-footer">
+
+          <button type="button" class="btn btn-outline-danger focusable" data-bs-dismiss="modal">Close
+          </button>
+          <button type="button" class="btn btn-outline-success ms-4 focusable" data-bs-dismiss="modal"
+                  onclick="tree.saveTree()">Save
+          </button>
+
+        </div>
+
+      </form>
+
     </div>
+
+  </div>
 
 </div>
 
 <div class="toast-container position-fixed bottom-0 end-0 p-3">
-
-    <div class="toast align-items-center" id="smallToast" role="alert" aria-live="assertive" aria-atomic="true">
-
-        <div class="d-flex">
-
-            <div class="toast-body"></div>
-
-            <button type="button" class="btn-close me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
-
-        </div>
-
+  <div class="toast align-items-center" id="smallToast" role="alert" aria-live="assertive" aria-atomic="true">
+    <div class="d-flex">
+      <div class="toast-body"></div>
+      <button type="button" class="btn-close me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
     </div>
-
+  </div>
 </div>
 
 <div class="minecraftTooltip overflow-hidden pe-none" id="cursorTooltip" hidden></div>

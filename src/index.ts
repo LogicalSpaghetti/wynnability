@@ -1,4 +1,5 @@
 import 'bootstrap/dist/css/bootstrap.min.css';
+import '../css/main.css';
 import * as utils from './utils.ts';
 import * as custom from './custom_presets.ts';
 import * as listeners from "./listeners.ts";
@@ -15,6 +16,7 @@ function loadPage() {
 window.utils = utils;
 window.custom = custom;
 
+window.changeHidden = changeHidden;
 window.tree = tree;
 window.loadModal = loadModal;
 
@@ -90,27 +92,21 @@ window.addEventListener('popstate', (e) => {
 
 utils.enforceMinMax('maxSaveStates', 1, 100);
 
-window.changeHidden = function changeHidden(bHidden, classes = [], ids = []) {
+// TODO: mostly used for theme switching which is weird
+function changeHidden(hidden: boolean, classes: string[] = [], ids: string[] = []): void {
+    for (let className of classes)
+        for (let element of document.getElementsByClassName(className))
+            (element as HTMLElement).hidden = hidden;
 
-    if (classes.length > 0) {
-        classes.forEach(c => {
-            document.getElementsByClassName(c).forEach(e => {
-                e.hidden = bHidden;
-            });
-        });
-    }
-    if (ids.length > 0) {
-        ids.forEach(id => {
-            document.getElementById(id).hidden = bHidden;
-        });
-    }
-};
+    if (ids.length) for (let element of ids.map(id => document.getElementById(id)))
+        if (element) element.hidden = hidden;
+}
 
-document.addEventListener("DOMContentLoaded", (event) => {
+document.addEventListener("DOMContentLoaded", () => {
 
     //Attaches a div to a cursor, used to display content
     document.addEventListener('pointermove', (e) => {
-        utils.movetooltip(e.clientX, e.clientY, true);
+        utils.moveTooltip(e.clientX, e.clientY, true);
     });
     //Makes tooltip disappear on tap
     document.addEventListener('touchstart', () => {
@@ -119,7 +115,7 @@ document.addEventListener("DOMContentLoaded", (event) => {
     document.addEventListener('wheel', (e) => utils.hideHoverAbilityTooltip());
 
     let treescrollprocessor = new utils.TouchProcessor();
-    document.getElementById('treeTableBody').addEventListener('touchstart', (e) => {
+    document.getElementById('treeTableBody')?.addEventListener('touchstart', (e) => {
         e.preventDefault();
         let swipeY = e.changedTouches[0].clientY;
         treescrollprocessor.processTouch(e,

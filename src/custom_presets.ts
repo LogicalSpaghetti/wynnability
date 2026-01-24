@@ -289,7 +289,7 @@ export async function renderSearchResults(containerID = "customPresetContainer")
                         img.src = generateIconUrl(type, preset['baseclass'], 2);
                         document.body.style.overflow = 'hidden';
                         renderRandomAbilityTooltip(preset['filename'], type, cancelRender);
-                        utils.movetooltip(e.changedTouches[0].clientX, e.changedTouches[0].clientY);
+                        utils.moveTooltip(e.changedTouches[0].clientX, e.changedTouches[0].clientY);
 
                         document.addEventListener('touchstart', (event) => {
                             if (e.target !== event.target)

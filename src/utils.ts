@@ -1,7 +1,10 @@
-import * as bootstrap from 'bootstrap'
+import * as bootstrap from 'bootstrap';
 
-export function movetooltip(X, Y, checkHidden = false) {
-    const cursorTooltip = document.getElementById('cursorTooltip');
+type CursorToolTipType = { originX: number, originY: number } & HTMLElement;
+
+export function moveTooltip(X: number, Y: number, checkHidden = false) {
+    const cursorTooltip = document.getElementById('cursorTooltip') as CursorToolTipType;
+    if (!cursorTooltip) return;
     if (checkHidden && cursorTooltip.hidden)
         return;
 
@@ -12,7 +15,7 @@ export function movetooltip(X, Y, checkHidden = false) {
 }
 
 export function adjustTooltipSize() {
-    const cursorTooltip = document.getElementById('cursorTooltip');
+    const cursorTooltip = document.getElementById('cursorTooltip') as CursorToolTipType;
     const X = cursorTooltip.originX ?? 0;
     const Y = cursorTooltip.originY ?? 0;
 
@@ -21,7 +24,8 @@ export function adjustTooltipSize() {
         scale = (window.innerWidth - 24) / cursorTooltip.offsetWidth;
     cursorTooltip.style.transform = `scale(${scale})`;
 
-    let leftOffset = (X + cursorTooltip.offsetWidth + 12) > window.innerWidth ? window.innerWidth - cursorTooltip.offsetWidth - 12 : X + 5;
+    let leftOffset = (X + cursorTooltip.offsetWidth + 12) > window.innerWidth
+        ? window.innerWidth - cursorTooltip.offsetWidth - 12 : X + 5;
     leftOffset = Math.max(leftOffset, 12);
 
     let upOffset = Y + 2;
@@ -37,17 +41,17 @@ export function adjustTooltipSize() {
 
 export function hideHoverAbilityTooltip(containerId = "cursorTooltip") {
     const container = document.getElementById(containerId);
+    if (!container) return;
 
     container.hidden = true;
     container.innerHTML = "";
 }
 
-export function clamp(number, min, max) {
+export function clamp(number: number, min: number, max: number) {
     return Math.max(min, Math.min(number, max));
 }
 
-export function shortenText(text, maxChars, replaceEndWith = "...") {
-
+export function shortenText(text: string, maxChars: number, replaceEndWith = "...") {
     if (text.length <= maxChars || maxChars < 1 || text.length < 2)
         return text;
 
@@ -57,217 +61,175 @@ export function shortenText(text, maxChars, replaceEndWith = "...") {
     return text.substring(0, maxChars - replaceEndWith.length) + replaceEndWith;
 }
 
-export function enforceMinMax(inputElementID, min, max) {
+export function enforceMinMax(inputElementID: string, min: number, max: number) {
+    const inputElement = document.getElementById(inputElementID) as HTMLInputElement;
+    if (!inputElement) return;
 
-    const inputElement = document.getElementById(inputElementID);
+    if (document.readyState === "loading")
+        document.addEventListener("DOMContentLoaded", doTheThing);
+    else doTheThing();
 
-    if (inputElement == null)
-        return;
+    function doTheThing() {
+        inputElement.min = String(min);
+        inputElement.max = String(max);
 
-    min = isNaN(Number(min)) ? null : Number(min);
-    max = isNaN(Number(max)) ? null : Number(max);
-
-    if (document.readyState === "complete" || document.readyState === "loaded") {
-
-        if (min != null)
-            inputElement.min = min;
-
-        if (max != null)
-            inputElement.max = max;
-
-        inputElement.addEventListener('change', (e) => {
+        inputElement.addEventListener('change', () => {
 
             if (inputElement.hasAttribute('min'))
-                inputElement.value = Math.max(inputElement.value, inputElement.min);
+                inputElement.value = stringMax(inputElement.value, inputElement.min);
 
             if (inputElement.hasAttribute('max'))
-                inputElement.value = Math.min(inputElement.value, inputElement.max);
+                inputElement.value = stringMin(inputElement.value, inputElement.max);
 
         }, true);
-
-    } else {
-
-        document.addEventListener("DOMContentLoaded", () => {
-
-            if (min != null)
-                inputElement.min = min;
-
-            if (max != null)
-                inputElement.max = max;
-
-            inputElement.addEventListener('change', (e) => {
-
-                if (inputElement.hasAttribute('min'))
-                    inputElement.value = Math.max(inputElement.value, inputElement.min);
-
-                if (inputElement.hasAttribute('max'))
-                    inputElement.value = Math.min(inputElement.value, inputElement.max);
-
-            }, true);
-
-        });
     }
 }
 
-export function showSmallToast(innerHTML = "I'm a toast!", autohide = true, hideDelay = 5000, id = 'smallToast') {
-
-    const container = document.getElementById(id);
-    if (container == null)
-        return;
-
-    container.querySelector('.toast-body').innerHTML = innerHTML;
-
-    const toast = bootstrap.Toast.getOrCreateInstance(container, {
-        'autohide': autohide,
-        'delay': autohide ? hideDelay : null,
-    });
-    toast.show();
+function stringMax(...args: string[]) {
+    return String(Math.max(...(args.map(a => Number(a)))));
 }
 
-const TAPLENGTH = 250;
-const SWIPEMINDISTANCE = 30;
+function stringMin(...args: string[]) {
+    return String(Math.min(...(args.map(a => Number(a)))));
+}
+
+export function showSmallToast(innerHTML = "I'm a toast!", autohide = true, hideDelay = 5000, id = 'smallToast') {
+    const container = document.getElementById(id);
+    if (!container) return;
+
+    const toastBody = container.querySelector('.toast-body');
+    if (toastBody) toastBody.innerHTML = innerHTML;
+
+    bootstrap.Toast.getOrCreateInstance(container, {
+        'autohide': autohide,
+        'delay': autohide ? hideDelay : undefined,
+    }).show();
+}
+
+const TAP_LENGTH = 250;
+const MIN_SWIPE_DISTANCE = 30;
+
 
 export class TouchProcessor {
 
     lastTap = 0;
 
-    taplength = 250;
+    tapLength = 250;
 
-    swipemindistance = 30;
+    minSwipeDistance = 30;
 
-    startX;
-    startY;
+    startX: number = 0;
+    startY: number = 0;
 
-    singeTapTimeout;
+    singeTapTimeoutId: number = 0;
+    holdTimeout: number = 0;
 
-    constructor({taplength = TAPLENGTH, swipemindistance = SWIPEMINDISTANCE} = {}) {
-        this.taplength = isNaN(Number(taplength)) ? TAPLENGTH : Math.max(Number(taplength), 0);
-        this.swipemindistance = isNaN(Number(swipemindistance)) ? SWIPEMINDISTANCE : Math.max(Number(swipemindistance), 0);
+    constructor({tapLength = TAP_LENGTH, minSwipeDistance: minSwipeDistance = MIN_SWIPE_DISTANCE} = {}) {
+        this.tapLength = isNaN(Number(tapLength)) ? TAP_LENGTH : Math.max(Number(tapLength), 0);
+        this.minSwipeDistance = isNaN(Number(minSwipeDistance)) ? MIN_SWIPE_DISTANCE : Math.max(Number(minSwipeDistance), 0);
     }
 
-    processTouch(event, singleTapCallback = (e) => {
-                 }, doubleTapCallback = (e) => {
-                 },
-                 holdStartCallback = (e) => {
-                 }, holdMoveCallback = (e) => {
-        }, holdEndCallback = (e) => {
-        },
-                 swipeStartCallback = (e) => {
-                 }, swipeMoveCallback = (e) => {
-        }, swipeEndCallback = (e) => {
-        }) {
+    processTouch(
+        event: TouchEvent,
+        singleTapCallback: EventListener,
+        doubleTapCallback: EventListener,
+        holdStartCallback: EventListener,
+        holdMoveCallback: EventListener,
+        holdEndCallback: EventListener,
+        swipeStartCallback: EventListener,
+        swipeMoveCallback: EventListener,
+        swipeEndCallback: EventListener) {
 
-        if (this.singeTapTimeout != null) {
-            clearTimeout(this.singeTapTimeout);
-            this.singeTapTimeout = null;
+        if (this.singeTapTimeoutId) {
+            clearTimeout(this.singeTapTimeoutId);
+            this.singeTapTimeoutId = 0;
         }
 
         const currentTime = new Date().getTime();
         const timeSinceLastTap = currentTime - this.lastTap;
 
-        if (timeSinceLastTap < TAPLENGTH && timeSinceLastTap > 0) {
+        if (timeSinceLastTap < TAP_LENGTH && timeSinceLastTap > 0) {
             event.preventDefault();
             doubleTapCallback(event);
         } else {
-
-            const target = event.target;
+            const target = event.target as EventTarget;
             this.startX = event.touches[0].clientX;
             this.startY = event.touches[0].clientY;
 
-            let touchmove;
-            let touchmoveElectricBoogaloo;
-            let touchend;
+            let touchmove: ((e: TouchEvent) => void) | null;
+            let touchmoveElectricBoogaloo: (e: TouchEvent) => void | null;
+            let touchend: (e: TouchEvent) => void | null;
 
             let processor = this;
 
-            target.addEventListener("touchmove", touchmove = function (e) {
-
+            touchmove = (e) => {
                 const deltaX = e.changedTouches[0].clientX - processor.startX;
                 const deltaY = e.changedTouches[0].clientY - processor.startY;
 
-                if (deltaX ** 2 + deltaY ** 2 >= processor.swipemindistance ** 2) {
-
-                    if (holdTimeout) {
-                        clearTimeout(holdTimeout);
-                        holdTimeout = null;
+                if (deltaX ** 2 + deltaY ** 2 >= processor.minSwipeDistance ** 2) {
+                    if (processor.holdTimeout) {
+                        clearTimeout(processor.holdTimeout);
+                        processor.holdTimeout = 0;
                     }
-                    target.removeEventListener("touchend", touchend);
-                    target.removeEventListener("touchmove", touchmove);
+                    target.removeEventListener("touchend", touchend as EventListener);
+                    target.removeEventListener("touchmove", touchmove as EventListener);
 
                     swipeStartCallback(event);
-                    target.addEventListener("touchmove", touchmoveElectricBoogaloo = function (e) {
-                        swipeMoveCallback(e);
-                    }, {passive: true});
+
+                    touchmoveElectricBoogaloo = swipeMoveCallback;
+
+                    target.addEventListener("touchmove", touchmoveElectricBoogaloo as EventListener, {passive: true});
                     target.addEventListener("touchend", (e) => {
-                        target.removeEventListener("touchmove", touchmoveElectricBoogaloo);
+                        target.removeEventListener("touchmove", touchmoveElectricBoogaloo as EventListener);
                         swipeEndCallback(e);
                     }, {once: true});
-
                 }
-            }, {passive: true});
+            };
 
-            let holdTimeout = setTimeout(
+            target?.addEventListener("touchmove", touchmove as EventListener, {passive: true});
+
+            this.holdTimeout = setTimeout(
                 () => {
-                    target.removeEventListener("touchend", touchend);
-                    target.removeEventListener("touchmove", touchmove);
+                    target.removeEventListener("touchend", touchend as EventListener);
+                    target.removeEventListener("touchmove", touchmove as EventListener);
                     holdStartCallback(event);
                     target.addEventListener("touchmove", (e) => holdMoveCallback(e), {passive: true});
                     target.addEventListener("touchend", (e) => {
                         holdEndCallback(e);
-                        target.removeEventListener("touchmove", (e) => holdMoveCallback(e), {passive: true});
+                        target.removeEventListener("touchmove", (e) => holdMoveCallback(e));
                     }, {once: true});
                 },
-                TAPLENGTH,
+                TAP_LENGTH,
             );
 
             target.addEventListener("touchend", touchend = function () {
-                if (holdTimeout) {
-                    clearTimeout(holdTimeout);
-                    holdTimeout = null;
+                if (processor.holdTimeout) {
+                    clearTimeout(processor.holdTimeout);
+                    processor.holdTimeout = 0;
                 }
-                target.removeEventListener("touchmove", touchmove);
+                target.removeEventListener("touchmove", touchmove as EventListener);
 
                 const currentTime = new Date().getTime();
 
-                processor.singeTapTimeout = setTimeout(
+                processor.singeTapTimeoutId = setTimeout(
                     () => {
                         singleTapCallback(event);
-                        processor.singeTapTimeout = null;
+                        processor.singeTapTimeoutId = 0;
                     },
-                    TAPLENGTH + processor.lastTap - currentTime,
+                    TAP_LENGTH + processor.lastTap - currentTime,
                 );
             }, {once: true});
         }
         this.lastTap = currentTime;
     }
-
-    touchmove(e) {
-        const deltaX = e.changedTouches[0].clientX - this.startX;
-        const deltaY = e.changedTouches[0].clientY - this.startY;
-
-        if (deltaX ** 2 + deltaY ** 2 >= this.swipemindistance ** 2) {
-
-            if (holdTimeout) {
-                clearTimeout(holdTimeout);
-                holdTimeout = null;
-            }
-            target.removeEventListener("touchend", touchend);
-            target.removeEventListener("touchmove", touchmove);
-
-            swipeStartCallback(event);
-            target.addEventListener("touchmove", touchmoveElectricBoogaloo = function (e) {
-                swipeMoveCallback(e);
-            }, {passive: true});
-            target.addEventListener("touchend", (e) => {
-                target.removeEventListener("touchmove", touchmoveElectricBoogaloo);
-                swipeEndCallback(e);
-            }, {once: true});
-
-        }
-    }
 }
 
-export const codeDictionaryGenericSymbols = {
+type StringObject = { [key: string]: string };
+type BooleanObject = { [key: string]: boolean };
+// type NumberObject = {[key: string]: number};
+type StringArrayObject = { [key: string]: string[] };
+
+export const codeDictionaryGenericSymbols: StringObject = {
     'mana': '§b✺',
 
     'damage': '§c⚔',
@@ -287,7 +249,7 @@ export const codeDictionaryGenericSymbols = {
     'blindness': '§c⬣',
     'slowness': '§c⬤',
 };
-export const codeDictionaryClassSymbols = {
+export const codeDictionaryClassSymbols: StringObject = {
     'focus': '§e➽',
 
     'winded': '§b≈',
@@ -318,7 +280,7 @@ export const codeDictionaryClassSymbols = {
     'noxious': '§#eb3dfe',
     'drained': '§#a1fad9',
 };
-export const codeDictionaryCommonAbilityAttributes = {
+export const codeDictionaryCommonAbilityAttributes: StringArrayObject = {
     'manacost': ['§b✺', '\n§b✺ §7Mana Cost: §f_'],
 
     'damage': ['§c⚔', '\n§c⚔ §7Total Damage: §f_% §8(of your DPS)'],
@@ -336,7 +298,7 @@ export const codeDictionaryCommonAbilityAttributes = {
     'cooldown': ['§3⌚', '\n§3⌚ §7Cooldown: §f_s'],
 };
 
-export const codeDictionaryColor = {
+export const codeDictionaryColor: StringObject = {
     '0': '#000000',
     '1': '#0000aa',
     '2': '#00aa00',
@@ -353,33 +315,31 @@ export const codeDictionaryColor = {
     'd': '#ff55ff',
     'e': '#ffff55',
     'f': '#ffffff',
-    'r': null,
+    // 'r': null,
     'g': '#87dd47',
     'h': '#ffe14d',
     'i': '#f747c2',
     'j': '#99e9ff',
     'k': '#ff4545',
 };
-export const codeDictionaryDecoration = {
+export const codeDictionaryDecoration: StringObject = {
     'm': 'line-through',
     'n': 'underline',
 };
-export const codeDictionaryStyle = {
+export const codeDictionaryStyle: StringObject = {
     'l': 'fw-bold',
     'o': 'fst-italic',
 };
-export const minecraftDelimiters = {'§': true, '&': true};
+export const minecraftDelimiters: BooleanObject = {'§': true, '&': true};
 export const preferredDelimiter = '§';
 
-export function splitByColorFormats(string) {
-
-    let result =
-        [
-            {
-                color: null,
-                content: '',
-            },
-        ];
+export function splitByColorFormats(string: string) {
+    let result: { color: null | string, content: string }[] = [
+        {
+            color: null,
+            content: '',
+        },
+    ];
 
     if (string.length === 0)
         return result;
@@ -415,22 +375,17 @@ export function splitByColorFormats(string) {
     }
 
     return result;
-
 }
 
 export function splitByOtherFormats(string = '') {
 
-    let result =
-        [
-            {
-                decoration: null,
-                style: null,
-                content: '',
-            },
-        ];
+    let result: { decoration?: string, style?: string, content: string }[] = [
+        {
+            content: '',
+        },
+    ];
 
-    if (string.length == 0)
-        return result;
+    if (string.length == 0) return result;
 
     let i = 0;
     for (i; i < string.length - 1; i++) {
@@ -479,25 +434,25 @@ export function stripMinecraftFormatting(text = "") {
     return result;
 }
 
-export function convertToMinecraftTooltip(text, outputFieldID) {
-    const outputField = document.getElementById(outputFieldID);
-    if (outputField != null)
+export function convertToMinecraftTooltip(text: string, id: string) {
+    const outputField = document.getElementById(id);
+    if (outputField)
         outputField.innerHTML = minecraftToHTML(text);
 }
 
-export function insertStringBeforeSelected(insertString) {
+export function insertStringBeforeSelected(insertString: string) {
 
-    const activeElement = document.activeElement;
-    if (!activeElement || !(activeElement.type == 'textarea' || activeElement.type == 'text')) {
+    const activeElement = document.activeElement as HTMLInputElement;
+    if (!activeElement) return;
+    if (!activeElement || !(activeElement.type == 'textarea' || activeElement.type == 'text'))
         return;
-    }
 
-    if (activeElement.maxLength != -1 && activeElement.value.length + insertString.length > activeElement.maxLength) {
+
+    if (activeElement.maxLength != -1 && activeElement.value.length + insertString.length > activeElement.maxLength)
         return;
-    }
 
     const currentValue = activeElement.value;
-    const cursorPosition = activeElement.selectionStart;
+    const cursorPosition = activeElement.selectionStart as number;
 
     activeElement.value = currentValue.substring(0, cursorPosition) + insertString + currentValue.substring(cursorPosition, currentValue.length);
 
@@ -508,7 +463,6 @@ export function insertStringBeforeSelected(insertString) {
 }
 
 export function minecraftToHTML(text = "") {
-
     let result = '';
 
     const colorSplitArr = splitByColorFormats(text);
@@ -518,8 +472,8 @@ export function minecraftToHTML(text = "") {
         let pendingContent = '';
 
         let spansToClose = 0;
-        let pendingTextDecorations = {};
-        let pendingTextStyles = {};
+        let pendingTextDecorations: BooleanObject = {};
+        let pendingTextStyles: BooleanObject = {};
 
         const formatSplitArr = splitByOtherFormats(colorSplit['content']);
 
@@ -535,18 +489,18 @@ export function minecraftToHTML(text = "") {
             if (style != null && codeDictionaryStyle[style] != null)
                 pendingTextStyles[style] = true;
 
-            if (content == null || content == '')
-                return;
+            if (!content) return;
 
-
-            pendingContent += '<span';
             spansToClose++;
+
             const decorations = Object.keys(pendingTextDecorations);
             const styles = Object.keys(pendingTextStyles);
             pendingTextDecorations = {};
             pendingTextStyles = {};
             const bUseDecorations = decorations.length > 0;
             const bUseStyles = styles.length > 0;
+
+            pendingContent += '<span';
 
             if (bUseDecorations) {
                 pendingContent += ' style="text-decoration:';
@@ -565,22 +519,18 @@ export function minecraftToHTML(text = "") {
             }
 
             pendingContent += `>${anyToHTML(content)}`;
-
         });
 
-
-        if (pendingContent.length == 0)
-            return;
+        if (!pendingContent.length) return;
 
         const color = colorSplit['color'];
 
-        if (color != null)
-            if (codeDictionaryColor[color] != null)
+        if (color)
+            if (codeDictionaryColor[color])
                 result += `<span style="color:${codeDictionaryColor[color]}">`;
 
             else
                 result += `<span style="color:${sanitizeHTML(color)}">`;
-
         else
             result += '<span>';
 
@@ -588,16 +538,15 @@ export function minecraftToHTML(text = "") {
 
         for (spansToClose; spansToClose >= 0; spansToClose--)
             result += '</span>';
-
     });
 
     return result;
 }
 
-export function sanitizeHTML(text) {
+export function sanitizeHTML(text: string) {
     return text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
 
 export function anyToHTML(text = "") {
-    return sanitizeHTML(text).replace(/(?:\r\n|\r|\n)/g, '<br>').replace(/ /g, '&nbsp;').replace(/-/g, '-&#8288;');
+    return sanitizeHTML(text).replace(/\r\n|\r|\n/g, '<br>').replace(/ /g, '&nbsp;').replace(/-/g, '-&#8288;');
 }
