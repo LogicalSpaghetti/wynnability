@@ -1,6 +1,6 @@
-import * as utils from './utils.ts';
-import * as main from './messy_main.ts';
-import {generateIconUrl} from "./messy_main.ts";
+import * as utils from './utils';
+import * as main from './messy_main';
+import {generateIconUrl} from "./messy_main";
 
 let sortedPresets = [];
 let treeCache = {};

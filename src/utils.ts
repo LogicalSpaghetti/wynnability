@@ -224,10 +224,10 @@ export class TouchProcessor {
     }
 }
 
-type StringObject = { [key: string]: string };
-type BooleanObject = { [key: string]: boolean };
+export type StringObject = { [key: string]: string };
+export type BooleanObject = { [key: string]: boolean };
 // type NumberObject = {[key: string]: number};
-type StringArrayObject = { [key: string]: string[] };
+export type StringArrayObject = { [key: string]: string[] };
 
 export const codeDictionaryGenericSymbols: StringObject = {
     'mana': '§b✺',

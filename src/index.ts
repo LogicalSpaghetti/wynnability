@@ -1,15 +1,16 @@
 import 'bootstrap/dist/css/bootstrap.min.css';
 import '../css/main.css';
-import * as utils from './utils.ts';
-import * as custom from './custom_presets.ts';
-import * as listeners from "./listeners.ts";
-import {loadModal, tree} from './global_objects.ts';
+import * as utils from './utils';
+import * as custom from './custom_presets';
+import * as listeners from "./listeners";
+import {loadModal, tree} from './global_objects';
+import type {StringObject} from "./utils";
 
-// TODO: is "load" better than "DOMContentLoaded"? Should inputs be delayed?
-window.addEventListener("DOMContentLoaded", loadPage);
-
+// TODO: might be needed for safety
+// window.addEventListener("DOMContentLoaded", loadPage, {once: true});
+loadPage();
 function loadPage() {
-    // TODO: preLoadAssets();
+    // TODO: preLoadAssets(); // used to ensure icons not used will render if the user goes offline
     listeners.addListeners();
 }
 
@@ -35,10 +36,26 @@ if (typeof document.hidden !== "undefined") {
     });
 }
 
-window.switchTheme = function switchTheme(theme: string) {
+const themeInverses: StringObject = {
+    'light': 'dark',
+    'dark': 'light',
+};
+
+const themeIcons: StringObject = {
+    'light': 'assets/img/abilities/generic/purple_a.png',
+    'dark': 'assets/img/abilities/generic/purple.png',
+};
+
+export function invertTheme() {
+    setTheme(themeInverses[localStorage.getItem(LAST_SESSION_THEME) ?? 'light']);
+}
+
+function setTheme(theme: string) {
     document.body.dataset['bsTheme'] = theme;
     localStorage.setItem(LAST_SESSION_THEME, theme);
-};
+    (document.getElementById('themeSwitchImage') as HTMLImageElement).src = themeIcons[theme];
+    console.log(theme)
+}
 
 document.addEventListener("DOMContentLoaded", () => {
 
@@ -49,42 +66,36 @@ document.addEventListener("DOMContentLoaded", () => {
         tree.saveState('Loaded last closed session');
     }
 
-    const theme = localStorage.getItem(LAST_SESSION_THEME);
-    if (theme != null) {
-        document.body.dataset['bsTheme'] = theme;
-        if (theme == 'dark') {
-            changeHidden(false, [], ['themeSwitchDark']);
-            changeHidden(true, [], ['themeSwitchLight']);
-        }
-    }
+    const theme = localStorage.getItem(LAST_SESSION_THEME) ?? "dark";
+    setTheme(theme);
 });
 // #endregion
 
 const treeModal = document.getElementById('treeModal');
 const treeNameInput = document.getElementById('treeNameInput');
-treeModal.addEventListener('shown.bs.modal', () => {
-    treeNameInput.focus();
+treeModal?.addEventListener('shown.bs.modal', () => {
+    treeNameInput?.focus();
 });
 
 const archetypeModal = document.getElementById('archetypeModal');
 const archetypeNameInput = document.getElementById('archetypeNameInput');
-archetypeModal.addEventListener('shown.bs.modal', () => {
-    archetypeNameInput.focus();
+archetypeModal?.addEventListener('shown.bs.modal', () => {
+    archetypeNameInput?.focus();
 });
 
 const abilityModal = document.getElementById('abilityModal');
-abilityModal.addEventListener('shown.bs.modal', () => {
+abilityModal?.addEventListener('shown.bs.modal', () => {
     tree.renderEditorAbilityTooltip();
 });
-document.getElementById('editAbilityTooltip').addEventListener('click', () => tree.renderEditorAbilityTooltip(false));
+document.getElementById('editAbilityTooltip')?.addEventListener('click', () => tree.renderEditorAbilityTooltip(false));
 window.addEventListener('resize', () => {
-    if (!abilityModal.ariaHidden) tree.renderEditorAbilityTooltip();
+    if (!abilityModal?.ariaHidden) tree.renderEditorAbilityTooltip();
 });
 
-history.pushState(null, null, location.href);
-window.addEventListener('popstate', (e) => {
-    if (!abilityModal.ariaHidden)
-        history.pushState(null, null, location.href);
+history.pushState(null, '', location.href);
+window.addEventListener('popstate', () => {
+    if (!abilityModal?.ariaHidden)
+        history.pushState(null, '', location.href);
     else
         history.back();
 });
@@ -92,8 +103,8 @@ window.addEventListener('popstate', (e) => {
 
 utils.enforceMinMax('maxSaveStates', 1, 100);
 
-// TODO: mostly used for theme switching which is weird
-function changeHidden(hidden: boolean, classes: string[] = [], ids: string[] = []): void {
+// TODO: mostly used for theme switching which is weird, probably bad practice
+export function changeHidden(hidden: boolean, classes: string[] = [], ids: string[] = []): void {
     for (let className of classes)
         for (let element of document.getElementsByClassName(className))
             (element as HTMLElement).hidden = hidden;
@@ -112,13 +123,13 @@ document.addEventListener("DOMContentLoaded", () => {
     document.addEventListener('touchstart', () => {
         utils.hideHoverAbilityTooltip();
     });
-    document.addEventListener('wheel', (e) => utils.hideHoverAbilityTooltip());
+    document.addEventListener('wheel', () => utils.hideHoverAbilityTooltip());
 
-    let treescrollprocessor = new utils.TouchProcessor();
+    let treeScrollProcessor = new utils.TouchProcessor();
     document.getElementById('treeTableBody')?.addEventListener('touchstart', (e) => {
         e.preventDefault();
         let swipeY = e.changedTouches[0].clientY;
-        treescrollprocessor.processTouch(e,
+        treeScrollProcessor.processTouch(e,
             () => {
             },
             () => {
@@ -131,7 +142,7 @@ document.addEventListener("DOMContentLoaded", () => {
             },
             () => {
             },
-            (event) => {
+            ((event: TouchEvent) => {
                 const deltaY = event.changedTouches[0].clientY - swipeY;
                 if (Math.abs(deltaY) > 30) {
                     swipeY = event.changedTouches[0].clientY;
@@ -140,13 +151,15 @@ document.addEventListener("DOMContentLoaded", () => {
                     else
                         tree.incrementVerticalPage(-1);
                 }
+            }) as EventListener,
+            () => {
             },
         );
     }, {passive: false});
 
     const containersToHide = document.getElementsByClassName("shown-on-allocation");
     for (let container of containersToHide)
-        container.hidden = true;
+        (container as HTMLElement).hidden = true;
 
     //Populates color options from utils.codeDictionaryColor map
     const colorContainers = document.getElementsByClassName("colorContainer");
@@ -157,7 +170,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
         const button = document.createElement("button");
         button.style = "height: 16px; width: 16px; margin-right: 4px; background-color:" + utils.codeDictionaryColor[key];
-        button.tabIndex = "-1";
+        button.tabIndex = -1;
         button.type = "button";
 
         for (let container of colorContainers) {
@@ -182,7 +195,7 @@ document.addEventListener("DOMContentLoaded", () => {
         const div = document.createElement("div");
         button.appendChild(div);
         div.innerHTML = utils.minecraftToHTML(utils.codeDictionaryGenericSymbols[key]);
-        button.tabIndex = "-1";
+        button.tabIndex = -1;
         button.type = "button";
 
         for (let container of genericUnicodeContainers) {
@@ -208,7 +221,7 @@ document.addEventListener("DOMContentLoaded", () => {
         button.appendChild(div);
         div.innerHTML = utils.minecraftToHTML(utils.codeDictionaryClassSymbols[key]);
 
-        button.tabIndex = "-1";
+        button.tabIndex = -1;
         button.type = "button";
 
         for (let container of classUnicodeContainers) {
@@ -234,7 +247,7 @@ document.addEventListener("DOMContentLoaded", () => {
         button.appendChild(div);
         div.innerHTML = utils.minecraftToHTML(utils.codeDictionaryCommonAbilityAttributes[key][0]);
 
-        button.tabIndex = "-1";
+        button.tabIndex = -1;
         button.type = "button";
 
         for (let container of commonAbilityUnicodeContainers) {
@@ -253,23 +266,24 @@ document.addEventListener("DOMContentLoaded", () => {
 
     for (let label of automatedCharCountLabels) {
 
-        let input = document.getElementById(label.getAttribute('for'));
+        let input =
+            document.getElementById(label.getAttribute('for') as string) as HTMLInputElement;
 
-        if (input == null || input.getAttribute('maxlength') == null)
+        if (!input?.getAttribute('maxlength'))
             continue;
 
         input.addEventListener("input", () =>
             label.innerHTML = input.value.length > 0 ? `${input.value.length}/${input.getAttribute('maxlength')}` : input.placeholder);
 
-        abilityModal.addEventListener('shown.bs.modal', () =>
+        abilityModal?.addEventListener('shown.bs.modal', () =>
             label.innerHTML = input.value.length > 0 ? `${input.value.length}/${input.getAttribute('maxlength')}` : input.placeholder);
     }
 
     //Makes .integer inputs round floats
-    const automatedRoundInputs = document.getElementsByClassName("integer");
+    const automatedRoundInputs = document.getElementsByClassName("integer") as HTMLCollectionOf<HTMLInputElement>;
     for (let input of automatedRoundInputs) {
-        input.addEventListener("change", (e) => {
-            input.value = Math.round(input.value);
+        input.addEventListener("change", () => {
+            input.value = String(Math.round(Number(input.value)));
         }, true);
     }
 });

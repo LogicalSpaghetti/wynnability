@@ -6,8 +6,7 @@
   <title>Wynnability</title>
   <link rel="icon" href="assets/img/icons/wynnability.png"/>
 </head>
-<body id="dropzone" class="generic-background" data-bs-theme="light"
-      ondrop="tree.loadTreeFromDrop(event); loadModal.hide()">
+<body id="dropzone" class="generic-background" data-bs-theme="light">
 
 <section class="mt-2 pb-2 pt-2">
 
@@ -17,24 +16,8 @@
             aria-expanded="false" aria-controls="extraSettings">Class Settings
     </button>
 
-    <div class="ms-1 me-auto d-flex align-items-center" style="height: 40px;"
-         onpointerover="
-            const container = document.getElementById('cursorTooltip');
-            container.hidden = false;
-            container.innerHTML = `
-                  <span style='color:#ff55ff' class='fw-bold'>Eye&nbsp;Piercer</span><br><br>
-                  <span style='color:#ffff55'>✧&nbsp;</span><span style='color:#aaaaaa'>Effect:&nbsp;</span><span style='color:#ffffff'>Blindness&nbsp;(</span><span style='color:#ff5555'>⬣</span><span style='color:#ffffff'>)&nbsp;to&nbsp;Self</span>
-            `
-          "
-         onpointerout="utils.hideHoverAbilityTooltip()"
-    >
-
-      <img id="themeSwitchDark" hidden src="assets/img/abilities/generic/purple.png"
-           onclick="switchTheme('light'); this.hidden = true; changeHidden(false, [], ['themeSwitchLight']);">
-
-      <img id="themeSwitchLight" src="assets/img/abilities/generic/purple_a.png"
-           onclick="switchTheme('dark'); this.hidden = true; changeHidden(false, [], ['themeSwitchDark']);">
-
+    <div id="blindnessToggle" class="ms-1 me-auto d-flex align-items-center" style="height: 40px;">
+      <img id="themeSwitchImage" src="assets/img/abilities/generic/purple_a.png">
     </div>
 
     <button type="button" class="btn btn-primary ms-1 me-2" data-bs-toggle="modal" data-bs-target="#loadModal"
@@ -911,7 +894,7 @@
 
 <div class="minecraftTooltip overflow-hidden pe-none" id="cursorTooltip" hidden></div>
 
-<script type="module" src="src"></script>
+<script type="module" src="src/index.ts"></script>
 
 </body>
 </html>

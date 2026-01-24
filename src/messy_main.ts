@@ -1,10 +1,11 @@
-import * as utils from './utils.ts';
+import * as utils from './utils';
+import type {StringObject} from "./utils";
 
 const classNames = ['archer', 'assassin', 'mage', 'shaman', 'warrior'];
 
 const abilityIconDirectoryPath = `../assets/img/abilities/`;
 
-const abilityIconDictionary = {
+const abilityIconDictionary: StringObject = {
     'skill': 'class/',
     'red': 'generic/red',
     'blue': 'generic/blue',
@@ -44,7 +45,7 @@ const nodeDictionary: { [key: string]: {path: string, color_tag: string} } = {
     },
 };
 
-const altAbilityIconDictionary = {
+const altAbilityIconDictionary: StringObject = {
     'skill': 'class/',
     'magenta': 'generic/magenta',
     'red': 'generic/red',
@@ -54,7 +55,7 @@ const altAbilityIconDictionary = {
     'white': 'generic/white',
 };
 
-const reverseDirectionDictionary = {
+const reverseDirectionDictionary: StringObject = {
     'up': 'down',
     'down': 'up',
     'right': 'left',
@@ -63,7 +64,7 @@ const reverseDirectionDictionary = {
 
 // const ability
 
-function generateIconDiv(type, travelNode = new TravelNode(), classs = "", allocationStatus = 0, bScaleAbilityIcon = false, useAlternativeAbilityIcons = false) {
+function generateIconDiv(type: string, travelNode: TravelNode | null = new TravelNode(), classs = "", allocationStatus = 0, bScaleAbilityIcon = false, useAlternativeAbilityIcons = false) {
 
     let result = document.createElement('div');
     result.classList.add('centered-element-container');
@@ -93,7 +94,7 @@ function generateIconDiv(type, travelNode = new TravelNode(), classs = "", alloc
 
 const statusSuffixes = ['_blocked', '_dark', '', '_a'];
 
-export function generateIconUrl(type, classs = "custom", allocationStatus = 0, useAlternativeAbilityIcons = false) {
+export function generateIconUrl(type: string, classs = "custom", allocationStatus = 0, useAlternativeAbilityIcons = false) {
 
     let iconDictionary = useAlternativeAbilityIcons
         ? altAbilityIconDictionary : abilityIconDictionary;
