@@ -1,34 +1,44 @@
-import * as main from './messy_main.ts';
+import 'bootstrap/dist/css/bootstrap.min.css';
 import * as utils from './utils.ts';
-import * as custom from './custompresets.ts';
+import * as custom from './custom_presets.ts';
+import * as listeners from "./listeners.ts";
+import {loadModal, tree} from './global_objects.ts';
+
+// TODO: is "load" better than "DOMContentLoaded"? Should inputs be delayed?
+window.addEventListener("DOMContentLoaded", loadPage);
+
+function loadPage() {
+    // TODO: preLoadAssets();
+    listeners.addListeners();
+}
 
 window.utils = utils;
 window.custom = custom;
 
-let tree = new main.BaseTree();
 window.tree = tree;
+window.loadModal = loadModal;
 
 // #region Cookies
 const LAST_SESSION_STORAGE_NAME = 'lastClosedSession';
 const LAST_SESSION_THEME = 'theme';
 
-window.addEventListener('beforeunload', (e) => {
+window.addEventListener('beforeunload', () => {
     localStorage.setItem(LAST_SESSION_STORAGE_NAME, JSON.stringify(tree, null, 0));
 });
 
 if (typeof document.hidden !== "undefined") {
-    document.addEventListener("visibilitychange", (e) => {
+    document.addEventListener("visibilitychange", () => {
         if (document.hidden)
             localStorage.setItem(LAST_SESSION_STORAGE_NAME, JSON.stringify(tree, null, 0));
     });
 }
 
-window.switchTheme = function switchTheme(theme) {
+window.switchTheme = function switchTheme(theme: string) {
     document.body.dataset['bsTheme'] = theme;
     localStorage.setItem(LAST_SESSION_THEME, theme);
 };
 
-document.addEventListener("DOMContentLoaded", (event) => {
+document.addEventListener("DOMContentLoaded", () => {
 
     const json = localStorage.getItem(LAST_SESSION_STORAGE_NAME);
     if (json != null) {
@@ -47,13 +57,6 @@ document.addEventListener("DOMContentLoaded", (event) => {
     }
 });
 // #endregion
-
-const dropzone = document.getElementById('dropzone');
-['drag', 'dragstart', 'dragend', 'dragover', 'dragenter', 'dragleave', 'drop'].forEach((str) => {
-    dropzone.addEventListener(str, (e) => {
-        e.preventDefault();
-    });
-});
 
 const treeModal = document.getElementById('treeModal');
 const treeNameInput = document.getElementById('treeNameInput');
@@ -86,8 +89,6 @@ window.addEventListener('popstate', (e) => {
 
 
 utils.enforceMinMax('maxSaveStates', 1, 100);
-
-window.loadModal = new bootstrap.Modal('#loadModal', {});
 
 window.changeHidden = function changeHidden(bHidden, classes = [], ids = []) {
 

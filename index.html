@@ -4,7 +4,6 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Wynnability</title>
-    <link href="css/lib/bootstrap.min.css" rel="stylesheet">
     <link href="css/main.css" rel="stylesheet">
     <link rel="icon" href="assets/img/icons/wynnability.png"/>
 </head>
@@ -544,8 +543,8 @@
 
                         <button type="button" class="btn btn-primary flex-fill"
                                 onmouseover="changeHidden(false, [], ['browselibrarytip']); changeHidden(true, [], ['selectfiletip']);"
-                                onclick="changeHidden(false, [], ['libraryinterface']); changeHidden(true, [], ['loadinterface']); custom.renderSearchResults();"
-                        >Browse library
+                                onclick="changeHidden(false, [], ['libraryinterface']); changeHidden(true, [], ['loadinterface']); custom.renderSearchResults();">
+                            Browse library
                         </button>
 
                     </div>
@@ -920,8 +919,7 @@
 
 <div class="minecraftTooltip overflow-hidden pe-none" id="cursorTooltip" hidden></div>
 
-<script src="src/lib/bootstrap.bundle.min.js"></script>
-<script type="module" src="./src/main.ts"></script>
+<script type="module" src="src"></script>
 
 </body>
 </html>

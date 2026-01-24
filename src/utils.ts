@@ -1,3 +1,5 @@
+import * as bootstrap from 'bootstrap'
+
 export function movetooltip(X, Y, checkHidden = false) {
     const cursorTooltip = document.getElementById('cursorTooltip');
     if (checkHidden && cursorTooltip.hidden)
