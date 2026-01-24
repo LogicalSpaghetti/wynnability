@@ -1,0 +1,1 @@
+readd `tsc &&` to the build script
