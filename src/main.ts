@@ -1,6 +1,6 @@
-import * as main from './main.js';
-import * as utils from './utils.js';
-import * as custom from './custompresets.js';
+import * as main from './messy_main.ts';
+import * as utils from './utils.ts';
+import * as custom from './custompresets.ts';
 
 window.utils = utils;
 window.custom = custom;
@@ -26,7 +26,7 @@ if (typeof document.hidden !== "undefined") {
 window.switchTheme = function switchTheme(theme) {
     document.body.dataset['bsTheme'] = theme;
     localStorage.setItem(LAST_SESSION_THEME, theme);
-}
+};
 
 document.addEventListener("DOMContentLoaded", (event) => {
 
@@ -49,28 +49,32 @@ document.addEventListener("DOMContentLoaded", (event) => {
 // #endregion
 
 const dropzone = document.getElementById('dropzone');
-['drag', 'dragstart', 'dragend', 'dragover', 'dragenter', 'dragleave', 'drop'].forEach( (str) => {
-    dropzone.addEventListener(str, (e) => { e.preventDefault() });
+['drag', 'dragstart', 'dragend', 'dragover', 'dragenter', 'dragleave', 'drop'].forEach((str) => {
+    dropzone.addEventListener(str, (e) => {
+        e.preventDefault();
+    });
 });
 
 const treeModal = document.getElementById('treeModal');
 const treeNameInput = document.getElementById('treeNameInput');
 treeModal.addEventListener('shown.bs.modal', () => {
     treeNameInput.focus();
-})
+});
 
 const archetypeModal = document.getElementById('archetypeModal');
 const archetypeNameInput = document.getElementById('archetypeNameInput');
 archetypeModal.addEventListener('shown.bs.modal', () => {
     archetypeNameInput.focus();
-})
+});
 
 const abilityModal = document.getElementById('abilityModal');
 abilityModal.addEventListener('shown.bs.modal', () => {
     tree.renderEditorAbilityTooltip();
-})
+});
 document.getElementById('editAbilityTooltip').addEventListener('click', () => tree.renderEditorAbilityTooltip(false));
-window.addEventListener('resize', () => {if (!abilityModal.ariaHidden) tree.renderEditorAbilityTooltip()});
+window.addEventListener('resize', () => {
+    if (!abilityModal.ariaHidden) tree.renderEditorAbilityTooltip();
+});
 
 history.pushState(null, null, location.href);
 window.addEventListener('popstate', (e) => {
@@ -95,29 +99,41 @@ window.changeHidden = function changeHidden(bHidden, classes = [], ids = []) {
         });
     }
     if (ids.length > 0) {
-        ids.forEach(id => {document.getElementById(id).hidden = bHidden});
+        ids.forEach(id => {
+            document.getElementById(id).hidden = bHidden;
+        });
     }
-}
+};
 
 document.addEventListener("DOMContentLoaded", (event) => {
 
     //Attaches a div to a cursor, used to display content
-    document.addEventListener( 'pointermove', (e) => {utils.movetooltip(e.clientX, e.clientY, true);} );
+    document.addEventListener('pointermove', (e) => {
+        utils.movetooltip(e.clientX, e.clientY, true);
+    });
     //Makes tooltip disappear on tap
-    document.addEventListener( 'touchstart', () => {utils.hideHoverAbilityTooltip()});
-    document.addEventListener( 'wheel', (e) => utils.hideHoverAbilityTooltip() );
+    document.addEventListener('touchstart', () => {
+        utils.hideHoverAbilityTooltip();
+    });
+    document.addEventListener('wheel', (e) => utils.hideHoverAbilityTooltip());
 
     let treescrollprocessor = new utils.TouchProcessor();
     document.getElementById('treeTableBody').addEventListener('touchstart', (e) => {
         e.preventDefault();
         let swipeY = e.changedTouches[0].clientY;
         treescrollprocessor.processTouch(e,
-            () => {},
-            () => {},
-            () => {},
-            () => {},
-            () => {},
-            () => {},
+            () => {
+            },
+            () => {
+            },
+            () => {
+            },
+            () => {
+            },
+            () => {
+            },
+            () => {
+            },
             (event) => {
                 const deltaY = event.changedTouches[0].clientY - swipeY;
                 if (Math.abs(deltaY) > 30) {
@@ -127,7 +143,7 @@ document.addEventListener("DOMContentLoaded", (event) => {
                     else
                         tree.incrementVerticalPage(-1);
                 }
-            }
+            },
         );
     }, {passive: false});
 
@@ -139,7 +155,6 @@ document.addEventListener("DOMContentLoaded", (event) => {
     const colorContainers = document.getElementsByClassName("colorContainer");
 
     for (let key in utils.codeDictionaryColor) {
-
         if (utils.codeDictionaryColor[key] == null)
             continue;
 
@@ -151,18 +166,18 @@ document.addEventListener("DOMContentLoaded", (event) => {
         for (let container of colorContainers) {
             const clone = button.cloneNode(false);
             container.appendChild(clone);
-            clone.addEventListener("click", () => {utils.insertStringBeforeSelected(utils.preferredDelimiter + key)});
+            clone.addEventListener("click", () => {
+                utils.insertStringBeforeSelected(utils.preferredDelimiter + key);
+            });
         }
 
         button.remove();
-
     }
 
     //Populates generic unicode options from utils.codeDictionaryGenericSymbols map
     const genericUnicodeContainers = document.getElementsByClassName("genericUnicodeContainer");
 
     for (let key in utils.codeDictionaryGenericSymbols) {
-
         const button = document.createElement("button");
         button.title = key;
         button.classList.add('small-btn', 'font-minecraft');
@@ -176,18 +191,18 @@ document.addEventListener("DOMContentLoaded", (event) => {
         for (let container of genericUnicodeContainers) {
             const clone = button.cloneNode(true);
             container.appendChild(clone);
-            clone.addEventListener("click", () => {utils.insertStringBeforeSelected(utils.codeDictionaryGenericSymbols[key])});
+            clone.addEventListener("click", () => {
+                utils.insertStringBeforeSelected(utils.codeDictionaryGenericSymbols[key]);
+            });
         }
 
         button.remove();
-
     }
 
     //Populates class unicode options from utils.codeDictionaryClassSymbols map
     const classUnicodeContainers = document.getElementsByClassName("classUnicodeContainer");
 
     for (let key in utils.codeDictionaryClassSymbols) {
-
         const button = document.createElement("button");
         button.title = key;
         button.classList.add('small-btn', 'font-minecraft');
@@ -202,7 +217,9 @@ document.addEventListener("DOMContentLoaded", (event) => {
         for (let container of classUnicodeContainers) {
             const clone = button.cloneNode(true);
             container.appendChild(clone);
-            clone.addEventListener("click", () => {utils.insertStringBeforeSelected(utils.codeDictionaryClassSymbols[key])});
+            clone.addEventListener("click", () => {
+                utils.insertStringBeforeSelected(utils.codeDictionaryClassSymbols[key]);
+            });
         }
 
         button.remove();
@@ -212,7 +229,6 @@ document.addEventListener("DOMContentLoaded", (event) => {
     const commonAbilityUnicodeContainers = document.getElementsByClassName("commonAbilityUnicodeContainer");
 
     for (let key in utils.codeDictionaryCommonAbilityAttributes) {
-
         const button = document.createElement("button");
         button.title = key;
         button.classList.add('large-btn', 'font-minecraft');
@@ -227,11 +243,12 @@ document.addEventListener("DOMContentLoaded", (event) => {
         for (let container of commonAbilityUnicodeContainers) {
             const clone = button.cloneNode(true);
             container.appendChild(clone);
-            clone.addEventListener("click", () => {utils.insertStringBeforeSelected(utils.codeDictionaryCommonAbilityAttributes[key][1])});
+            clone.addEventListener("click", () => {
+                utils.insertStringBeforeSelected(utils.codeDictionaryCommonAbilityAttributes[key][1]);
+            });
         }
 
         button.remove();
-
     }
 
     //Makes labels display remaining character count when something is typed
@@ -244,18 +261,19 @@ document.addEventListener("DOMContentLoaded", (event) => {
         if (input == null || input.getAttribute('maxlength') == null)
             continue;
 
-        input.addEventListener( "input", () =>
-            label.innerHTML = input.value.length > 0 ? `${input.value.length}/${input.getAttribute('maxlength')}` : input.placeholder );
+        input.addEventListener("input", () =>
+            label.innerHTML = input.value.length > 0 ? `${input.value.length}/${input.getAttribute('maxlength')}` : input.placeholder);
 
         abilityModal.addEventListener('shown.bs.modal', () =>
-            label.innerHTML = input.value.length > 0 ? `${input.value.length}/${input.getAttribute('maxlength')}` : input.placeholder );
+            label.innerHTML = input.value.length > 0 ? `${input.value.length}/${input.getAttribute('maxlength')}` : input.placeholder);
     }
 
     //Makes .integer inputs round floats
     const automatedRoundInputs = document.getElementsByClassName("integer");
     for (let input of automatedRoundInputs) {
-        input.addEventListener( "change", (e) => {input.value = Math.round(input.value)}, true);
+        input.addEventListener("change", (e) => {
+            input.value = Math.round(input.value);
+        }, true);
     }
-
 });
 

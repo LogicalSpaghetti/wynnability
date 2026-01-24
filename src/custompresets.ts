@@ -1,6 +1,6 @@
-import * as utils from './utils.js';
-import * as main from './main.js';
-import {generateIconUrl} from "./main.js";
+import * as utils from './utils.ts';
+import * as main from './messy_main.ts';
+import {generateIconUrl} from "./messy_main.ts";
 
 let sortedPresets = [];
 let treeCache = {};
@@ -36,8 +36,8 @@ async function getPresets() {
         mode: 'same-origin',
         method: 'GET',
         headers: {
-            'Accept': 'application/json'
-        }
+            'Accept': 'application/json',
+        },
 
     }).then((response) => {
 
@@ -123,8 +123,8 @@ async function getPreset(filename) {
         mode: 'same-origin',
         method: 'GET',
         headers: {
-            'Accept': 'application/json'
-        }
+            'Accept': 'application/json',
+        },
 
     }).then((response) => {
 
@@ -218,7 +218,7 @@ export async function renderSearchResults(containerID = "customPresetContainer")
                     window.tree.loadFromJSON(JSON.stringify(tree, null, 0));
                     window.tree.saveState("Loaded a custom tree");
                     window.loadModal.hide();
-                }
+                },
             );
         }, {passive: false});
 
@@ -296,7 +296,7 @@ export async function renderSearchResults(containerID = "customPresetContainer")
                                 cancelRender.cancel = true;
                             img.src = generateIconUrl(type, preset['baseclass'], 1);
                         }, {once: true});
-                    }
+                    },
                 );
             }, {passive: false});
             imgholder.appendChild(div);

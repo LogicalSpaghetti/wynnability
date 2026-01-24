@@ -1,7 +1,7 @@
 export function movetooltip(X, Y, checkHidden = false) {
     const cursorTooltip = document.getElementById('cursorTooltip');
     if (checkHidden && cursorTooltip.hidden)
-    return;
+        return;
 
     cursorTooltip.originX = X;
     cursorTooltip.originY = Y;
@@ -28,10 +28,10 @@ export function adjustTooltipSize() {
         cursorTooltip.style.transformOrigin = `bottom left`;
     } else
         cursorTooltip.style.transformOrigin = `top left`;
-    
+
     cursorTooltip.style.top = `${upOffset}px`;
     cursorTooltip.style.left = `${leftOffset}px`;
-} 
+}
 
 export function hideHoverAbilityTooltip(containerId = "cursorTooltip") {
     const container = document.getElementById(containerId);
@@ -41,9 +41,7 @@ export function hideHoverAbilityTooltip(containerId = "cursorTooltip") {
 }
 
 export function clamp(number, min, max) {
-
     return Math.max(min, Math.min(number, max));
-
 }
 
 export function shortenText(text, maxChars, replaceEndWith = "...") {
@@ -76,14 +74,14 @@ export function enforceMinMax(inputElementID, min, max) {
             inputElement.max = max;
 
         inputElement.addEventListener('change', (e) => {
-    
+
             if (inputElement.hasAttribute('min'))
                 inputElement.value = Math.max(inputElement.value, inputElement.min);
-    
+
             if (inputElement.hasAttribute('max'))
                 inputElement.value = Math.min(inputElement.value, inputElement.max);
-    
-        }, true)
+
+        }, true);
 
     } else {
 
@@ -96,41 +94,45 @@ export function enforceMinMax(inputElementID, min, max) {
                 inputElement.max = max;
 
             inputElement.addEventListener('change', (e) => {
-        
+
                 if (inputElement.hasAttribute('min'))
                     inputElement.value = Math.max(inputElement.value, inputElement.min);
 
                 if (inputElement.hasAttribute('max'))
                     inputElement.value = Math.min(inputElement.value, inputElement.max);
-        
-            }, true)
+
+            }, true);
 
         });
-   }
+    }
 }
 
 export function showSmallToast(innerHTML = "I'm a toast!", autohide = true, hideDelay = 5000, id = 'smallToast') {
 
     const container = document.getElementById(id);
-    if(container == null)
+    if (container == null)
         return;
 
     container.querySelector('.toast-body').innerHTML = innerHTML;
 
-    const toast = bootstrap.Toast.getOrCreateInstance( container, {'autohide': autohide, 'delay': autohide ? hideDelay : null} );
+    const toast = bootstrap.Toast.getOrCreateInstance(container, {
+        'autohide': autohide,
+        'delay': autohide ? hideDelay : null,
+    });
     toast.show();
 }
 
 const TAPLENGTH = 250;
 const SWIPEMINDISTANCE = 30;
-export class TouchProcessor{
+
+export class TouchProcessor {
 
     lastTap = 0;
 
     taplength = 250;
 
     swipemindistance = 30;
-    
+
     startX;
     startY;
 
@@ -141,9 +143,17 @@ export class TouchProcessor{
         this.swipemindistance = isNaN(Number(swipemindistance)) ? SWIPEMINDISTANCE : Math.max(Number(swipemindistance), 0);
     }
 
-    processTouch(event, singleTapCallback = (e) => {}, doubleTapCallback = (e) => {},
-        holdStartCallback = (e) => {}, holdMoveCallback = (e) => {}, holdEndCallback = (e) => {},
-        swipeStartCallback = (e) => {}, swipeMoveCallback = (e) => {}, swipeEndCallback = (e) => {}) {
+    processTouch(event, singleTapCallback = (e) => {
+                 }, doubleTapCallback = (e) => {
+                 },
+                 holdStartCallback = (e) => {
+                 }, holdMoveCallback = (e) => {
+        }, holdEndCallback = (e) => {
+        },
+                 swipeStartCallback = (e) => {
+                 }, swipeMoveCallback = (e) => {
+        }, swipeEndCallback = (e) => {
+        }) {
 
         if (this.singeTapTimeout != null) {
             clearTimeout(this.singeTapTimeout);
@@ -168,12 +178,12 @@ export class TouchProcessor{
 
             let processor = this;
 
-            target.addEventListener("touchmove", touchmove = function(e) {
+            target.addEventListener("touchmove", touchmove = function (e) {
 
                 const deltaX = e.changedTouches[0].clientX - processor.startX;
                 const deltaY = e.changedTouches[0].clientY - processor.startY;
 
-                if (deltaX ** 2 + deltaY ** 2 >= processor.swipemindistance ** 2){
+                if (deltaX ** 2 + deltaY ** 2 >= processor.swipemindistance ** 2) {
 
                     if (holdTimeout) {
                         clearTimeout(holdTimeout);
@@ -183,7 +193,7 @@ export class TouchProcessor{
                     target.removeEventListener("touchmove", touchmove);
 
                     swipeStartCallback(event);
-                    target.addEventListener("touchmove", touchmoveElectricBoogaloo = function(e) {
+                    target.addEventListener("touchmove", touchmoveElectricBoogaloo = function (e) {
                         swipeMoveCallback(e);
                     }, {passive: true});
                     target.addEventListener("touchend", (e) => {
@@ -205,10 +215,10 @@ export class TouchProcessor{
                         target.removeEventListener("touchmove", (e) => holdMoveCallback(e), {passive: true});
                     }, {once: true});
                 },
-                TAPLENGTH
+                TAPLENGTH,
             );
 
-            target.addEventListener("touchend", touchend = function() {
+            target.addEventListener("touchend", touchend = function () {
                 if (holdTimeout) {
                     clearTimeout(holdTimeout);
                     holdTimeout = null;
@@ -219,10 +229,10 @@ export class TouchProcessor{
 
                 processor.singeTapTimeout = setTimeout(
                     () => {
-                    singleTapCallback(event);
-                    processor.singeTapTimeout = null;
+                        singleTapCallback(event);
+                        processor.singeTapTimeout = null;
                     },
-                    TAPLENGTH + processor.lastTap - currentTime
+                    TAPLENGTH + processor.lastTap - currentTime,
                 );
             }, {once: true});
         }
@@ -233,7 +243,7 @@ export class TouchProcessor{
         const deltaX = e.changedTouches[0].clientX - this.startX;
         const deltaY = e.changedTouches[0].clientY - this.startY;
 
-        if (deltaX ** 2 + deltaY ** 2 >= this.swipemindistance ** 2){
+        if (deltaX ** 2 + deltaY ** 2 >= this.swipemindistance ** 2) {
 
             if (holdTimeout) {
                 clearTimeout(holdTimeout);
@@ -243,7 +253,7 @@ export class TouchProcessor{
             target.removeEventListener("touchmove", touchmove);
 
             swipeStartCallback(event);
-            target.addEventListener("touchmove", touchmoveElectricBoogaloo = function(e) {
+            target.addEventListener("touchmove", touchmoveElectricBoogaloo = function (e) {
                 swipeMoveCallback(e);
             }, {passive: true});
             target.addEventListener("touchend", (e) => {
@@ -256,109 +266,107 @@ export class TouchProcessor{
 }
 
 export const codeDictionaryGenericSymbols = {
-    'mana' : '§b✺',
+    'mana': '§b✺',
 
-    'damage' : '§c⚔',
-    'neuteral' : '§6✣',
-    'earth' : '§2✤',
-    'thunder' : '§e✦',
-    'water' : '§b❉',
-    'fire' : '§c✹',
-    'air' : '§f❋',
+    'damage': '§c⚔',
+    'neutral': '§6✣',
+    'earth': '§2✤',
+    'thunder': '§e✦',
+    'water': '§b❉',
+    'fire': '§c✹',
+    'air': '§f❋',
 
-    'effect' : '§e✧',
-    'duration' : '§d⌛',
-    'AoE' : '§3☀',
-    'range' : '§a➼',
-    'cooldown' : '§3⌚',
-    'heal' : '§d❤',
-    'blindness' : '§c⬣',
-    'slowness' : '§c⬤',
+    'effect': '§e✧',
+    'duration': '§d⌛',
+    'AoE': '§3☀',
+    'range': '§a➼',
+    'cooldown': '§3⌚',
+    'heal': '§d❤',
+    'blindness': '§c⬣',
+    'slowness': '§c⬤',
 };
 export const codeDictionaryClassSymbols = {
-    'focus' : '§e➽',
+    'focus': '§e➽',
 
-    'winded' : '§b≈',
-    'dilation' : '§3➲',
+    'winded': '§b≈',
+    'dilation': '§3➲',
 
-    'resistance' : '§a❁',
-    'corrupted' : '§4☠',
-    'armorbreak' : '§c✃',
-    'sacred' : '§6✧',
-    'provoke' : '§4💢',
-    'invincibility' : '§b☗',
+    'resistance': '§a❁',
+    'corrupted': '§4☠',
+    'armorbreak': '§c✃',
+    'sacred': '§6✧',
+    'provoke': '§4💢',
+    'invincibility': '§b☗',
 
-    'puppet' : '§6⚘',
-    'whipped' : '§6⇶',
-    'awakened' : '§f♚',
-    'bloodpool' : '§4⚕',
-    'bleeding' : '§c',
+    'puppet': '§6⚘',
+    'whipped': '§6⇶',
+    'awakened': '§f♚',
+    'bloodpool': '§4⚕',
+    'bleeding': '§c',
 
-    'old clones' : '§5',
-    'marked' : '§c✜',
-    'mirror clone' : '§#c267f7',
-    'mirage clone' : '§#f5cfff',
-    'shadow clone' : '§#d84c4c',
-    'tricks' : '§#6afa65',
-    'confused' : '§#e1dca4',
-    'contaminated' : '§#94a771',
-    'enkindled' : '§#ff8e8e',
-    'noxious' : '§#eb3dfe',
-    'drained' : '§#a1fad9',
+    'old clones': '§5',
+    'marked': '§c✜',
+    'mirror clone': '§#c267f7',
+    'mirage clone': '§#f5cfff',
+    'shadow clone': '§#d84c4c',
+    'tricks': '§#6afa65',
+    'confused': '§#e1dca4',
+    'contaminated': '§#94a771',
+    'enkindled': '§#ff8e8e',
+    'noxious': '§#eb3dfe',
+    'drained': '§#a1fad9',
 };
 export const codeDictionaryCommonAbilityAttributes = {
-    
-    'manacost' : ['§b✺', '\n§b✺ §7Mana Cost: §f_'],
+    'manacost': ['§b✺', '\n§b✺ §7Mana Cost: §f_'],
 
-    'damage' : ['§c⚔', '\n§c⚔ §7Total Damage: §f_% §8(of your DPS)'],
-    'neuteral' : ['§6✣', '\n   §8(§6✣ §8Damage: _%)'],
-    'earth' : ['§2✤', '\n   §8(§2✤ §8Earth: _%)'],
-    'thunder' : ['§e✦', '\n   §8(§e✦ §8Thunder: _%)'],
-    'water' : ['§b❉', '\n   §8(§b❉ §8Water: _%)'],
-    'fire' : ['§c✹', '\n   §8(§c✹ §8Fire: _%)'],
-    'air' : ['§f❋', '\n   §8(§f❋ §8Air: _%)'],
-    
-    'effect' : ['§e✧', '\n§e✧ §7Effect: §f_'],
-    'duration' : ['§d⌛', '\n§d⌛ §7Duration: §f_s'],
-    'range' : ['§2➼', '\n§2➼ §7Range: §f_ Blocks'],
-    'AoE' : ['§3☀', '\n§3☀ §7Area of Effect: §f_ Blocks §7(Circle-Shaped)'],
-    'cooldown' : ['§3⌚', '\n§3⌚ §7Cooldown: §f_s'],
+    'damage': ['§c⚔', '\n§c⚔ §7Total Damage: §f_% §8(of your DPS)'],
+    'neutral': ['§6✣', '\n   §8(§6✣ §8Damage: _%)'],
+    'earth': ['§2✤', '\n   §8(§2✤ §8Earth: _%)'],
+    'thunder': ['§e✦', '\n   §8(§e✦ §8Thunder: _%)'],
+    'water': ['§b❉', '\n   §8(§b❉ §8Water: _%)'],
+    'fire': ['§c✹', '\n   §8(§c✹ §8Fire: _%)'],
+    'air': ['§f❋', '\n   §8(§f❋ §8Air: _%)'],
 
+    'effect': ['§e✧', '\n§e✧ §7Effect: §f_'],
+    'duration': ['§d⌛', '\n§d⌛ §7Duration: §f_s'],
+    'range': ['§2➼', '\n§2➼ §7Range: §f_ Blocks'],
+    'AoE': ['§3☀', '\n§3☀ §7Area of Effect: §f_ Blocks §7(Circle-Shaped)'],
+    'cooldown': ['§3⌚', '\n§3⌚ §7Cooldown: §f_s'],
 };
 
 export const codeDictionaryColor = {
-    '0' : '#000000',
-    '1' : '#0000AA',
-    '2' : '#00AA00',
-    '3' : '#00AAAA',
-    '4' : '#AA0000',
-    '5' : '#AA00AA',
-    '6' : '#FFAA00',
-    '7' : '#AAAAAA',
-    '8' : '#555555',
-    '9' : '#5555FF',
-    'a' : '#55FF55',
-    'b' : '#55FFFF',
-    'c' : '#FF5555',
-    'd' : '#FF55FF',
-    'e' : '#FFFF55',
-    'f' : '#FFFFFF',
-    'r' : null,
-    'g' : '#87DD47',
-    'h' : '#FFE14D',
-    'i' : '#F747C2',
-    'j' : '#99E9FF',
-    'k' : '#FF4545',
+    '0': '#000000',
+    '1': '#0000aa',
+    '2': '#00aa00',
+    '3': '#00aaaa',
+    '4': '#aa0000',
+    '5': '#aa00aa',
+    '6': '#ffaa00',
+    '7': '#aaaaaa',
+    '8': '#555555',
+    '9': '#5555ff',
+    'a': '#55ff55',
+    'b': '#55ffff',
+    'c': '#ff5555',
+    'd': '#ff55ff',
+    'e': '#ffff55',
+    'f': '#ffffff',
+    'r': null,
+    'g': '#87dd47',
+    'h': '#ffe14d',
+    'i': '#f747c2',
+    'j': '#99e9ff',
+    'k': '#ff4545',
 };
 export const codeDictionaryDecoration = {
-    'm' : 'line-through',
-    'n' : 'underline',
+    'm': 'line-through',
+    'n': 'underline',
 };
 export const codeDictionaryStyle = {
-    'l' : 'fw-bold',
-    'o' : 'fst-italic',
+    'l': 'fw-bold',
+    'o': 'fst-italic',
 };
-export const minecraftDelimiters = {'§' : true, '&' : true};
+export const minecraftDelimiters = {'§': true, '&': true};
 export const preferredDelimiter = '§';
 
 export function splitByColorFormats(string) {
@@ -366,12 +374,12 @@ export function splitByColorFormats(string) {
     let result =
         [
             {
-                color : null,
-                content : ''
-            }
+                color: null,
+                content: '',
+            },
         ];
 
-    if (string.length == 0)
+    if (string.length === 0)
         return result;
 
     let i = 0;
@@ -389,21 +397,21 @@ export function splitByColorFormats(string) {
             continue;
 
         let code = string[i];
-        
+
         if (code in codeDictionaryColor)
-            result.push( {color : code, content : ''} );
+            result.push({color: code, content: ''});
 
         else if (code == '#' && string.length - i >= 7) {
             const endOfColorCode = i + 6;
             for (i; i < endOfColorCode; i++) {
                 code += string[i + 1];
             }
-            result.push( {color : code, content : ''} );
+            result.push({color: code, content: ''});
 
         } else
             result[result.length - 1]['content'] += char + code;
     }
-    
+
     return result;
 
 }
@@ -413,39 +421,39 @@ export function splitByOtherFormats(string = '') {
     let result =
         [
             {
-                decoration : null,
-                style : null,
-                content : ''
-            }
+                decoration: null,
+                style: null,
+                content: '',
+            },
         ];
 
     if (string.length == 0)
         return result;
-    
+
     let i = 0;
     for (i; i < string.length - 1; i++) {
 
         const char = string[i];
-        
+
         if (!minecraftDelimiters[char]) {
 
             result[result.length - 1]['content'] += char;
             continue;
 
         }
-        
+
         i++;
         const code = string[i];
-        
+
         if (code in codeDictionaryStyle)
-            result.push( {style : code, content : ''} );
+            result.push({style: code, content: ''});
 
         else if (code in codeDictionaryDecoration)
-            result.push( {decoration : code, content : ''} );
+            result.push({decoration: code, content: ''});
     }
     if (i < string.length && !minecraftDelimiters[string[string.length - 1]])
         result[result.length - 1]['content'] += string[string.length - 1];
-    
+
     return result;
 
 }
@@ -455,17 +463,17 @@ export function stripMinecraftFormatting(text = "") {
     let result = '';
 
     const colorSplitArr = splitByColorFormats(text);
-    
-    colorSplitArr.forEach( colorSplit => {
-        
+
+    colorSplitArr.forEach(colorSplit => {
+
         const formatSplitArr = splitByOtherFormats(colorSplit['content']);
-        
-        formatSplitArr.forEach( formatSplit => {
+
+        formatSplitArr.forEach(formatSplit => {
 
             result += formatSplit['content'];
         });
     });
-    
+
     return result;
 }
 

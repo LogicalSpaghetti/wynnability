@@ -1,11 +1,8 @@
-import * as utils from './utils.js';
+import * as utils from './utils.ts';
 
 const classNames = ['archer', 'assassin', 'mage', 'shaman', 'warrior'];
 
 const abilityIconDirectoryPath = `../assets/img/abilities/`;
-
-const nodeNames = ['skill', 'red', 'blue', 'purple', 'yellow', 'white'];
-const altNodeNames = ['skill', 'magenta', 'red', 'blue', 'purple', 'yellow', 'white'];
 
 const abilityIconDictionary = {
     'skill': 'class/',
@@ -14,6 +11,37 @@ const abilityIconDictionary = {
     'purple': 'generic/purple',
     'yellow': 'generic/yellow',
     'white': 'generic/white',
+};
+
+const nodeDictionary = {
+    'skill': {
+        'path': 'class/',
+        'color_tag': 'g',
+    },
+    'magenta': {
+        'path': 'generic/magenta',
+        'color_tag': 'd',
+    },
+    'red': {
+        'path': 'generic/red',
+        'color_tag': 'k',
+    },
+    'blue': {
+        'path': 'generic/blue',
+        'color_tag': 'j',
+    },
+    'purple': {
+        'path': 'generic/purple',
+        'color_tag': 'i',
+    },
+    'yellow': {
+        'path': 'generic/yellow',
+        'color_tag': 'h',
+    },
+    'white': {
+        'path': 'generic/white',
+        'color_tag': 'f',
+    },
 };
 
 const altAbilityIconDictionary = {
@@ -32,6 +60,8 @@ const reverseDirectionDictionary = {
     'right': 'left',
     'left': 'right',
 };
+
+// const ability
 
 function generateIconDiv(type, travelNode = new TravelNode(), classs = "", allocationStatus = 0, bScaleAbilityIcon = false, useAlternativeAbilityIcons = false) {
 
@@ -180,34 +210,11 @@ class Ability {
 
     autoformatName() {
         const delimiter = utils.preferredDelimiter;
-        let prefix = `${delimiter}l`;
-        switch (this.type) {
-            case 'skill':
-                prefix = `${delimiter}g` + prefix;
-                break;
-            case 'white':
-                prefix = `${delimiter}f` + prefix;
-                break;
-            case 'yellow':
-                prefix = `${delimiter}h` + prefix;
-                break;
-            case 'purple':
-                prefix = `${delimiter}i` + prefix;
-                break;
-            case 'blue':
-                prefix = `${delimiter}j` + prefix;
-                break;
-            case 'red':
-                prefix = `${delimiter}k` + prefix;
-                break;
-            default:
-                return;
-        }
-        this.name = prefix + this._plainname;
+        this.name = `${delimiter}${nodeDictionary[this.type].color_tag}${delimiter}l${this._plainname}`;
     }
 }
 
-const NUMOFVARIANTS = 4;
+const VARIANT_COUNT = 4;
 
 class TravelNode {
     /**
@@ -240,12 +247,12 @@ class TravelNode {
      */
     variant = 1;
 
-    constructor({up = 0, down = 0, left = 0, right = 0, variant = Math.ceil(Math.random() * NUMOFVARIANTS)} = {}) {
+    constructor({up = 0, down = 0, left = 0, right = 0, variant = Math.ceil(Math.random() * VARIANT_COUNT)} = {}) {
         this.up = isNaN(Number(up)) ? 0 : utils.clamp(Number(up), 0, 2);
         this.down = isNaN(Number(down)) ? 0 : utils.clamp(Number(down), 0, 2);
         this.left = isNaN(Number(left)) ? 0 : utils.clamp(Number(left), 0, 2);
         this.right = isNaN(Number(right)) ? 0 : utils.clamp(Number(right), 0, 2);
-        this.variant = isNaN(Number(variant)) ? 1 : utils.clamp(Number(variant), 1, NUMOFVARIANTS);
+        this.variant = isNaN(Number(variant)) ? 1 : utils.clamp(Number(variant), 1, VARIANT_COUNT);
     }
 
     mergeTravelNodes(travelNode) {
@@ -278,7 +285,7 @@ class TravelNode {
         else if (connectionCountMap['active'] == 2)
             result += `<img src="${abilityIconDirectoryPath}branch/${this.up == 2 ? 2 : 0}${this.down == 2 ? 2 : 0}${this.left == 2 ? 2 : 0}${this.right == 2 ? 2 : 0}/${this.variant}.png" class="ability-icon" style="z-index: 2;">\n`;
         else if (connectionCountMap['active'] == 3)
-            result += `<img src="${abilityIconDirectoryPath}branch/${this.up == 2 ? 2 : 0}${this.down == 2 ? 2 : 0}${this.left == 2 ? 2 : 0}${this.right == 2 ? 2 : 0}/${Math.ceil(this.variant / NUMOFVARIANTS * 2)}.png" class="ability-icon" style="z-index: 2;">\n`;
+            result += `<img src="${abilityIconDirectoryPath}branch/${this.up == 2 ? 2 : 0}${this.down == 2 ? 2 : 0}${this.left == 2 ? 2 : 0}${this.right == 2 ? 2 : 0}/${Math.ceil(this.variant / VARIANT_COUNT * 2)}.png" class="ability-icon" style="z-index: 2;">\n`;
 
 
         return result;
@@ -363,7 +370,7 @@ class Properties {
     loopTree = false;
 
     /**
-     * Whether or not you can go up the tree
+     * Whether you can go up the tree
      * @var bool
      */
     bTravesableUp = false;
@@ -592,27 +599,21 @@ export class BaseTree {
                    rowsPerPageId = ROWSPERPAGE_INPUTID, pagesDisplayedId = PAGESDISPLAYED_INPUTID, bTravesableUpId = "travelUpSwitch", useAlternativeAbilityIconsId = "altIconSwitch", strictAllocationId = "strictAllocationSwitch") {
 
         if (this.properties != null && this.properties.loopTree != document.getElementById(loopTreeId).checked) {
-
             const totalCells = this.properties.pages * this.properties.rowsPerPage * COLUMNS;
 
             for (let key = 1; key <= totalCells; key += COLUMNS) {
-
                 if (this.cellMap[key] == null || this.cellMap[key]['travelNode'] == null)
                     continue;
 
                 this.cellMap[key]['travelNode']['left'] = 0;
-
             }
 
             for (let key = COLUMNS; key <= totalCells; key += COLUMNS) {
-
                 if (this.cellMap[key] == null || this.cellMap[key]['travelNode'] == null)
                     continue;
 
                 this.cellMap[key]['travelNode']['right'] = 0;
-
             }
-
         }
 
         this.properties = new Properties({
@@ -646,7 +647,6 @@ export class BaseTree {
         document.getElementById(bTravesableUpId).checked = this.properties.bTravesableUp;
         document.getElementById(useAlternativeAbilityIconsId).checked = this.properties.useAlternativeAbilityIcons;
         document.getElementById(strictAllocationId).checked = this.properties.strictAllocation;
-
     }
 
     renderScrollArrows(bShowSidewayArrows) {
