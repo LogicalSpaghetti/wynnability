@@ -224,12 +224,10 @@ export class TouchProcessor {
     }
 }
 
-export type StringObject = { [key: string]: string };
-export type BooleanObject = { [key: string]: boolean };
-// type NumberObject = {[key: string]: number};
-export type StringArrayObject = { [key: string]: string[] };
+export type StringTo<T> = { [key: string]: T };
+export type NumberTo<T> = { [key: number | string]: T };
 
-export const codeDictionaryGenericSymbols: StringObject = {
+export const codeDictionaryGenericSymbols: StringTo<string> = {
     'mana': '§b✺',
 
     'damage': '§c⚔',
@@ -249,7 +247,7 @@ export const codeDictionaryGenericSymbols: StringObject = {
     'blindness': '§c⬣',
     'slowness': '§c⬤',
 };
-export const codeDictionaryClassSymbols: StringObject = {
+export const codeDictionaryClassSymbols: StringTo<string> = {
     'focus': '§e➽',
 
     'winded': '§b≈',
@@ -280,7 +278,7 @@ export const codeDictionaryClassSymbols: StringObject = {
     'noxious': '§#eb3dfe',
     'drained': '§#a1fad9',
 };
-export const codeDictionaryCommonAbilityAttributes: StringArrayObject = {
+export const codeDictionaryCommonAbilityAttributes: StringTo<string[]> = {
     'manacost': ['§b✺', '\n§b✺ §7Mana Cost: §f_'],
 
     'damage': ['§c⚔', '\n§c⚔ §7Total Damage: §f_% §8(of your DPS)'],
@@ -298,7 +296,7 @@ export const codeDictionaryCommonAbilityAttributes: StringArrayObject = {
     'cooldown': ['§3⌚', '\n§3⌚ §7Cooldown: §f_s'],
 };
 
-export const codeDictionaryColor: StringObject = {
+export const codeDictionaryColor: StringTo<string> = {
     '0': '#000000',
     '1': '#0000aa',
     '2': '#00aa00',
@@ -322,15 +320,15 @@ export const codeDictionaryColor: StringObject = {
     'j': '#99e9ff',
     'k': '#ff4545',
 };
-export const codeDictionaryDecoration: StringObject = {
+export const codeDictionaryDecoration: StringTo<string> = {
     'm': 'line-through',
     'n': 'underline',
 };
-export const codeDictionaryStyle: StringObject = {
+export const codeDictionaryStyle: StringTo<string> = {
     'l': 'fw-bold',
     'o': 'fst-italic',
 };
-export const minecraftDelimiters: BooleanObject = {'§': true, '&': true};
+export const minecraftDelimiters = ['§', '&'];
 export const preferredDelimiter = '§';
 
 export function splitByColorFormats(string: string) {
@@ -349,7 +347,7 @@ export function splitByColorFormats(string: string) {
 
         let char = string[i];
 
-        if (!minecraftDelimiters[char]) {
+        if (!minecraftDelimiters.includes(char)) {
             result[result.length - 1]['content'] += char;
             continue;
         }
@@ -377,7 +375,7 @@ export function splitByColorFormats(string: string) {
     return result;
 }
 
-export function splitByOtherFormats(string = '') {
+export function splitByOtherFormats(str = '') {
 
     let result: { decoration?: string, style?: string, content: string }[] = [
         {
@@ -385,14 +383,14 @@ export function splitByOtherFormats(string = '') {
         },
     ];
 
-    if (string.length == 0) return result;
+    if (str.length == 0) return result;
 
     let i = 0;
-    for (i; i < string.length - 1; i++) {
+    for (i; i < str.length - 1; i++) {
 
-        const char = string[i];
+        const char = str[i];
 
-        if (!minecraftDelimiters[char]) {
+        if (!minecraftDelimiters.includes(char)) {
 
             result[result.length - 1]['content'] += char;
             continue;
@@ -400,7 +398,7 @@ export function splitByOtherFormats(string = '') {
         }
 
         i++;
-        const code = string[i];
+        const code = str[i];
 
         if (code in codeDictionaryStyle)
             result.push({style: code, content: ''});
@@ -408,8 +406,8 @@ export function splitByOtherFormats(string = '') {
         else if (code in codeDictionaryDecoration)
             result.push({decoration: code, content: ''});
     }
-    if (i < string.length && !minecraftDelimiters[string[string.length - 1]])
-        result[result.length - 1]['content'] += string[string.length - 1];
+    if (i < str.length && !minecraftDelimiters.includes(str[str.length - 1]))
+        result[result.length - 1]['content'] += str[str.length - 1];
 
     return result;
 
@@ -472,8 +470,8 @@ export function minecraftToHTML(text = "") {
         let pendingContent = '';
 
         let spansToClose = 0;
-        let pendingTextDecorations: BooleanObject = {};
-        let pendingTextStyles: BooleanObject = {};
+        let pendingTextDecorations: StringTo<boolean> = {};
+        let pendingTextStyles: StringTo<boolean> = {};
 
         const formatSplitArr = splitByOtherFormats(colorSplit['content']);
 

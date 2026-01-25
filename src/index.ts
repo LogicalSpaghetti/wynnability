@@ -3,12 +3,23 @@ import '../css/main.css';
 import * as utils from './utils';
 import * as custom from './custom_presets';
 import * as listeners from "./listeners";
-import {loadModal, tree} from './global_objects';
-import type {StringObject} from "./utils";
+import type {StringToString} from "./utils";
+import * as main from "./messy_main";
+import {Modal} from 'bootstrap';
+
+console.log("index loaded");
+
+// #region Global Objects
+
+export let tree = new main.BaseTree();
+export let loadModal /*= new Modal('#loadModal', {})*/; // TODO: used to close the Load menu once something is selected.
+
+// #endregion
+
 
 // TODO: might be needed for safety
-// window.addEventListener("DOMContentLoaded", loadPage, {once: true});
-loadPage();
+window.addEventListener("load", loadPage, {once: true});
+// loadPage();
 function loadPage() {
     // TODO: preLoadAssets(); // used to ensure icons not used will render if the user goes offline
     listeners.addListeners();
@@ -36,12 +47,12 @@ if (typeof document.hidden !== "undefined") {
     });
 }
 
-const themeInverses: StringObject = {
+const themeInverses: StringToString = {
     'light': 'dark',
     'dark': 'light',
 };
 
-const themeIcons: StringObject = {
+const themeIcons: StringToString = {
     'light': 'assets/img/abilities/generic/purple_a.png',
     'dark': 'assets/img/abilities/generic/purple.png',
 };

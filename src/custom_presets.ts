@@ -1,7 +1,7 @@
 import * as utils from './utils';
 import * as main from './messy_main';
 import {generateIconUrl} from "./messy_main";
-
+console.log("custom presets loaded");
 let sortedPresets = [];
 let treeCache = {};
 const MAXCACHEDTREES = 15;

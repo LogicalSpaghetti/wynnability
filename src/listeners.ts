@@ -1,6 +1,6 @@
-import {loadModal, tree} from "./global_objects";
 import * as utils from "./utils";
-import {invertTheme} from "./index.ts";
+import {invertTheme, loadModal, tree} from "./index.ts";
+console.log("listeners loaded");
 
 export function addListeners() {
     const dropzone = document.getElementById('dropzone');

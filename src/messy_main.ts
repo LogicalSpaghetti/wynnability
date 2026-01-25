@@ -1,11 +1,13 @@
+import type {NumberTo, StringTo} from "./utils";
 import * as utils from './utils';
-import type {StringObject} from "./utils";
+
+type NameInput = (HTMLInputElement & { oldName: string }) | null
 
 const classNames = ['archer', 'assassin', 'mage', 'shaman', 'warrior'];
 
-const abilityIconDirectoryPath = `../assets/img/abilities/`;
+const abilityIconDirectoryPath = `/wynnability/assets/img/abilities/`;
 
-const abilityIconDictionary: StringObject = {
+const abilityIconDictionary: StringTo<string> = {
     'skill': 'class/',
     'red': 'generic/red',
     'blue': 'generic/blue',
@@ -14,7 +16,7 @@ const abilityIconDictionary: StringObject = {
     'white': 'generic/white',
 };
 
-const nodeDictionary: { [key: string]: {path: string, color_tag: string} } = {
+const nodeDictionary: StringTo<{ path: string, color_tag: string }> = {
     'skill': {
         'path': 'class/',
         'color_tag': 'g',
@@ -45,7 +47,7 @@ const nodeDictionary: { [key: string]: {path: string, color_tag: string} } = {
     },
 };
 
-const altAbilityIconDictionary: StringObject = {
+const altAbilityIconDictionary: StringTo<string> = {
     'skill': 'class/',
     'magenta': 'generic/magenta',
     'red': 'generic/red',
@@ -55,14 +57,17 @@ const altAbilityIconDictionary: StringObject = {
     'white': 'generic/white',
 };
 
-const reverseDirectionDictionary: StringObject = {
+const reverseDirectionDictionary: StringTo<string> = {
     'up': 'down',
     'down': 'up',
     'right': 'left',
     'left': 'right',
 };
 
-// const ability
+const priorityMap: StringTo<number> = {};
+Object.keys(altAbilityIconDictionary).forEach((elem, i) => {
+    priorityMap[elem] = i;
+});
 
 function generateIconDiv(type: string, travelNode: TravelNode | null = new TravelNode(), classs = "", allocationStatus = 0, bScaleAbilityIcon = false, useAlternativeAbilityIcons = false) {
 
@@ -117,58 +122,60 @@ const ARCHETYPE_POINTS_REQUIRED_UPPER = 420;
 const ARCHETYPE_POINTS_REQUIRED_INPUT_ID = 'archetypePointsRequiredInput';
 utils.enforceMinMax(ARCHETYPE_POINTS_REQUIRED_INPUT_ID, ARCHETYPE_POINTS_REQUIRED_LOWER, ARCHETYPE_POINTS_REQUIRED_UPPER);
 
+type AbilityData = {
+
+    name: string,
+    description: string,
+    unlockingWillBlock: number[],
+    archetype: string,
+    pointsRequired: number,
+    archetypePointsRequired: number,
+    type: string,
+    requires: number,
+}
 class Ability {
     /**
      * Top-most text
-     * @var string
      */
     name = '';
 
     /**
      * Name without minecraft formatting codes
-     * @var string
      */
     _plainname = '';
 
     /**
      * Description
-     * @var string
      */
     description = '';
 
     /**
      * Blocks these abilities from being allocated
-     * @var int[]
      */
-    unlockingWillBlock = [];
+    unlockingWillBlock: number[] = [];
 
     /**
      * Archetype
-     * @var string
      */
     archetype = '';
 
     /**
      * Ability point requirement
-     * @var int
      */
     pointsRequired = POINTS_REQUIRED_LOWER;
 
     /**
      * Min archetype points required
-     * @var int
      */
     archetypePointsRequired = ARCHETYPE_POINTS_REQUIRED_LOWER;
 
     /**
      * Ability type
-     * @var string
      */
     type = '';
 
     /**
      * ID of the required ability
-     * @var int
      */
     requires = -1;
 
@@ -181,7 +188,7 @@ class Ability {
                     archetypePointsRequired = ARCHETYPE_POINTS_REQUIRED_LOWER,
                     type = 'skill',
                     requires = -1,
-                } = {}) {
+                }: AbilityData = {} as AbilityData) {
 
         this.name = String(name) ? String(name) : '';
         this._plainname = utils.stripMinecraftFormatting(this.name);
@@ -216,59 +223,64 @@ class Ability {
 }
 
 const VARIANT_COUNT = 4;
+type VariantIndex = 1 | 2 | 3 | 4; // 1 to VARIANT_COUNT
+
+type Direction = "up" | "down" | "left" | "right";
+type ConnectionStrength = 0 | 1 | 2;
 
 class TravelNode {
     /**
-     * up : empty/0 means unconnected, 1 means connected, 2 means allocated
-     * @var int
+     * up : 0 means unconnected, 1 means connected, 2 means allocated
      */
-    up = 0;
+    up: ConnectionStrength = 0;
 
     /**
-     * down : empty/0 means unconnected, 1 means connected, 2 means allocated
+     * down : 0 means unconnected, 1 means connected, 2 means allocated
      * @var int
      */
-    down = 0;
+    down: ConnectionStrength = 0;
 
     /**
-     * left : empty/0 means unconnected, 1 means connected, 2 means allocated
+     * left : 0 means unconnected, 1 means connected, 2 means allocated
      * @var int
      */
-    left = 0;
+    left: ConnectionStrength = 0;
 
     /**
-     * right : empty/0 means unconnected, 1 means connected, 2 means allocated
+     * right : 0 means unconnected, 1 means connected, 2 means allocated
      * @var int
      */
-    right = 0;
+    right: ConnectionStrength = 0;
 
     /**
      * Which variant to pick when rendering
      * @var int
      */
-    variant = 1;
+    variant: VariantIndex = 1;
 
-    constructor({up = 0, down = 0, left = 0, right = 0, variant = Math.ceil(Math.random() * VARIANT_COUNT)} = {}) {
-        this.up = isNaN(Number(up)) ? 0 : utils.clamp(Number(up), 0, 2);
-        this.down = isNaN(Number(down)) ? 0 : utils.clamp(Number(down), 0, 2);
-        this.left = isNaN(Number(left)) ? 0 : utils.clamp(Number(left), 0, 2);
-        this.right = isNaN(Number(right)) ? 0 : utils.clamp(Number(right), 0, 2);
-        this.variant = isNaN(Number(variant)) ? 1 : utils.clamp(Number(variant), 1, VARIANT_COUNT);
+    constructor({
+                    up = 0, down = 0, left = 0, right = 0,
+                    variant = Math.ceil(Math.random() * VARIANT_COUNT) as VariantIndex,
+                }: TravelNode = {} as TravelNode) {
+        this.up = up;
+        this.down = down;
+        this.left = left;
+        this.right = right;
+        this.variant = variant;
     }
 
-    mergeTravelNodes(travelNode) {
-        this.up = Math.max(this.up, travelNode.up);
-        this.down = Math.max(this.down, travelNode.down);
-        this.left = Math.max(this.left, travelNode.left);
-        this.right = Math.max(this.right, travelNode.right);
+    mergeTravelNodes(travelNode: TravelNode) {
+        this.up = Math.max(this.up, travelNode.up) as ConnectionStrength;
+        this.down = Math.max(this.down, travelNode.down) as ConnectionStrength;
+        this.left = Math.max(this.left, travelNode.left) as ConnectionStrength;
+        this.right = Math.max(this.right, travelNode.right) as ConnectionStrength;
     }
 
     generateIconHTML() {
-
         let result = '';
 
         let connectionCountMap = {'connected': 0, 'active': 0};
-        const properties = ['up', 'down', 'left', 'right'];
+        const properties: Direction[] = ['up', 'down', 'left', 'right'];
         for (let property of properties)
             if (this[property] == 1)
                 connectionCountMap['connected']++;
@@ -297,64 +309,59 @@ class TravelNode {
     }
 }
 
-const MAXABILITYPOINTS_LOWER = 1;
-const MAXABILITYPOINTS_DEFAULT = 45;
-const MAXABILITYPOINTS_UPPER = 1984;
-const MAXABILITYPOINTS_INPUTID = 'maxAbilityPoints';
-utils.enforceMinMax(MAXABILITYPOINTS_INPUTID, MAXABILITYPOINTS_LOWER, MAXABILITYPOINTS_UPPER);
+const MAX_ABILITY_POINTS_LOWER = 1;
+const MAX_ABILITY_POINTS_DEFAULT = 45;
+const MAX_ABILITY_POINTS_UPPER = 1984;
+const MAX_ABILITY_POINTS_INPUT_ID = 'maxAbilityPoints';
+utils.enforceMinMax(MAX_ABILITY_POINTS_INPUT_ID, MAX_ABILITY_POINTS_LOWER, MAX_ABILITY_POINTS_UPPER);
 
 const PAGES_LOWER = 1;
 const PAGES_DEFAULT = 7;
 const PAGES_UPPER = 30;
-const PAGES_INPUTID = 'treePages';
-utils.enforceMinMax(PAGES_INPUTID, PAGES_LOWER, PAGES_UPPER);
+const PAGES_INPUT_ID = 'treePages';
+utils.enforceMinMax(PAGES_INPUT_ID, PAGES_LOWER, PAGES_UPPER);
 
 const HORIZONTAL_PAGES_LOWER = 1;
 const HORIZONTAL_PAGES_DEFAULT = 1;
 const HORIZONTAL_PAGES_UPPER = 30;
-const HORIZONTAL_PAGES_INPUTID = 'horizontalPages';
-utils.enforceMinMax(HORIZONTAL_PAGES_INPUTID, HORIZONTAL_PAGES_LOWER, HORIZONTAL_PAGES_UPPER);
+const HORIZONTAL_PAGES_INPUT_ID = 'horizontalPages';
+utils.enforceMinMax(HORIZONTAL_PAGES_INPUT_ID, HORIZONTAL_PAGES_LOWER, HORIZONTAL_PAGES_UPPER);
 
-const ROWSPERPAGE_LOWER = 3;
-const ROWSPERPAGE_DEFAULT = 6;
-const ROWSPERPAGE_UPPER = 11;
-const ROWSPERPAGE_INPUTID = 'rowsPerPage';
-utils.enforceMinMax(ROWSPERPAGE_INPUTID, ROWSPERPAGE_LOWER, ROWSPERPAGE_UPPER);
+const ROWS_PER_PAGE_LOWER = 3;
+const ROWS_PER_PAGE_DEFAULT = 6;
+const ROWS_PER_PAGE_UPPER = 11;
+const ROWS_PER_PAGE_INPUT_ID = 'rowsPerPage';
+utils.enforceMinMax(ROWS_PER_PAGE_INPUT_ID, ROWS_PER_PAGE_LOWER, ROWS_PER_PAGE_UPPER);
 
-const PAGESDISPLAYED_LOWER = 1;
-const PAGESDISPLAYED_DEFAULT = 2;
-const PAGESDISPLAYED_UPPER = 8;
-const PAGESDISPLAYED_INPUTID = 'pagesDisplayed';
-utils.enforceMinMax(PAGESDISPLAYED_INPUTID, PAGESDISPLAYED_LOWER, PAGESDISPLAYED_UPPER);
+const PAGES_DISPLAYED_LOWER = 1;
+const PAGES_DISPLAYED_DEFAULT = 2;
+const PAGES_DISPLAYED_UPPER = 8;
+const PAGES_DISPLAYED_INPUT_ID = 'pagesDisplayed';
+utils.enforceMinMax(PAGES_DISPLAYED_INPUT_ID, PAGES_DISPLAYED_LOWER, PAGES_DISPLAYED_UPPER);
 
 class Properties {
     /**
      * Class
-     * @var string
      */
     classs = '';
 
     /**
      * Maximum ability points unsigned
-     * @var int
      */
     maxAbilityPoints = 45;
 
     /**
      * Number of vertical ability tree pages unsigned
-     * @var int
      */
     pages = 7;
 
     /**
      * Number of horizontal ability tree pages unsigned
-     * @var int
      */
     horizontalPages = 1;
 
     /**
      * How many cells per page
-     * @var int
      */
     rowsPerPage = 6;
 
@@ -366,36 +373,32 @@ class Properties {
 
     /**
      * Whether the tree can loop along the left and right edge
-     * @var bool
      */
     loopTree = false;
 
     /**
      * Whether you can go up the tree
-     * @var bool
      */
     bTravesableUp = false;
 
     /**
      * Whether to use extra ability icons
-     * @var bool
      */
     useAlternativeAbilityIcons = false;
 
     /**
      * Whether to enforce L shaped allocation (how it works in-game)
-     * @var bool
      */
     strictAllocation = true;
 
     constructor({
                     classs = classNames[0],
-                    maxAbilityPoints = MAXABILITYPOINTS_DEFAULT,
+                    maxAbilityPoints = MAX_ABILITY_POINTS_DEFAULT,
                     loopTree = false,
                     pages = PAGES_DEFAULT,
                     horizontalPages = HORIZONTAL_PAGES_DEFAULT,
-                    rowsPerPage = ROWSPERPAGE_DEFAULT,
-                    pagesDisplayed = PAGESDISPLAYED_DEFAULT,
+                    rowsPerPage = ROWS_PER_PAGE_DEFAULT,
+                    pagesDisplayed = PAGES_DISPLAYED_DEFAULT,
                     bTravesableUp = false,
                     useAlternativeAbilityIcons = false,
                     strictAllocation = true,
@@ -403,15 +406,15 @@ class Properties {
 
         this.classs = classNames.find(name => name === String(classs)) ?? classNames[0];
 
-        this.maxAbilityPoints = isNaN(Number(maxAbilityPoints)) ? MAXABILITYPOINTS_DEFAULT : utils.clamp(Number(maxAbilityPoints), MAXABILITYPOINTS_LOWER, MAXABILITYPOINTS_UPPER);
+        this.maxAbilityPoints = isNaN(Number(maxAbilityPoints)) ? MAX_ABILITY_POINTS_DEFAULT : utils.clamp(Number(maxAbilityPoints), MAX_ABILITY_POINTS_LOWER, MAX_ABILITY_POINTS_UPPER);
 
         this.pages = isNaN(Number(pages)) ? PAGES_DEFAULT : utils.clamp(Number(pages), PAGES_LOWER, PAGES_UPPER);
 
         this.horizontalPages = isNaN(Number(horizontalPages)) ? HORIZONTAL_PAGES_DEFAULT : utils.clamp(Number(horizontalPages), HORIZONTAL_PAGES_LOWER, HORIZONTAL_PAGES_UPPER);
 
-        this.rowsPerPage = isNaN(Number(rowsPerPage)) ? ROWSPERPAGE_DEFAULT : utils.clamp(Number(rowsPerPage), ROWSPERPAGE_LOWER, ROWSPERPAGE_UPPER);
+        this.rowsPerPage = isNaN(Number(rowsPerPage)) ? ROWS_PER_PAGE_DEFAULT : utils.clamp(Number(rowsPerPage), ROWS_PER_PAGE_LOWER, ROWS_PER_PAGE_UPPER);
 
-        this.pagesDisplayed = isNaN(Number(pagesDisplayed)) ? PAGESDISPLAYED_DEFAULT : utils.clamp(Number(pagesDisplayed), PAGESDISPLAYED_LOWER, Math.min(PAGESDISPLAYED_UPPER, this.pages));
+        this.pagesDisplayed = isNaN(Number(pagesDisplayed)) ? PAGES_DISPLAYED_DEFAULT : utils.clamp(Number(pagesDisplayed), PAGES_DISPLAYED_LOWER, Math.min(PAGES_DISPLAYED_UPPER, this.pages));
 
         this.loopTree = Boolean(loopTree);
         this.bTravesableUp = Boolean(bTravesableUp);
@@ -424,151 +427,151 @@ class StateLog {
 
     /**
      * Latest change description
-     * @var string
      */
-    change;
+    change: string;
 
     /**
      * JSON string representing the state
-     * @var string
      */
-    state;
+    state: string;
 
     /**
-     * Opional tag to help distinguish changes
-     * @var string
+     * Optional tag to help distinguish changes
      */
-    type;
+    type: string; // TODO: verify if optional
 
-    constructor({changeDescription, state, type} = {}) {
-        this.change = String(changeDescription) ? String(changeDescription) : '';
-        this.state = String(state) ? String(state) : '';
-        this.type = String(type) ? String(type) : '';
+    constructor({change = '', state = '', type = ''}: StateLog = {} as StateLog) {
+        this.change = change;
+        this.state = state;
+        this.type = type;
     }
 }
 
-const RESPONSETIMEOUT = 5000;
-const EDITPATHTEMPCLASS = 'cell-edit-temp-element';
-const MAXSELECTEDCELLS = 40;
-const CELLIDPREFIX = 'cell-';
+const RESPONSE_TIMEOUT = 5000;
+const EDIT_PATH_TEMP_CLASS = 'cell-edit-temp-element';
+const MAX_SELECTED_CELLS = 40;
+const CELL_ID_PREFIX = 'cell-';
 const COLUMNS = 9;
+
+type UncertainBaseTree = {
+    properties: undefined | any,
+    archetypes: undefined | any,
+    abilities: undefined | any,
+    selectedAbilityID: undefined | any,
+    selectedArchetype: undefined | any,
+    history: undefined | any,
+    currentHistoryState: undefined | any,
+    cellMap: undefined | any,
+    currentVerticalPage: undefined | any,
+    currentHorizontalPage: undefined | any,
+    selectedCells: undefined | any,
+    bEditMode: undefined | any,
+    startingAbilityID: undefined | any,
+    potentialAllocationMap: undefined | any,
+    abilityTrees: undefined | any,
+    selectedTree: undefined | any,
+    currentTree: undefined | any,
+}
 
 export class BaseTree {
     /**
      * Generic properties of the editor
-     * @var Properties
      */
-    properties;
+    properties: Properties;
 
     /**
      * Archetypes
-     * @var string[]
      */
-    archetypes = [];
+    archetypes: string[] = [];
 
     /**
      * Abilities
-     * @var { id : Ability }
      */
-    abilities = {};
+    abilities: StringTo<Ability> = {};
 
     /**
      * Selected ability id, waiting to be placed on the tree
-     * @var int
      */
     selectedAbilityID = -1;
 
     /**
      * Selected archetype for ability sorting
-     * @var string
      */
-    selectedArchetype = null;
+    selectedArchetype: string = '';
 
     /**
      * Recorded changes queue
-     * @var StateLog[]
      */
-    history = [];
+    history: StateLog[] = [];
 
     /**
      * Current history state
-     * @var int
      */
     currentHistoryState = 0;
 
     /**
      * A map of cells, keys are cell number if counted left to right, up to down, starting at 1
-     * @var {{ [key: int] : {'travelNode' : TravelNode, 'abilityID' : int} }}
      */
-    cellMap = {};
+    cellMap: NumberTo<{ travelNode: TravelNode, abilityID: number | undefined }> = {};
 
     /**
      * Current horizontal page
-     * @var int
      */
     currentVerticalPage = 1;
 
     /**
      * Current vertical page
-     * @var int
      */
     currentHorizontalPage = 1;
 
     /**
      * Used by initializeEditNode method to keep track of affected cells
-     * @var int[]
      */
-    selectedCells = [];
+    selectedCells: number[] = [];
 
 
     /**
      * Determines if the rendered tree is for editing or allocation
-     * @var bool
      */
     bEditMode = true;
 
     /**
      * Ability ID from which tree allocation starts
-     * @var int
      */
-    startingAbilityID;
+    startingAbilityID: number | undefined;
 
     /**
-     * abilitytID : map of allocatable abilities from it as well as connecting nodes (abilityID : [path])
-     * @var {int : {int : {cellID : travelNode}}}
+     * abilityID : map of allocatable abilities from it as well as connecting nodes (abilityID : [path])
      */
-    potentialAllocationMap = {};
+    potentialAllocationMap: NumberTo<NumberTo<{ cellID: TravelNode }>> = {};
 
     /**
      * A map of names for trees, each tree is represented by an array of allocated cellIDs
-     * @var {string : int[]}
      */
-    abilityTrees = {};
+    abilityTrees: NumberTo<number[]> = {};
 
     /**
      * Determines which tree to render
-     * @var string
      */
-    selectedTree;
+    selectedTree: string | undefined;
 
     /**
-     * A copy of the current tree that
-     * Uses allocatedNodes to keep track of allocated nodes (abilityID : true)
-     * Uses connectedNodes to keep track of nodes connected to the tree : their connection points (abilityID : abilityID[])
-     * Uses blockedNodes to keep track of blocked nodes (abilityID : true)
-     * Uses archetypes to keep track of archetype points (archetype : unsignedInt)
-     * Uses abilityPoints to keep track of used ability points (unsignedInt)
-     * Uses travelNodes to keep track of paths between allocated nodes (cellID : travelNode)
-     * @var {
-     * 'allocatedNodes' : {int : bool},
-     * 'connectedNodes' : {int : int[]},
-     * 'blockedNodes' : {int : bool},
-     * 'archetypes' : {string : int},
-     * 'abilityPoints' : int,
-     * 'travelNodes' : {int : travelNode}
-     * }
+     * A copy of the current tree that\
+     * Uses allocatedNodes to keep track of allocated nodes (abilityID : true)\
+     * Uses connectedNodes to keep track of nodes connected to the tree : their connection points (abilityID : abilityID[])\
+     * Uses blockedNodes to keep track of blocked nodes (abilityID : true)\
+     * Uses archetypes to keep track of archetype points (archetype : unsignedInt)\
+     * Uses abilityPoints to keep track of used ability points (unsignedInt)\
+     * Uses travelNodes to keep track of paths between allocated nodes (cellID : travelNode)\
      */
-    currentTree;
+    currentTree: undefined | {
+        allocatedNodes: NumberTo<boolean>,
+        connectedNodes: NumberTo<number[]>,
+        blockedNodes: NumberTo<boolean>,
+        archetypes: NumberTo<number>,
+        abilityPoints: number,
+        travelNodes: NumberTo<TravelNode>
+    };
 
     #treeTouchProcessor = new utils.TouchProcessor();
 
@@ -578,16 +581,15 @@ export class BaseTree {
             this.writeProperties();
             this.renderEverything();
             this.saveState('Reset tree and settings');
-            window.addEventListener("pointerup", (e) => {
-                this.finallizeEditNode();
-            });
+            window.addEventListener("pointerup", () => this.finallizeEditNode());
         }
     }
 
+    // TODO: not unused(?), find best way to communicate that.
     // #region Serialization and history
     toJSON() {
-        var result = {};
-        for (var x in this) {
+        let result: { [key: string]: any } = {};
+        for (let x in this) {
             if (x !== "history" && x !== "currentHistoryState" && x !== "selectedAbilityID" && x !== "currentVerticalPage" &&
                 x !== "selectedCells" && x !== "currentTree" && x !== "potentialAllocationMap" && x !== "selectedArchetype" && x !== "treeTouchProcessor") {
                 result[x] = this[x];
@@ -596,38 +598,32 @@ export class BaseTree {
         return result;
     }
 
-    readProperties(classSelectId = "classSelect", maxAbilityPointsId = MAXABILITYPOINTS_INPUTID, loopTreeId = "loopTreeSwitch", pagesId = PAGES_INPUTID, horizontalPagesId = HORIZONTAL_PAGES_INPUTID,
-                   rowsPerPageId = ROWSPERPAGE_INPUTID, pagesDisplayedId = PAGESDISPLAYED_INPUTID, bTravesableUpId = "travelUpSwitch", useAlternativeAbilityIconsId = "altIconSwitch", strictAllocationId = "strictAllocationSwitch") {
+    readProperties(classSelectId = "classSelect", maxAbilityPointsId = MAX_ABILITY_POINTS_INPUT_ID, loopTreeId = "loopTreeSwitch", pagesId = PAGES_INPUT_ID, horizontalPagesId = HORIZONTAL_PAGES_INPUT_ID,
+                   rowsPerPageId = ROWS_PER_PAGE_INPUT_ID, pagesDisplayedId = PAGES_DISPLAYED_INPUT_ID, bTravesableUpId = "travelUpSwitch", useAlternativeAbilityIconsId = "altIconSwitch", strictAllocationId = "strictAllocationSwitch") {
 
-        if (this.properties != null && this.properties.loopTree != document.getElementById(loopTreeId).checked) {
+        if (this.properties != null && this.properties.loopTree != (document.getElementById(loopTreeId) as HTMLInputElement)?.checked) {
             const totalCells = this.properties.pages * this.properties.rowsPerPage * COLUMNS;
 
-            for (let key = 1; key <= totalCells; key += COLUMNS) {
-                if (this.cellMap[key] == null || this.cellMap[key]['travelNode'] == null)
-                    continue;
+            for (let key = 1; key <= totalCells; key += COLUMNS)
+                if (this.cellMap[key] != null && this.cellMap[key]['travelNode'] != null)
+                    this.cellMap[key]['travelNode']['left'] = 0;
 
-                this.cellMap[key]['travelNode']['left'] = 0;
-            }
-
-            for (let key = COLUMNS; key <= totalCells; key += COLUMNS) {
-                if (this.cellMap[key] == null || this.cellMap[key]['travelNode'] == null)
-                    continue;
-
-                this.cellMap[key]['travelNode']['right'] = 0;
-            }
+            for (let key = COLUMNS; key <= totalCells; key += COLUMNS)
+                if (this.cellMap[key] != null && this.cellMap[key]['travelNode'] != null)
+                    this.cellMap[key]['travelNode']['right'] = 0;
         }
 
         this.properties = new Properties({
-            classs: document.getElementById(classSelectId).value,
-            maxAbilityPoints: document.getElementById(maxAbilityPointsId).value,
-            pages: document.getElementById(pagesId).value,
-            horizontalPages: document.getElementById(horizontalPagesId).value,
-            rowsPerPage: document.getElementById(rowsPerPageId).value,
-            pagesDisplayed: document.getElementById(pagesDisplayedId).value,
-            loopTree: document.getElementById(loopTreeId).checked,
-            bTravesableUp: document.getElementById(bTravesableUpId).checked,
-            useAlternativeAbilityIcons: document.getElementById(useAlternativeAbilityIconsId).checked,
-            strictAllocation: document.getElementById(strictAllocationId).checked,
+            classs: (document.getElementById(classSelectId) as HTMLInputElement)?.value ?? '',
+            maxAbilityPoints: Number((document.getElementById(maxAbilityPointsId) as HTMLInputElement)?.value) ?? 0,
+            pages: Number((document.getElementById(pagesId) as HTMLInputElement)?.value) ?? 0,
+            horizontalPages: Number((document.getElementById(horizontalPagesId) as HTMLInputElement)?.value) ?? 0,
+            rowsPerPage: Number((document.getElementById(rowsPerPageId) as HTMLInputElement)?.value) ?? 0,
+            pagesDisplayed: Number((document.getElementById(pagesDisplayedId) as HTMLInputElement)?.value) ?? 0,
+            loopTree: (document.getElementById(loopTreeId) as HTMLInputElement)?.checked ?? false,
+            bTravesableUp: (document.getElementById(bTravesableUpId) as HTMLInputElement)?.checked ?? false,
+            useAlternativeAbilityIcons: (document.getElementById(useAlternativeAbilityIconsId) as HTMLInputElement)?.checked ?? false,
+            strictAllocation: (document.getElementById(strictAllocationId) as HTMLInputElement)?.checked ?? true,
         });
 
         this.setMode(this.bEditMode);
@@ -635,43 +631,39 @@ export class BaseTree {
         this.saveState('Updated properties');
     }
 
-    writeProperties(classSelectId = "classSelect", maxAbilityPointsId = MAXABILITYPOINTS_INPUTID, loopTreeId = "loopTreeSwitch", pagesId = PAGES_INPUTID, horizontalPagesId = HORIZONTAL_PAGES_INPUTID,
-                    rowsPerPageId = ROWSPERPAGE_INPUTID, pagesDisplayedId = PAGESDISPLAYED_INPUTID, bTravesableUpId = "travelUpSwitch", useAlternativeAbilityIconsId = "altIconSwitch", strictAllocationId = "strictAllocationSwitch") {
-
-        document.getElementById(classSelectId).value = this.properties.classs;
-        document.getElementById(maxAbilityPointsId).value = this.properties.maxAbilityPoints;
-        document.getElementById(pagesId).value = this.properties.pages;
-        document.getElementById(horizontalPagesId).value = this.properties.horizontalPages;
-        document.getElementById(rowsPerPageId).value = this.properties.rowsPerPage;
-        document.getElementById(pagesDisplayedId).value = this.properties.pagesDisplayed;
-        document.getElementById(loopTreeId).checked = this.properties.loopTree;
-        document.getElementById(bTravesableUpId).checked = this.properties.bTravesableUp;
-        document.getElementById(useAlternativeAbilityIconsId).checked = this.properties.useAlternativeAbilityIcons;
-        document.getElementById(strictAllocationId).checked = this.properties.strictAllocation;
+    writeProperties(classSelectId = "classSelect", maxAbilityPointsId = MAX_ABILITY_POINTS_INPUT_ID, loopTreeId = "loopTreeSwitch", pagesId = PAGES_INPUT_ID, horizontalPagesId = HORIZONTAL_PAGES_INPUT_ID,
+                    rowsPerPageId = ROWS_PER_PAGE_INPUT_ID, pagesDisplayedId = PAGES_DISPLAYED_INPUT_ID, bTravesableUpId = "travelUpSwitch", useAlternativeAbilityIconsId = "altIconSwitch", strictAllocationId = "strictAllocationSwitch") {
+        if (!document.getElementById(classSelectId)) {
+            console.log("shit's fucked, needs to be react-ified");
+            return;
+        }
+        (document.getElementById(classSelectId) as HTMLInputElement).value = this.properties.classs;
+        (document.getElementById(maxAbilityPointsId) as HTMLInputElement).value = String(this.properties.maxAbilityPoints);
+        (document.getElementById(pagesId) as HTMLInputElement).value = String(this.properties.pages);
+        (document.getElementById(horizontalPagesId) as HTMLInputElement).value = String(this.properties.horizontalPages);
+        (document.getElementById(rowsPerPageId) as HTMLInputElement).value = String(this.properties.rowsPerPage);
+        (document.getElementById(pagesDisplayedId) as HTMLInputElement).value = String(this.properties.pagesDisplayed);
+        (document.getElementById(loopTreeId) as HTMLInputElement).checked = this.properties.loopTree;
+        (document.getElementById(bTravesableUpId) as HTMLInputElement).checked = this.properties.bTravesableUp;
+        (document.getElementById(useAlternativeAbilityIconsId) as HTMLInputElement).checked = this.properties.useAlternativeAbilityIcons;
+        (document.getElementById(strictAllocationId) as HTMLInputElement).checked = this.properties.strictAllocation;
     }
 
-    renderScrollArrows(bShowSidewayArrows) {
+    renderScrollArrows(showSidewayArrows: boolean) {
+        let hideElementsOfClass = showSidewayArrows ? "shown-on-single-horizontal-page" : "shown-on-multi-horizontal-page";
+        let showElementsOfClass = !showSidewayArrows ? "shown-on-single-horizontal-page" : "shown-on-multi-horizontal-page";
 
-        let hideElementsOfClass = bShowSidewayArrows ? "shown-on-single-horizontal-page" : "shown-on-multi-horizontal-page";
-        let showElementsOfClass = !bShowSidewayArrows ? "shown-on-single-horizontal-page" : "shown-on-multi-horizontal-page";
+        const containersToHide = document.getElementsByClassName(hideElementsOfClass) as HTMLCollectionOf<HTMLElement>;
+        const containersToShow = document.getElementsByClassName(showElementsOfClass) as HTMLCollectionOf<HTMLElement>;
 
-        const containersToHide = document.getElementsByClassName(hideElementsOfClass);
-        const containersToShow = document.getElementsByClassName(showElementsOfClass);
-
-        for (let container of containersToHide)
+        for (let container of containersToHide) if (container)
             container.hidden = true;
 
-        for (let container of containersToShow)
+        for (let container of containersToShow) if (container)
             container.hidden = false;
-
-    }
-
-    remapCells(bKeepCurrent) {
-
     }
 
     saveState(change = "", type = "", replaceSameType = false) {
-
         const state = JSON.stringify(this, null, 0);
 
         const replaceLast = replaceSameType && this.history[this.currentHistoryState].type == type;
@@ -681,13 +673,12 @@ export class BaseTree {
         if (this.history.length > numOfPreservedStates)
             this.history.splice(numOfPreservedStates, this.history.length - numOfPreservedStates);
 
-        const maxSaveStates = Number(document.getElementById('maxSaveStates').value) ?? 10;
+        const maxSaveStates = Number((document.getElementById('maxSaveStates') as HTMLInputElement)?.value) ?? 10;
 
         const removeElementsBeforeID = this.history.length - maxSaveStates + 1;
 
         if (removeElementsBeforeID > 0) {
-
-            let newHistory = [];
+            let newHistory: StateLog[] = [];
 
             this.history.forEach((element, index) => {
 
@@ -700,17 +691,15 @@ export class BaseTree {
             this.history = newHistory;
         }
 
-        const newStateLog = new StateLog({changeDescription: change, type: type, state: state});
+        const newStateLog = new StateLog({change, type, state});
 
         this.currentHistoryState = this.history.push(newStateLog) - 1;
 
         this.renderStates();
     }
 
-    loadStateIncrementally(increment) {
-
+    loadStateIncrementally(increment: number) {
         this.loadState(this.currentHistoryState + increment);
-
     }
 
     loadState(stateIndex = -1) {
@@ -737,7 +726,7 @@ export class BaseTree {
 
             const div = document.createElement("div");
             div.classList.add('history-record-overriden', 'minecraftTooltip');
-            div.addEventListener('click', (e) => this.loadState(i));
+            div.addEventListener('click', () => this.loadState(i));
             div.innerHTML = this.history[i].change;
             container.appendChild(div);
 
@@ -745,7 +734,7 @@ export class BaseTree {
 
         const div = document.createElement("div");
         div.classList.add('history-record-selected', 'minecraftTooltip');
-        div.addEventListener('click', (e) => this.loadState(this.currentHistoryState));
+        div.addEventListener('click', () => this.loadState(this.currentHistoryState));
         div.innerHTML = this.history[this.currentHistoryState].change;
         container.appendChild(div);
 
@@ -753,7 +742,7 @@ export class BaseTree {
 
             const div = document.createElement("div");
             div.classList.add('history-record-not-selected', 'minecraftTooltip');
-            div.addEventListener('click', (e) => this.loadState(i));
+            div.addEventListener('click', () => this.loadState(i));
             div.innerHTML = this.history[i].change;
             container.appendChild(div);
 
@@ -771,13 +760,13 @@ export class BaseTree {
             this.renderAbilityPointsUsed();
         }
 
-        this.renderScrollArrows(this.properties.horizontalPages > 1 ? true : false);
+        this.renderScrollArrows(this.properties.horizontalPages > 1);
 
         let hideElementsOfClass = this.bEditMode ? "shown-on-allocation" : "shown-on-tree-edit";
         let showElementsOfClass = this.bEditMode ? "shown-on-tree-edit" : "shown-on-allocation";
 
-        const containersToHide = document.getElementsByClassName(hideElementsOfClass);
-        const containersToShow = document.getElementsByClassName(showElementsOfClass);
+        const containersToHide = document.getElementsByClassName(hideElementsOfClass) as HTMLCollectionOf<HTMLElement>;
+        const containersToShow = document.getElementsByClassName(showElementsOfClass) as HTMLCollectionOf<HTMLElement>;
 
         for (let container of containersToHide)
             container.hidden = true;
@@ -788,12 +777,9 @@ export class BaseTree {
         this.renderTree();
     }
 
-    loadTreeFromPreset(self, classSelectID = 'classSelect') {
-
-        const classSelect = document.getElementById(classSelectID);
-        if (classSelect == null) {
-            return;
-        }
+    loadTreeFromPreset(self: HTMLButtonElement, classSelectID = 'classSelect') {
+        const classSelect = document.getElementById(classSelectID) as HTMLInputElement;
+        if (!classSelect) return;
 
         self.classList.add('btn-secondary');
         self.disabled = true;
@@ -804,8 +790,9 @@ export class BaseTree {
         const timeoutId = setTimeout(() => {
             controller.abort();
             console.log('Fetch request timed out');
-        }, RESPONSETIMEOUT);
+        }, RESPONSE_TIMEOUT);
 
+        // TODO: switch to import()
         fetch(`presets/base/${classSelect.value}.json`, {
 
             signal,
@@ -853,47 +840,43 @@ export class BaseTree {
             return;
         }
 
-        this.loadFromJSON(jsonContainer.value);
+        this.loadFromJSON((jsonContainer as HTMLInputElement).value);
         this.saveState('Loaded tree from JSON');
     }
 
-    loadTreeFromDrop(dropEvent) {
+    loadTreeFromDrop(dropEvent: DragEvent) {
         dropEvent.preventDefault();
 
         let file;
 
-        if (dropEvent.dataTransfer.items)
-            file = dropEvent.dataTransfer.items[0].getAsFile();
-        else
-            file = dropEvent.dataTransfer.files[0];
+        file = dropEvent.dataTransfer?.items
+            ? dropEvent.dataTransfer?.items[0].getAsFile()
+            : dropEvent.dataTransfer?.files[0];
 
-        this.loadTreeFromFile(file);
+        if (file) this.loadTreeFromFile(file);
     }
 
-    loadTreeFromFile(file) {
+    loadTreeFromFile(file: File) {
         file.text()
             .then(text => {
                 this.loadFromJSON(text);
                 this.saveState(`Loaded tree from ${file.name}`);
             })
-            .catch((e) => {
+            .catch(() => {
                 utils.showSmallToast("Wrong file type");
             });
     }
 
     loadEmptyTree() {
-
         this.loadFromJSON('{}');
         this.saveState('Reset tree and settings');
-
     }
 
-    loadFromJSON(json, respectEditMode = false, updatePage = true) {
-
-        let obj = {};
+    loadFromJSON(json: string, respectEditMode = false, updatePage = true) {
+        let obj: UncertainBaseTree;
 
         try {
-            obj = JSON.parse(json);
+            obj = JSON.parse(json) as UncertainBaseTree;
         } catch (error) {
             utils.showSmallToast("Load Failed: couldn't parse JSON");
             throw ("Couldn't parse");
@@ -904,7 +887,6 @@ export class BaseTree {
         this.archetypes = [];
         const archetypes = obj.archetypes;
         if (Array.isArray(archetypes)) {
-
             archetypes.forEach(element => {
                 this.archetypes.push(element);
             });
@@ -912,31 +894,21 @@ export class BaseTree {
 
         this.abilities = {};
         const abilities = obj.abilities;
-        if (typeof abilities === 'object' && !Array.isArray(abilities) && abilities !== null) {
-
+        if (typeof abilities === 'object' && !Array.isArray(abilities) && abilities !== null)
             Object.keys(abilities).forEach(id => {
-
-                this.abilities[id] = new Ability(abilities[id]);
-
+                this.abilities[id] = new Ability(abilities[id] as AbilityData);
             });
-        }
 
         this.cellMap = {};
         const cellMap = obj.cellMap;
-        if (typeof cellMap === 'object' && !Array.isArray(cellMap) && cellMap !== null) {
+        if (typeof cellMap === 'object' && !Array.isArray(cellMap) && cellMap !== null)
+            Object.keys(cellMap).map(Number).forEach(id =>
+                this.cellMap[id] = {
+                    travelNode: new TravelNode(cellMap[id]['travelNode']),
+                    abilityID: cellMap[id]['abilityID'] ?? undefined,
+                });
 
-            Object.keys(cellMap).forEach(id => {
-
-                this.cellMap[id] = {};
-                this.cellMap[id]['travelNode'] = new TravelNode(cellMap[id]['travelNode']);
-                if (cellMap[id]['abilityID'] != null)
-                    this.cellMap[id]['abilityID'] = cellMap[id]['abilityID'];
-
-            });
-        }
-
-        if (typeof obj.startingAbilityID === 'string')
-            this.startingAbilityID = obj.startingAbilityID;
+        this.startingAbilityID = Number(obj.startingAbilityID);
 
         if (typeof obj.selectedTree === 'string')
             this.selectedTree = obj.selectedTree;
@@ -945,7 +917,7 @@ export class BaseTree {
         const abilityTrees = obj.abilityTrees;
         if (typeof abilityTrees === 'object' && !Array.isArray(abilityTrees) && abilityTrees !== null) {
 
-            Object.keys(abilityTrees).forEach(treeName => {
+            Object.keys(abilityTrees).map(Number).forEach(treeName => {
 
                 if (Array.isArray(abilityTrees[treeName]))
                     this.abilityTrees[treeName] = abilityTrees[treeName];
@@ -953,8 +925,7 @@ export class BaseTree {
             });
         }
 
-        if (!updatePage)
-            return;
+        if (!updatePage) return;
 
         if (respectEditMode && obj.bEditMode != null && obj.bEditMode === false) {
             this.bEditMode = false;
@@ -982,40 +953,41 @@ export class BaseTree {
 
     // #region Archetypes
     editArchetype(name = "", nameFormID = "archetypeNameInput") {
-
-        const nameInputElement = document.getElementById(nameFormID);
+        const nameInputElement = document.getElementById(nameFormID) as NameInput;
+        if (nameInputElement == null) return;
 
         if (name == "") {
             nameInputElement.value = "";
-            nameInputElement.oldname = "";
+            nameInputElement.oldName = "";
         } else {
             nameInputElement.value = name;
-            nameInputElement.oldname = name;
+            nameInputElement.oldName = name;
         }
 
         nameInputElement.dispatchEvent(new Event('input'));
     }
 
     saveArchetype(nameFormID = "archetypeNameInput") {
+        const nameInputElement = document.getElementById(nameFormID) as NameInput;
+        if (nameInputElement == null) return;
 
-        const nameInputElement = document.getElementById(nameFormID);
         if (nameInputElement.value == "" || this.archetypes.includes(nameInputElement.value))
             return;
 
-        const oldname = nameInputElement.oldname ?? "";
-        const newname = nameInputElement.value;
+        const oldName = nameInputElement.oldName ?? "";
+        const newName = nameInputElement.value;
 
-        if (oldname == "") {
+        if (oldName == "") {
 
-            this.archetypes.push(newname);
-            this.saveState(`Added archetype: ${utils.minecraftToHTML(newname)}`);
+            this.archetypes.push(newName);
+            this.saveState(`Added archetype: ${utils.minecraftToHTML(newName)}`);
 
         } else {
 
-            const existingIndex = this.archetypes.indexOf(oldname);
-            this.archetypes[existingIndex] = newname;
-            this.updateArchetype(oldname, newname);
-            this.saveState(`Renamed archetype: ${utils.minecraftToHTML(oldname)} -> ${utils.minecraftToHTML(newname)}`);
+            const existingIndex = this.archetypes.indexOf(oldName);
+            this.archetypes[existingIndex] = newName;
+            this.updateArchetype(oldName, newName);
+            this.saveState(`Renamed archetype: ${utils.minecraftToHTML(oldName)} -> ${utils.minecraftToHTML(newName)}`);
 
         }
 
@@ -1023,10 +995,8 @@ export class BaseTree {
 
     }
 
-    deleteArchetype(name) {
-
-        if (typeof name != "string" || name == "")
-            return;
+    deleteArchetype(name: string) {
+        if (!name) return;
 
         const index = this.archetypes.indexOf(name);
         if (index > -1)
@@ -1035,15 +1005,14 @@ export class BaseTree {
         this.updateArchetype(name);
         this.renderArchetypes();
         this.saveState(`Deleted archetype: ${utils.minecraftToHTML(name)}`);
-
     }
 
     renderArchetypes(containerID = "archetypeContainer", neutralContainerID = "neutralContainer") {
-
         const container = document.getElementById(containerID);
+        if (!container) return;
 
-        let archetypeCounts = {};
-        let placedArchetypeCounts = {"": 0};
+        let archetypeCounts: StringTo<number> = {};
+        let placedArchetypeCounts: StringTo<number> = {"": 0};
         let neutralCount = 0;
         for (let archetype of this.archetypes) {
             archetypeCounts[archetype] = 0;
@@ -1193,30 +1162,30 @@ export class BaseTree {
                                pointsRequiredFormID = POINTS_REQUIRED_INPUT_ID, archetypePointsRequiredFormID = ARCHETYPE_POINTS_REQUIRED_INPUT_ID, containerId = "editAbilityTooltip",
                                prerequisiteFormID = "abilityPrerequiseteInput", abilityBlockCountDisplayID = "abilityBlockCountDisplay", typeFormID = "abilityTypeInput") {
 
-        const nameInputElement = document.getElementById(nameFormID);
-        const descriptionInputElement = document.getElementById(descriptionFormID);
-        const archetypeInputElement = document.getElementById(archetypeFormID);
-        const pointsRequiredInputElement = document.getElementById(pointsRequiredFormID);
-        const archetypePointsRequiredInputElement = document.getElementById(archetypePointsRequiredFormID);
-        const typeInputElement = document.getElementById(typeFormID);
-        const prerequisiteInputElement = document.getElementById(prerequisiteFormID);
+        const nameInputElement = document.getElementById(nameFormID) as NameInput;
+        const descriptionInputElement = document.getElementById(descriptionFormID) as HTMLInputElement;
+        const archetypeInputElement = document.getElementById(archetypeFormID) as HTMLInputElement;
+        const pointsRequiredInputElement = document.getElementById(pointsRequiredFormID) as HTMLInputElement;
+        const archetypePointsRequiredInputElement = document.getElementById(archetypePointsRequiredFormID) as HTMLInputElement;
+        const typeInputElement = document.getElementById(typeFormID) as HTMLInputElement;
+        const prerequisiteInputElement = document.getElementById(prerequisiteFormID) as HTMLInputElement;
         const container = document.getElementById(containerId);
 
         const abilityBlockCountDisplay = document.getElementById(abilityBlockCountDisplayID);
 
         let blockedAbilities = this.getBlockedAbilities();
         if (abilityBlockCountDisplay != null)
-            abilityBlockCountDisplay.innerHTML = blockedAbilities.length;
+            abilityBlockCountDisplay.innerHTML = String(blockedAbilities.length);
 
         const content = this._getAbilityTooltipHTML(new Ability({
-            name: nameInputElement.value,
-            description: descriptionInputElement.value,
+            name: nameInputElement?.value ?? '',
+            description: descriptionInputElement?.value,
             unlockingWillBlock: blockedAbilities,
-            archetype: archetypeInputElement.value,
-            pointsRequired: pointsRequiredInputElement.value,
-            archetypePointsRequired: archetypePointsRequiredInputElement.value,
-            type: typeInputElement.value,
-            requires: prerequisiteInputElement.value,
+            archetype: archetypeInputElement?.value,
+            pointsRequired: Number(pointsRequiredInputElement?.value),
+            archetypePointsRequired: Number(archetypePointsRequiredInputElement?.value),
+            type: typeInputElement?.value,
+            requires: Number(prerequisiteInputElement?.value),
         }));
 
         if (scaleDown) {
@@ -1522,29 +1491,16 @@ export class BaseTree {
     }
 
     sortAbilities() {
-
-        let priorityMap = {};
-        Object.keys(altAbilityIconDictionary).forEach((elem, i) => {
-            priorityMap[elem] = i;
-        });
-
-        let sortedAbilityIDs = Object.keys(this.abilities).sort((a, b) => {
-
-            if (this.abilities[a].type == null)
-                return 1;
-            if (this.abilities[b].type == null)
-                return -1;
+        return Object.keys(this.abilities).sort((a, b) => {
+            if (this.abilities[a].type == null) return 1;
+            if (this.abilities[b].type == null) return -1;
 
             const priorityDif = priorityMap[this.abilities[a].type] - priorityMap[this.abilities[b].type];
 
-            if (priorityDif != 0)
-                return priorityDif;
+            if (priorityDif != 0) return priorityDif;
 
             return this.abilities[a].getPlainName().localeCompare(this.abilities[b].getPlainName()) || 1;
         });
-
-        return sortedAbilityIDs;
-
     }
 
     renderAbilities(containerID = "abilityContainer", searchFieldID = "abilitySearch", notOnTreeFilterID = "notOnTreeFilter") {
@@ -1947,8 +1903,8 @@ export class BaseTree {
 
         this.selectedCells.push(cellKey);
 
-        const cellElem = document.getElementById(CELLIDPREFIX + cellKey).firstChild;
-        cellElem.innerHTML += `<img class="ability-icon ${EDITPATHTEMPCLASS} ${EDITPATHTEMPCLASS + this.selectedCells.length - 1}" src="${abilityIconDirectoryPath}generic/travel_center_6_a.png" style="z-index: 26;" draggable="false">\n`;
+        const cellElem = document.getElementById(CELL_ID_PREFIX + cellKey).firstChild;
+        cellElem.innerHTML += `<img class="ability-icon ${EDIT_PATH_TEMP_CLASS} ${EDIT_PATH_TEMP_CLASS + this.selectedCells.length - 1}" src="${abilityIconDirectoryPath}generic/travel_center_6_a.png" style="z-index: 26;" draggable="false">\n`;
 
     }
 
@@ -1959,7 +1915,7 @@ export class BaseTree {
         if (selectedCellsLength == 0 || !(this.properties.loopTree))
             return;
 
-        if (selectedCellsLength > MAXSELECTEDCELLS) {
+        if (selectedCellsLength > MAX_SELECTED_CELLS) {
 
             this.finallizeEditNodes();
             return;
@@ -1992,7 +1948,7 @@ export class BaseTree {
         if (selectedCellsLength == 0 || cellKey == null || Number(cellKey) < 1 || Number(cellKey) > this.properties.pages * this.properties.rowsPerPage * COLUMNS)
             return;
 
-        if (selectedCellsLength > MAXSELECTEDCELLS) {
+        if (selectedCellsLength > MAX_SELECTED_CELLS) {
 
             this.finallizeEditNode();
             return;
@@ -2009,7 +1965,7 @@ export class BaseTree {
         // if backtracked - remove last element and visuals
         if (cellKey == this.selectedCells[selectedCellsLength - 2]) {
 
-            const collection = document.getElementsByClassName(EDITPATHTEMPCLASS + (selectedCellsLength - 1));
+            const collection = document.getElementsByClassName(EDIT_PATH_TEMP_CLASS + (selectedCellsLength - 1));
 
             while (collection[0])
                 collection[0].parentNode.removeChild(collection[0]);
@@ -2018,33 +1974,33 @@ export class BaseTree {
 
         } else {
 
-            const newCellElem = document.getElementById(CELLIDPREFIX + cellKey).firstChild;
-            const prevCellElem = document.getElementById(CELLIDPREFIX + prevCellKey).firstChild;
+            const newCellElem = document.getElementById(CELL_ID_PREFIX + cellKey).firstChild;
+            const prevCellElem = document.getElementById(CELL_ID_PREFIX + prevCellKey).firstChild;
 
             // add center image to the cell
             if (!this.selectedCells.includes(cellKey))
-                newCellElem.innerHTML += `<img class="ability-icon ${EDITPATHTEMPCLASS} ${EDITPATHTEMPCLASS + selectedCellsLength}" src="${abilityIconDirectoryPath}generic/travel_center_6_a.png" style="z-index: 26;">\n`;
+                newCellElem.innerHTML += `<img class="ability-icon ${EDIT_PATH_TEMP_CLASS} ${EDIT_PATH_TEMP_CLASS + selectedCellsLength}" src="${abilityIconDirectoryPath}generic/travel_center_6_a.png" style="z-index: 26;">\n`;
 
             // add connection images to this and previous cell
             switch (adjacentCellsMap[prevCellKey]) {
                 case 'up':
-                    newCellElem.innerHTML += `<img class="ability-icon ${EDITPATHTEMPCLASS} ${EDITPATHTEMPCLASS + selectedCellsLength}" src="${abilityIconDirectoryPath}generic/travel_up_10_a.png" style="z-index: 30;">\n`;
-                    prevCellElem.innerHTML += `<img class="ability-icon ${EDITPATHTEMPCLASS} ${EDITPATHTEMPCLASS + selectedCellsLength}" src="${abilityIconDirectoryPath}generic/travel_down_8_a.png" style="z-index: 28;">\n`;
+                    newCellElem.innerHTML += `<img class="ability-icon ${EDIT_PATH_TEMP_CLASS} ${EDIT_PATH_TEMP_CLASS + selectedCellsLength}" src="${abilityIconDirectoryPath}generic/travel_up_10_a.png" style="z-index: 30;">\n`;
+                    prevCellElem.innerHTML += `<img class="ability-icon ${EDIT_PATH_TEMP_CLASS} ${EDIT_PATH_TEMP_CLASS + selectedCellsLength}" src="${abilityIconDirectoryPath}generic/travel_down_8_a.png" style="z-index: 28;">\n`;
                     break;
 
                 case 'down':
-                    newCellElem.innerHTML += `<img class="ability-icon ${EDITPATHTEMPCLASS} ${EDITPATHTEMPCLASS + selectedCellsLength}" src="${abilityIconDirectoryPath}generic/travel_down_8_a.png" style="z-index: 28;">\n`;
-                    prevCellElem.innerHTML += `<img class="ability-icon ${EDITPATHTEMPCLASS} ${EDITPATHTEMPCLASS + selectedCellsLength}" src="${abilityIconDirectoryPath}generic/travel_up_10_a.png" style="z-index: 30;">\n`;
+                    newCellElem.innerHTML += `<img class="ability-icon ${EDIT_PATH_TEMP_CLASS} ${EDIT_PATH_TEMP_CLASS + selectedCellsLength}" src="${abilityIconDirectoryPath}generic/travel_down_8_a.png" style="z-index: 28;">\n`;
+                    prevCellElem.innerHTML += `<img class="ability-icon ${EDIT_PATH_TEMP_CLASS} ${EDIT_PATH_TEMP_CLASS + selectedCellsLength}" src="${abilityIconDirectoryPath}generic/travel_up_10_a.png" style="z-index: 30;">\n`;
                     break;
 
                 case 'left':
-                    newCellElem.innerHTML += `<img class="ability-icon ${EDITPATHTEMPCLASS} ${EDITPATHTEMPCLASS + selectedCellsLength}" src="${abilityIconDirectoryPath}generic/travel_left_7_a.png" style="z-index: 27;">\n`;
-                    prevCellElem.innerHTML += `<img class="ability-icon ${EDITPATHTEMPCLASS} ${EDITPATHTEMPCLASS + selectedCellsLength}" src="${abilityIconDirectoryPath}generic/travel_right_9_a.png" style="z-index: 29;">\n`;
+                    newCellElem.innerHTML += `<img class="ability-icon ${EDIT_PATH_TEMP_CLASS} ${EDIT_PATH_TEMP_CLASS + selectedCellsLength}" src="${abilityIconDirectoryPath}generic/travel_left_7_a.png" style="z-index: 27;">\n`;
+                    prevCellElem.innerHTML += `<img class="ability-icon ${EDIT_PATH_TEMP_CLASS} ${EDIT_PATH_TEMP_CLASS + selectedCellsLength}" src="${abilityIconDirectoryPath}generic/travel_right_9_a.png" style="z-index: 29;">\n`;
                     break;
 
                 case 'right':
-                    newCellElem.innerHTML += `<img class="ability-icon ${EDITPATHTEMPCLASS} ${EDITPATHTEMPCLASS + selectedCellsLength}" src="${abilityIconDirectoryPath}generic/travel_right_9_a.png" style="z-index: 29;">\n`;
-                    prevCellElem.innerHTML += `<img class="ability-icon ${EDITPATHTEMPCLASS} ${EDITPATHTEMPCLASS + selectedCellsLength}" src="${abilityIconDirectoryPath}generic/travel_left_7_a.png" style="z-index: 27;">\n`;
+                    newCellElem.innerHTML += `<img class="ability-icon ${EDIT_PATH_TEMP_CLASS} ${EDIT_PATH_TEMP_CLASS + selectedCellsLength}" src="${abilityIconDirectoryPath}generic/travel_right_9_a.png" style="z-index: 29;">\n`;
+                    prevCellElem.innerHTML += `<img class="ability-icon ${EDIT_PATH_TEMP_CLASS} ${EDIT_PATH_TEMP_CLASS + selectedCellsLength}" src="${abilityIconDirectoryPath}generic/travel_left_7_a.png" style="z-index: 27;">\n`;
                     break;
 
                 default:
@@ -2127,7 +2083,7 @@ export class BaseTree {
                 break;
         }
 
-        const collection = document.getElementsByClassName(EDITPATHTEMPCLASS);
+        const collection = document.getElementsByClassName(EDIT_PATH_TEMP_CLASS);
 
         while (collection[0])
             collection[0].parentNode.removeChild(collection[0]);
@@ -2220,7 +2176,7 @@ export class BaseTree {
                     const cellKey = (page - 1) * (CELLSPERPAGE) + (row - 1) * COLUMNS + col;
 
                     const newCol = document.createElement('td');
-                    newCol.id = CELLIDPREFIX + cellKey;
+                    newCol.id = CELL_ID_PREFIX + cellKey;
                     newCol.cellKey = cellKey;
                     newRow.appendChild(newCol);
 
@@ -2619,10 +2575,10 @@ export class BaseTree {
 
         if (name == "") {
             nameInputElement.value = "";
-            nameInputElement.oldname = "";
+            nameInputElement.oldName = "";
         } else {
             nameInputElement.value = name;
-            nameInputElement.oldname = name;
+            nameInputElement.oldName = name;
         }
 
         nameInputElement.dispatchEvent(new Event('input'));
@@ -2634,10 +2590,10 @@ export class BaseTree {
         if (nameInputElement.value == "")
             return;
 
-        const oldname = nameInputElement.oldname ?? "";
+        const oldName = nameInputElement.oldName ?? "";
         let newname = nameInputElement.value;
 
-        if (this.abilityTrees[newname] != null && newname != oldname) {
+        if (this.abilityTrees[newname] != null && newname != oldName) {
             for (let i = 1; i < 100; i++)
                 if (this.abilityTrees[newname + `(${i})`] == null) {
                     newname = newname + `(${i})`;
@@ -2645,7 +2601,7 @@ export class BaseTree {
                 }
         }
 
-        if (oldname == "") {
+        if (oldName == "") {
 
             this.abilityTrees[newname] = [];
             this.saveState(`Added tree: ${utils.minecraftToHTML(newname)}`);
@@ -2653,11 +2609,11 @@ export class BaseTree {
 
         } else {
 
-            this.abilityTrees[newname] = this.abilityTrees[oldname];
-            if (this.selectedTree == oldname)
+            this.abilityTrees[newname] = this.abilityTrees[oldName];
+            if (this.selectedTree == oldName)
                 this.selectedTree = newname;
-            delete this.abilityTrees[oldname];
-            this.saveState(`Renamed tree: ${utils.minecraftToHTML(oldname)} -> ${utils.minecraftToHTML(newname)}`);
+            delete this.abilityTrees[oldName];
+            this.saveState(`Renamed tree: ${utils.minecraftToHTML(oldName)} -> ${utils.minecraftToHTML(newname)}`);
             this.renderTreeNames();
 
         }
@@ -2849,7 +2805,7 @@ export class BaseTree {
                     const cellKey = (page - 1) * (CELLSPERPAGE) + (row - 1) * COLUMNS + col;
 
                     const newCol = document.createElement('td');
-                    newCol.id = CELLIDPREFIX + cellKey;
+                    newCol.id = CELL_ID_PREFIX + cellKey;
                     newRow.appendChild(newCol);
 
                     const cell = this.cellMap[cellKey];
