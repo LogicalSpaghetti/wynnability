@@ -1,5 +1,8 @@
 import * as bootstrap from 'bootstrap';
 
+export type StringTo<T> = { [key: string]: T };
+export type NumberTo<T> = { [key: number | string]: T };
+
 type CursorToolTipType = { originX: number, originY: number } & HTMLElement;
 
 export function moveTooltip(X: number, Y: number, checkHidden = false) {
@@ -131,14 +134,14 @@ export class TouchProcessor {
 
     processTouch(
         event: TouchEvent,
-        singleTapCallback: EventListener,
-        doubleTapCallback: EventListener,
-        holdStartCallback: EventListener,
-        holdMoveCallback: EventListener,
-        holdEndCallback: EventListener,
-        swipeStartCallback: EventListener,
-        swipeMoveCallback: EventListener,
-        swipeEndCallback: EventListener) {
+        singleTapCallback: EventListener | undefined = undefined,
+        doubleTapCallback: EventListener | undefined = undefined,
+        holdStartCallback: EventListener | undefined = undefined,
+        holdMoveCallback: EventListener | undefined = undefined,
+        holdEndCallback: EventListener | undefined = undefined,
+        swipeStartCallback: EventListener | undefined = undefined,
+        swipeMoveCallback: EventListener | undefined = undefined,
+        swipeEndCallback: EventListener | undefined = undefined,) {
 
         if (this.singeTapTimeoutId) {
             clearTimeout(this.singeTapTimeoutId);
@@ -150,15 +153,15 @@ export class TouchProcessor {
 
         if (timeSinceLastTap < TAP_LENGTH && timeSinceLastTap > 0) {
             event.preventDefault();
-            doubleTapCallback(event);
+            if (doubleTapCallback) doubleTapCallback(event);
         } else {
             const target = event.target as EventTarget;
             this.startX = event.touches[0].clientX;
             this.startY = event.touches[0].clientY;
 
-            let touchmove: ((e: TouchEvent) => void) | null;
-            let touchmoveElectricBoogaloo: (e: TouchEvent) => void | null;
-            let touchend: (e: TouchEvent) => void | null;
+            let touchmove: ((e: TouchEvent) => void) | undefined;
+            let touchmoveElectricBoogaloo: ((e: TouchEvent) => void) | undefined;
+            let touchend: ((e: TouchEvent) => void) | undefined;
 
             let processor = this;
 
@@ -174,14 +177,16 @@ export class TouchProcessor {
                     target.removeEventListener("touchend", touchend as EventListener);
                     target.removeEventListener("touchmove", touchmove as EventListener);
 
-                    swipeStartCallback(event);
+                    if (swipeStartCallback)
+                        swipeStartCallback(event);
 
                     touchmoveElectricBoogaloo = swipeMoveCallback;
 
                     target.addEventListener("touchmove", touchmoveElectricBoogaloo as EventListener, {passive: true});
                     target.addEventListener("touchend", (e) => {
                         target.removeEventListener("touchmove", touchmoveElectricBoogaloo as EventListener);
-                        swipeEndCallback(e);
+                        if (swipeEndCallback)
+                            swipeEndCallback(e);
                     }, {once: true});
                 }
             };
@@ -192,11 +197,15 @@ export class TouchProcessor {
                 () => {
                     target.removeEventListener("touchend", touchend as EventListener);
                     target.removeEventListener("touchmove", touchmove as EventListener);
-                    holdStartCallback(event);
-                    target.addEventListener("touchmove", (e) => holdMoveCallback(e), {passive: true});
+                    if (holdStartCallback)
+                        holdStartCallback(event);
+                    if (holdMoveCallback)
+                        target.addEventListener("touchmove", (e) => holdMoveCallback(e), {passive: true});
                     target.addEventListener("touchend", (e) => {
-                        holdEndCallback(e);
-                        target.removeEventListener("touchmove", (e) => holdMoveCallback(e));
+                        if (holdEndCallback)
+                            holdEndCallback(e);
+                        if (holdMoveCallback)
+                            target.removeEventListener("touchmove", (e) => holdMoveCallback(e));
                     }, {once: true});
                 },
                 TAP_LENGTH,
@@ -213,7 +222,8 @@ export class TouchProcessor {
 
                 processor.singeTapTimeoutId = setTimeout(
                     () => {
-                        singleTapCallback(event);
+                        if (singleTapCallback)
+                            singleTapCallback(event);
                         processor.singeTapTimeoutId = 0;
                     },
                     TAP_LENGTH + processor.lastTap - currentTime,
@@ -223,9 +233,6 @@ export class TouchProcessor {
         this.lastTap = currentTime;
     }
 }
-
-export type StringTo<T> = { [key: string]: T };
-export type NumberTo<T> = { [key: number | string]: T };
 
 export const codeDictionaryGenericSymbols: StringTo<string> = {
     'mana': '§b✺',

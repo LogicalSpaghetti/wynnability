@@ -1,26 +1,36 @@
 import * as utils from './utils';
 import * as main from './messy_main';
-import {generateIconUrl} from "./messy_main";
+import {BaseTree, generateIconUrl} from "./messy_main";
+import {loadModal, tree} from "./index.ts";
+import type {StringTo} from "./utils";
+
+export type Preset = {
+    "credit": string,
+    "title": string,
+    "description": string,
+    "class": string,
+    "baseclass": string,
+    "completeness": number,
+    "filename": string,
+};
+
 console.log("custom presets loaded");
-let sortedPresets = [];
-let treeCache = {};
-const MAXCACHEDTREES = 15;
-const TOUCHPROCESSOR = new utils.TouchProcessor();
+let sortedPresets: Preset[] = [];
+let treeCache: StringTo<BaseTree> = {};
+const MAX_CACHED_TREES = 15;
+const TOUCH_PROCESSOR = new utils.TouchProcessor();
 
 async function initializePresets() {
-    if (sortedPresets.length > 0)
-        return false;
+    if (sortedPresets.length > 0) return false;
 
     let unsortedPresets = await getPresets();
-    if (unsortedPresets == null)
-        return false;
+    if (unsortedPresets == null) return false;
 
     sortedPresets = sortPresets(unsortedPresets);
     return true;
 }
 
-async function getPresets() {
-
+async function getPresets(): Promise<null | Preset[]> {
     const controller = new AbortController();
     const signal = controller.signal;
 
@@ -30,7 +40,6 @@ async function getPresets() {
     }, 5000);
 
     return await fetch(`presets/presets.json`, {
-
         signal,
         cache: 'no-store',
         mode: 'same-origin',
@@ -38,19 +47,11 @@ async function getPresets() {
         headers: {
             'Accept': 'application/json',
         },
-
     }).then((response) => {
-
-        if (!response.ok) {
-            throw new Error(`HTTP error: ${response.status}`);
-        }
-
+        if (!response.ok) throw new Error(`HTTP error: ${response.status}`);
         return response.text();
-
     }).then((text) => {
-
         return JSON.parse(text);
-
     }).catch((e) => {
         console.log(e.stack);
         utils.showSmallToast("Load Failed: couldn't reach the server");
@@ -60,21 +61,14 @@ async function getPresets() {
     });
 }
 
-function sortPresets(presetArray) {
-    return presetArray.sort((a, b) => {
-        const dif = b["completeness"] - a["completeness"];
-        if (dif > 0)
-            return 1;
-        if (dif < 0)
-            return -1;
-
-        return a["title"].localeCompare(b["title"]);
-    });
+function sortPresets(presetArray: Preset[]): Preset[] {
+    return presetArray.sort((a, b) =>
+        (b.completeness - a.completeness) || a.title.localeCompare(b.title));
 }
 
 function filterResults(searchID = "customSearch", classSelectID = "customClassSelect") {
-    let filterSubstring = String(document.getElementById(searchID).value).toLowerCase();
-    let classs = document.getElementById(classSelectID).value;
+    let filterSubstring = String((document.getElementById(searchID) as HTMLInputElement)?.value).toLowerCase();
+    let classs = (document.getElementById(classSelectID) as HTMLInputElement)?.value;
     let filteredArray;
 
     if (classs === 'all')
@@ -92,20 +86,18 @@ function filterResults(searchID = "customSearch", classSelectID = "customClassSe
     return filteredArray;
 }
 
-function cacheTree(filename, tree) {
-    if (treeCache[filename] != null) {
-        treeCache[filename] = tree;
-        return;
+function cacheTree(filename: string, tree: BaseTree) {
+    if (!treeCache[filename]) {
+        const keys = Object.keys(treeCache);
+        if (keys.length >= MAX_CACHED_TREES)
+            delete treeCache[keys[0]];
     }
-    const keys = Object.keys(treeCache);
-    if (keys.length >= MAXCACHEDTREES)
-        delete treeCache[keys[0]];
 
-    treeCache[filename] = tree;
+    return treeCache[filename] = tree;
 }
 
-async function getPreset(filename) {
-    if (treeCache[filename] != null)
+async function getPreset(filename: string) {
+    if (treeCache[filename])
         return treeCache[filename];
 
     const controller = new AbortController();
@@ -116,8 +108,7 @@ async function getPreset(filename) {
         console.log('Fetch request timed out');
     }, 5000);
 
-    treeCache[filename] = fetch(`presets/custom/${filename}.json`, {
-
+    const presetTree = await fetch(`presets/custom/${filename}.json`, {
         signal,
         cache: 'no-store',
         mode: 'same-origin',
@@ -125,36 +116,27 @@ async function getPreset(filename) {
         headers: {
             'Accept': 'application/json',
         },
-
     }).then((response) => {
-
-        if (!response.ok) {
-            throw new Error(`HTTP error: ${response.status}`);
-        }
-
+        if (!response.ok) throw new Error(`HTTP error: ${response.status}`);
         return response.text();
-
     }).then((text) => {
-
         let tree = new main.BaseTree(false);
         tree.loadFromJSON(text, false, false);
-        cacheTree(filename, tree);
         return tree;
-
     }).catch((e) => {
         console.log(e);
-        treeCache[filename] = null;
+        return null;
     }).finally(() => {
         clearTimeout(timeoutId);
     });
-    return treeCache[filename];
+
+    return presetTree ? cacheTree(filename, presetTree) : null;
 }
 
-async function getRandomNodeOfType(filename, type = "red") {
+async function getRandomNodeOfType(filename: string, type = "red") {
 
     let tree = await getPreset(filename);
-    if (tree == null)
-        return -1;
+    if (!tree) return -1;
 
     let filteredAbilities = [];
     for (let id of Object.keys(tree.abilities)) {
@@ -165,18 +147,20 @@ async function getRandomNodeOfType(filename, type = "red") {
     return filteredAbilities[Math.floor(Math.random() * filteredAbilities.length)] ?? -1;
 }
 
-async function renderRandomAbilityTooltip(filename, type = "red", signal = {cancel: false}, containerId = "cursorTooltip") {
+async function renderRandomAbilityTooltip(filename: string, type = "red", signal = {cancel: false}, containerId = "cursorTooltip") {
 
     const container = document.getElementById(containerId);
+    if (!container) return;
+
     container.hidden = false;
     container.innerHTML = "Loading random ability...";
 
-    (async () => {
+    await (async () => {
         const randomAbilityID = await getRandomNodeOfType(filename, type);
         if (randomAbilityID == -1)
             return;
         const tree = await getPreset(filename);
-        if (!signal.cancel) {
+        if (tree && !signal.cancel) {
             tree.renderHoverAbilityTooltip(randomAbilityID);
             utils.adjustTooltipSize();
         }
@@ -187,6 +171,7 @@ export async function renderSearchResults(containerID = "customPresetContainer")
     await initializePresets();
 
     const container = document.getElementById(containerID);
+    if (!container) return;
     container.innerHTML = "";
 
     const filteredArray = filterResults();
@@ -200,24 +185,22 @@ export async function renderSearchResults(containerID = "customPresetContainer")
         const div = document.createElement("div");
         div.classList.add('minecraftTooltip', 'w-100', 'mb-3', 'overflow-hidden');
 
-        div.addEventListener('dblclick', async (e) => {
-            if (e.pointerType !== "touch") {
-                const tree = await getPreset(preset['filename']);
-                window.tree.loadFromJSON(JSON.stringify(tree, null, 0));
-                window.tree.saveState("Loaded a custom tree");
-                window.loadModal.hide();
-            }
+        div.addEventListener('dblclick', async () => {
+            const loadedTree = await getPreset(preset['filename']);
+            tree.loadFromJSON(JSON.stringify(loadedTree, null, 0));
+            tree.saveState("Loaded a custom tree");
+            loadModal.hide();
         });
         div.addEventListener('touchstart', (e) => {
-            if (e.target.tagName === "IMG" || !document.getElementById("cursorTooltip").hidden)
+            if ((e.currentTarget as HTMLElement)?.tagName === "IMG" || !document.getElementById("cursorTooltip")?.hidden)
                 return;
-            TOUCHPROCESSOR.processTouch(
+            TOUCH_PROCESSOR.processTouch(
                 e,
                 async () => {
-                    const tree = await getPreset(preset['filename']);
-                    window.tree.loadFromJSON(JSON.stringify(tree, null, 0));
-                    window.tree.saveState("Loaded a custom tree");
-                    window.loadModal.hide();
+                    const loadedTree = await getPreset(preset['filename']);
+                    tree.loadFromJSON(JSON.stringify(loadedTree, null, 0));
+                    tree.saveState("Loaded a custom tree");
+                    loadModal.hide();
                 },
             );
         }, {passive: false});
@@ -260,7 +243,7 @@ export async function renderSearchResults(containerID = "customPresetContainer")
             div.classList.add('ability-type-selector', 'ms-1', 'centered-element-container');
 
             const img = document.createElement('img');
-            img.src = generateIconUrl(type, preset['baseclass'], 1);
+            img.src = generateIconUrl(type, preset['baseclass'], 1) ?? "";
             img.style.zIndex = "11";
             div.appendChild(img);
 
@@ -269,24 +252,24 @@ export async function renderSearchResults(containerID = "customPresetContainer")
                 if (e.pointerType !== "touch") {
                     cancelRender.cancel = false;
                     renderRandomAbilityTooltip(preset['filename'], type, cancelRender);
-                    img.src = generateIconUrl(type, preset['baseclass'], 2);
+                    img.src = generateIconUrl(type, preset['baseclass'], 2) ?? "";
                 }
             });
             div.addEventListener('pointerout', (e) => {
                 if (e.pointerType !== "touch") {
                     cancelRender.cancel = true;
                     utils.hideHoverAbilityTooltip();
-                    img.src = generateIconUrl(type, preset['baseclass'], 1);
+                    img.src = generateIconUrl(type, preset['baseclass'], 1) ?? "";
                 }
             });
             div.addEventListener('touchstart', (e) => {
 
                 cancelRender.cancel = false;
 
-                TOUCHPROCESSOR.processTouch(
+                TOUCH_PROCESSOR.processTouch(
                     e,
                     () => {
-                        img.src = generateIconUrl(type, preset['baseclass'], 2);
+                        img.src = generateIconUrl(type, preset['baseclass'], 2) ?? "";
                         document.body.style.overflow = 'hidden';
                         renderRandomAbilityTooltip(preset['filename'], type, cancelRender);
                         utils.moveTooltip(e.changedTouches[0].clientX, e.changedTouches[0].clientY);
@@ -294,7 +277,7 @@ export async function renderSearchResults(containerID = "customPresetContainer")
                         document.addEventListener('touchstart', (event) => {
                             if (e.target !== event.target)
                                 cancelRender.cancel = true;
-                            img.src = generateIconUrl(type, preset['baseclass'], 1);
+                            img.src = generateIconUrl(type, preset['baseclass'], 1) ?? "";
                         }, {once: true});
                     },
                 );

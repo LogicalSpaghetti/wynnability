@@ -133,6 +133,7 @@ type AbilityData = {
     type: string,
     requires: number,
 }
+
 class Ability {
     /**
      * Top-most text
@@ -856,7 +857,8 @@ export class BaseTree {
         if (file) this.loadTreeFromFile(file);
     }
 
-    loadTreeFromFile(file: File) {
+    loadTreeFromFile(file: File | undefined) {
+        if (!file) return;
         file.text()
             .then(text => {
                 this.loadFromJSON(text);
@@ -1038,20 +1040,16 @@ export class BaseTree {
             div.classList.add('d-inline-flex', 'minecraftTooltip', 'w-100', 'mb-1', 'pt-1');
 
             if (archetype == this.selectedArchetype) {
-
                 div.classList.add('selected-ability');
                 div.addEventListener('click', (e) => {
-                    if (e.target.nodeName != 'BUTTON')
-                        this.selectArchetype(null);
+                    if ((e.currentTarget as HTMLElement)?.nodeName != 'BUTTON')
+                        this.selectArchetype("");
                 });
-
             } else {
-
                 div.addEventListener('click', (e) => {
-                    if (e.target.nodeName != 'BUTTON')
+                    if ((e.currentTarget as HTMLElement)?.nodeName != 'BUTTON')
                         this.selectArchetype(archetype);
                 });
-
             }
 
             const text = document.createElement("div");
@@ -1110,35 +1108,30 @@ export class BaseTree {
         div.appendChild(abilityCount);
 
         const neutralContainer = document.getElementById(neutralContainerID);
-        neutralContainer.innerHTML = "";
-        neutralContainer.appendChild(div);
-    }
-
-    updateArchetype(oldarchetype, newarchetype = "") {
-
-        if (typeof newarchetype != 'string')
-            return;
-
-        for (let abilityID of Object.keys(this.abilities)) {
-            if (this.abilities[abilityID]['archetype'] == oldarchetype)
-                this.abilities[abilityID]['archetype'] = newarchetype;
+        if (neutralContainer) {
+            neutralContainer.innerHTML = "";
+            neutralContainer.appendChild(div);
         }
     }
 
-    selectArchetype(archetype = null) {
+    updateArchetype(oldArchetype: string, newArchetype = "") {
+        for (let abilityID of Object.keys(this.abilities))
+            if (this.abilities[abilityID]['archetype'] == oldArchetype)
+                this.abilities[abilityID]['archetype'] = newArchetype;
+    }
 
+    selectArchetype(archetype = "") {
         this.selectedArchetype = archetype;
         this.renderArchetypes();
         this.renderAbilities();
-
     }
 
     // #endregion
 
     // #region Abilities
     renderAbilityTypeSelector(selected = "skill", containerId = "abilityTypeInput") {
-
-        const container = document.getElementById(containerId);
+        const container = document.getElementById(containerId) as HTMLInputElement | null;
+        if (!container) return;
 
         container.innerHTML = "";
         container.value = selected;
@@ -1155,7 +1148,6 @@ export class BaseTree {
                 this.renderEditorAbilityTooltip();
             });
         });
-
     }
 
     renderEditorAbilityTooltip(scaleDown = true, nameFormID = "abilityNameInput", descriptionFormID = "abilityDescriptionInput", archetypeFormID = "abilityArchetypeInput",
@@ -1206,7 +1198,7 @@ export class BaseTree {
         }
     }
 
-    renderHoverAbilityTooltip(abilityId = -1, containerId = "cursorTooltip") {
+    renderHoverAbilityTooltip(abilityId: string | number = -1, containerId = "cursorTooltip") {
         const container = document.getElementById(containerId);
         const ability = this.abilities[abilityId];
 

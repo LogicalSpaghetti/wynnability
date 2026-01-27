@@ -1,11 +1,10 @@
 import 'bootstrap/dist/css/bootstrap.min.css';
 import '../css/main.css';
 import * as utils from './utils';
-import * as custom from './custom_presets';
 import * as listeners from "./listeners";
-import type {StringToString} from "./utils";
 import * as main from "./messy_main";
 import {Modal} from 'bootstrap';
+import type {StringTo} from "./utils";
 
 console.log("index loaded");
 
@@ -16,7 +15,6 @@ export let loadModal /*= new Modal('#loadModal', {})*/; // TODO: used to close t
 
 // #endregion
 
-
 // TODO: might be needed for safety
 window.addEventListener("load", loadPage, {once: true});
 // loadPage();
@@ -24,13 +22,6 @@ function loadPage() {
     // TODO: preLoadAssets(); // used to ensure icons not used will render if the user goes offline
     listeners.addListeners();
 }
-
-window.utils = utils;
-window.custom = custom;
-
-window.changeHidden = changeHidden;
-window.tree = tree;
-window.loadModal = loadModal;
 
 // #region Cookies
 const LAST_SESSION_STORAGE_NAME = 'lastClosedSession';
@@ -47,12 +38,12 @@ if (typeof document.hidden !== "undefined") {
     });
 }
 
-const themeInverses: StringToString = {
+const themeInverses: StringTo<string> = {
     'light': 'dark',
     'dark': 'light',
 };
 
-const themeIcons: StringToString = {
+const themeIcons: StringTo<string> = {
     'light': 'assets/img/abilities/generic/purple_a.png',
     'dark': 'assets/img/abilities/generic/purple.png',
 };
