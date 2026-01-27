@@ -1069,7 +1069,7 @@ export class BaseTree {
             editbtn.innerHTML = "✒️";
             editbtn.setAttribute('data-bs-toggle', 'modal');
             editbtn.setAttribute('data-bs-target', '#archetypeModal');
-            editbtn.addEventListener('click', (e) => this.editArchetype(archetype));
+            editbtn.addEventListener('click', () => this.editArchetype(archetype));
             div.appendChild(editbtn);
 
             const delbtn = document.createElement("button");

@@ -3,7 +3,7 @@ import '../css/main.css';
 import * as utils from './utils';
 import * as listeners from "./listeners";
 import * as main from "./messy_main";
-import {Modal} from 'bootstrap';
+// import {Modal} from 'bootstrap';
 import type {StringTo} from "./utils";
 
 console.log("index loaded");
@@ -77,12 +77,6 @@ const treeModal = document.getElementById('treeModal');
 const treeNameInput = document.getElementById('treeNameInput');
 treeModal?.addEventListener('shown.bs.modal', () => {
     treeNameInput?.focus();
-});
-
-const archetypeModal = document.getElementById('archetypeModal');
-const archetypeNameInput = document.getElementById('archetypeNameInput');
-archetypeModal?.addEventListener('shown.bs.modal', () => {
-    archetypeNameInput?.focus();
 });
 
 const abilityModal = document.getElementById('abilityModal');
