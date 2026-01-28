@@ -3,9 +3,14 @@ import React from "react";
 import {loadModal, tree, changeHidden} from "./index.ts";
 import {renderSearchResults} from "./custom_presets";
 import {convertToMinecraftTooltip, insertStringBeforeSelected, preferredDelimiter} from "./utils.ts";
-import {ArchetypeModal} from "./modals.tsx";
+import {ArchetypeMenu} from "./archetype.tsx";
+import * as utils from "./utils.ts";
+
+export type StateSetter<T> = (value: ((prevState: T) => T) | T) => void
 
 export function App() {
+    const [archetypes, setArchetypes] = useState([] as string[]);
+
     return <>
         <section className="mt-2 pb-2 pt-2">
             <div className="d-flex justify-content-start align-items-center ps-1 pe-1">
@@ -300,7 +305,7 @@ export function App() {
                 </div>
                 <div className="d-flex flex-column col-xs-12 col-sm-12 col-md-5 col-lg-5 ms-md-4 p-0"
                      style={{maxWidth: "500px"}}>
-                    <ArchetypeSelect></ArchetypeSelect>
+                    <ArchetypeMenu archetypes={archetypes} setArchetypes={setArchetypes}/>
                     <div className="flex-grow-1 position-relative mt-2 mb-2 shown-on-tree-edit"
                          style={{minHeight: "400px"}}>
                         <div className="position-absolute normal-container"
@@ -692,27 +697,6 @@ export function App() {
     </>;
 }
 
-function ArchetypeSelect() {
-    const [show, setShow] = useState(false);
-
-    return <div className="normal-container shown-on-tree-edit">
-        <div className="d-flex justify-content-end align-items-center ps-2 pe-2 mt-1">
-            <div id="neutralContainer" className="mt-1 overflow-hidden rtl"></div>
-            <div className="flex-fill"></div>
-            <div className="text-light ms-2">
-                ARCHETYPES
-            </div>
-            <button className="btn btn-secondary btn-sm ms-2" data-bs-toggle="modal"
-                    data-bs-target="#archetypeModal" onClick={() => tree.editArchetype()}>+
-            </button>
-        </div>
-        <div className="ms-2 me-2 mt-1 mb-1 overflow-auto" style={{maxHeight: "108px"}}
-             id="archetypeContainer"></div>
-        <button onClick={() => setShow(true)}>Show</button>
-        <ArchetypeModal show={show} setShow={setShow}></ArchetypeModal>
-    </div>;
-}
-
 type MaxLengthInputProps = {
     labelDefault: string,
     inputRef?: React.RefObject<HTMLInputElement>,
@@ -735,4 +719,53 @@ export function MaxLengthInput({labelDefault, inputRef, onInput, ...props}: MaxL
             <label>{labelText}</label>
         </>
     );
+}
+
+export function preventDefocus(e: React.PointerEvent<HTMLDivElement>) {
+    if (!(e.target as HTMLElement).classList.contains('focusable')) e.preventDefault();
+}
+
+export function ColorPalette() {
+    return <div className="colorContainer" style={{textAlign: "end", maxWidth: "320px", marginLeft: "auto"}}>
+        {Object.keys(utils.codeDictionaryColor).filter(x => utils.codeDictionaryColor[x] != null)
+            .map(key => {
+                return <button key={key}
+                               onClick={() => utils.insertStringBeforeSelected(utils.preferredDelimiter + key)}
+                               tabIndex={-1}
+                               style={{
+                                   height: "16px",
+                                   width: "16px",
+                                   marginRight: "4px",
+                                   backgroundColor: utils.codeDictionaryColor[key],
+                               }}></button>;
+            })}
+    </div>;
+}
+
+export function FormatterPalette() {
+    return <div className="row justify-content-end mt-2" style={{textAlign: "end"}}>
+        {/*<button type="button" className="btn btn-secondary me-2 medium-btn" style="width: 100px;" onClick="utils.insertStringBeforeSelected(utils.preferredDelimiter + 'r')">Reset style</button>*/}
+        <button type="button" className="btn btn-secondary me-2 fw-bold medium-btn"
+                title="Bold"
+                onClick={() => insertStringBeforeSelected(`${preferredDelimiter}l`)}>B
+        </button>
+        <button type="button" className="btn btn-secondary me-2 fst-italic medium-btn"
+                title="Italic"
+                onClick={() => insertStringBeforeSelected(`${preferredDelimiter}o`)}>I
+        </button>
+        <button type="button"
+                className="btn btn-secondary me-2 text-decoration-underline medium-btn"
+                title="Underline"
+                onClick={() => insertStringBeforeSelected(`${preferredDelimiter}n`)}>U
+        </button>
+        <button type="button"
+                className="btn btn-secondary me-2 text-decoration-line-through medium-btn"
+                title="Strikethrough"
+                onClick={() => insertStringBeforeSelected(`${preferredDelimiter}m`)}>S
+        </button>
+        <input type="color" style={{height: "25px", width: "25px"}}
+               className="form-control form-control-color me-3" value="#18f7d1"
+               title="Custom color"
+               onChange={(e) => insertStringBeforeSelected(preferredDelimiter + e.currentTarget.value)}/>
+    </div>;
 }

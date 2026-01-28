@@ -1035,7 +1035,6 @@ export class BaseTree {
         container.innerHTML = "";
 
         for (let archetype of this.archetypes) {
-
             const div = document.createElement("div");
             div.classList.add('d-inline-flex', 'minecraftTooltip', 'w-100', 'mb-1', 'pt-1');
 
@@ -1082,25 +1081,16 @@ export class BaseTree {
             div.appendChild(delbtn);
 
             container.appendChild(div);
-
         }
 
         const div = document.createElement("div");
         div.classList.add('d-inline-flex', 'minecraftTooltip', 'w-100', 'mb-1', 'pt-1');
 
         if (this.selectedArchetype == "") {
-
             div.classList.add('selected-ability');
-            div.addEventListener('click', (e) => {
-                this.selectArchetype(null);
-            });
-
+            div.addEventListener('click', () => this.selectArchetype(""));
         } else {
-
-            div.addEventListener('click', (e) => {
-                this.selectArchetype("");
-            });
-
+            div.addEventListener('click', () => this.selectArchetype(""));
         }
 
         const abilityCount = document.createElement("div");
