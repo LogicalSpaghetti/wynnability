@@ -1,4 +1,4 @@
-import {useState} from "react";
+import {useEffect, useState} from "react";
 import React from "react";
 import {loadModal, tree, changeHidden} from "./index.ts";
 import {renderSearchResults} from "./custom_presets";
@@ -9,7 +9,14 @@ import * as utils from "./utils.ts";
 export type StateSetter<T> = (value: ((prevState: T) => T) | T) => void
 
 export function App() {
+
+
+
     const [archetypes, setArchetypes] = useState([] as string[]);
+
+    useEffect(() => {
+        console.log(archetypes);
+    }, [archetypes]);
 
     return <>
         <section className="mt-2 pb-2 pt-2">
@@ -455,7 +462,7 @@ export function App() {
                                         onClick={() => {
                                             changeHidden(false, [], ['libraryinterface']);
                                             changeHidden(true, [], ['loadinterface']);
-                                            renderSearchResults();
+                                            void renderSearchResults();
                                         }}>
                                     Browse library
                                 </button>
@@ -698,27 +705,17 @@ export function App() {
 }
 
 type MaxLengthInputProps = {
+    value: string,
     labelDefault: string,
     inputRef?: React.RefObject<HTMLInputElement>,
 } & React.InputHTMLAttributes<HTMLInputElement>;
 
-export function MaxLengthInput({labelDefault, inputRef, onInput, ...props}: MaxLengthInputProps) {
-    const [value, setValue] = useState(props.defaultValue?.toString() || "");
-
-    const handleInput = (e: React.FormEvent<HTMLInputElement>) => {
-        setValue(e.currentTarget.value);
-        onInput?.(e);
-    };
-
-    // compute label text dynamically
+export function MaxLengthInput({value = "", labelDefault, inputRef, ...props}: MaxLengthInputProps) {
     const labelText = value.length > 0 ? `${value.length}/${props.maxLength}` : labelDefault;
-
-    return (
-        <>
-            <input {...props} ref={inputRef} value={value} onInput={handleInput}/>
-            <label>{labelText}</label>
-        </>
-    );
+    return <>
+        <input {...props} ref={inputRef} value={value}/>
+        <label>{labelText}</label>
+    </>;
 }
 
 export function preventDefocus(e: React.PointerEvent<HTMLDivElement>) {

@@ -1,4 +1,4 @@
-import * as bootstrap from 'bootstrap';
+import * as bootstrap from 'bootstrap'; // TODO: remove once all vanilla bootstrap has been refactored
 
 export type StringTo<T> = { [key: string]: T };
 export type NumberTo<T> = { [key: number | string]: T };

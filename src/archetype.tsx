@@ -1,17 +1,20 @@
 import {minecraftToHTML} from "./utils.ts";
-import {tree} from "./index.ts";
-import React, {type RefObject, useRef, useState} from "react";
-import Modal from "react-bootstrap/Modal";
+import React, {type RefObject, useEffect, useRef, useState} from "react";
+import {Modal} from "react-bootstrap";
 import {ColorPalette, FormatterPalette, MaxLengthInput, preventDefocus, type StateSetter} from "./react.tsx";
 import * as utils from "./utils.ts";
-
-// TODO: find a way to communicate to the modal what Archetype is being edited, and to add a new Archetype.
 
 export function ArchetypeMenu({archetypes, setArchetypes}: {
     archetypes: string[],
     setArchetypes: StateSetter<string[]>
 }) {
-    const [show, setShow] = useState(false);
+    const [editedArchetype, editArchetype] = useState(null as (string | null));
+
+    function renameArchetype(oldName: string, newName: string) {
+        setArchetypes(archetypes => archetypes.includes(oldName)
+            ? archetypes.map(name => name === oldName ? newName : name)
+            : archetypes.concat(newName));
+    }
 
     function deleteArchetype(archetype: string) {
         setArchetypes(archetypes => archetypes.filter(name => name !== archetype));
@@ -25,19 +28,19 @@ export function ArchetypeMenu({archetypes, setArchetypes}: {
                 ARCHETYPES
             </div>
             <button className="btn btn-secondary btn-sm ms-2" data-bs-toggle="modal"
-                    data-bs-target="#archetypeModal" onClick={() => tree.editArchetype()}>+
+                    data-bs-target="#archetypeModal" onClick={() => editArchetype("")}>+
             </button>
         </div>
-        <ArchetypeSelector archetypes={archetypes} deleteArchetype={deleteArchetype} setShow={setShow}/>
-        <button onClick={() => setShow(true)}>Show</button>
-        <ArchetypeModal show={show} setShow={setShow}></ArchetypeModal>
+        <ArchetypeSelector archetypes={archetypes} deleteArchetype={deleteArchetype} editArchetype={editArchetype}/>
+        <ArchetypeModal editedArchetype={editedArchetype} editArchetype={editArchetype}
+                        renameArchetype={renameArchetype}></ArchetypeModal>
     </div>;
 }
 
-function ArchetypeSelector({archetypes, deleteArchetype, setShow}: {
+function ArchetypeSelector({archetypes, deleteArchetype, editArchetype}: {
     archetypes: string[],
     deleteArchetype: (archetype: string) => void,
-    setShow: StateSetter<boolean>
+    editArchetype: StateSetter<string | null>
 }) {
 
     const [selectedArchetype, setSelectedArchetype] = useState("");
@@ -46,17 +49,17 @@ function ArchetypeSelector({archetypes, deleteArchetype, setShow}: {
         {archetypes.map((archetype, i) => {
             return <ArchetypeOption key={i} archetype={archetype} selectedArchetype={selectedArchetype}
                                     setSelectedArchetype={setSelectedArchetype}
-                                    setShow={setShow} deleteArchetype={deleteArchetype}/>;
+                                    editArchetype={editArchetype} deleteArchetype={deleteArchetype}/>;
         })}
     </div>;
 }
 
-function ArchetypeOption({key, archetype, selectedArchetype, setSelectedArchetype, setShow, deleteArchetype}: {
+function ArchetypeOption({key, archetype, selectedArchetype, setSelectedArchetype, editArchetype, deleteArchetype}: {
     key: number,
     archetype: string,
     selectedArchetype: string,
     setSelectedArchetype: StateSetter<string>,
-    setShow: StateSetter<boolean>,
+    editArchetype: StateSetter<string | null>,
     deleteArchetype: ((archetype: string) => void)
 }) {
     return <div key={key}
@@ -68,11 +71,10 @@ function ArchetypeOption({key, archetype, selectedArchetype, setSelectedArchetyp
     >
         <div className="flex-fill overflow-hidden"
              dangerouslySetInnerHTML={{__html: utils.minecraftToHTML(archetype)}}/>
-        <div>{placedArchetypeCounts[archetype]}/{archetypeCounts[archetype]}</div>
+        {/*<div>{placedArchetypeCounts[archetype]}/{archetypeCounts[archetype]}</div>*/}
         <button type="button" title="Edit" style={{backgroundColor: 'transparent'}}
                 className="small-btn me-1 ms-2 font-default" onClick={() => {
-            setSelectedArchetype(archetype);
-            setShow(true);
+            editArchetype(archetype);
         }}>✒️
         </button>
         <button type="button" style={{backgroundColor: "transparent"}} title="Delete" className="small-btn font-default"
@@ -83,15 +85,24 @@ function ArchetypeOption({key, archetype, selectedArchetype, setSelectedArchetyp
     </div>;
 }
 
-function ArchetypeModal({show, setShow}: { show: boolean, setShow: StateSetter<boolean> }) {
-    const handleClose = () => setShow(false);
+function ArchetypeModal({editedArchetype, editArchetype, renameArchetype}: {
+    editedArchetype: string | null,
+    editArchetype: StateSetter<string | null>,
+    renameArchetype: (oldName: string, newName: string) => void
+}) {
+    function handleClose() {
+        editArchetype(null);
+    }
 
     const inputRef = useRef<HTMLInputElement>(undefined) as RefObject<HTMLInputElement>;
 
-    const [minecraftTooltip, setMinecraftTooltip] = useState<string>("");
+    const [name, setName] = useState(editedArchetype ?? "");
+    useEffect(() => {
+        setName(editedArchetype ?? "");
+    }, [editedArchetype]);
 
     return <>
-        <Modal show={show} onHide={handleClose} centered onPointerDown={preventDefocus}
+        <Modal show={editedArchetype != null} onHide={handleClose} centered onPointerDown={preventDefocus}
                onEntered={() => inputRef.current?.focus()}>
             <Modal.Header className="justify-content-end">
                 <Modal.Title className="fs-5 text-light ms-1 me-auto">Archetype</Modal.Title>
@@ -106,14 +117,16 @@ function ArchetypeModal({show, setShow}: { show: boolean, setShow: StateSetter<b
                                     id="archetypeNameInput"
                                     autoComplete="off"
                                     placeholder="ex. Boltslinger"
-                                    onChange={(e) =>
-                                        setMinecraftTooltip(minecraftToHTML(e.currentTarget.value))}
+                                    value={name}
+                                    onInput={(e) => {
+                                        setName(e.currentTarget.value);
+                                    }}
                                     maxLength={150}
                                     inputRef={inputRef}/>
                 </div>
                 <div className="mt-3 mb-3" style={{backgroundColor: "#110111", height: "1px"}}></div>
                 <div className="minecraftTooltip overflow-hidden"
-                     dangerouslySetInnerHTML={{__html: minecraftTooltip}}></div>
+                     dangerouslySetInnerHTML={{__html: minecraftToHTML(name)}}></div>
             </Modal.Body>
             <Modal.Footer>
                 <button type="button" className="btn btn-outline-danger focusable"
@@ -121,7 +134,7 @@ function ArchetypeModal({show, setShow}: { show: boolean, setShow: StateSetter<b
                 </button>
                 <button type="button" className="btn btn-outline-success ms-4 focusable"
                         onClick={() => {
-                            tree.saveArchetype();
+                            renameArchetype(editedArchetype ?? "", name);
                             handleClose();
                         }}>Save
                 </button>

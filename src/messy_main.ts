@@ -715,38 +715,21 @@ export class BaseTree {
     }
 
     renderStates(historyContainerID = 'historyContainer') {
-
         const container = document.getElementById(historyContainerID);
-        if (container == null) {
-            return;
-        }
+        if (container == null) return;
 
         container.innerHTML = "";
 
-        for (let i = this.history.length - 1; i > this.currentHistoryState; i--) {
-
+        for (let i = this.history.length - 1; i >= 0; i--) {
             const div = document.createElement("div");
-            div.classList.add('history-record-overriden', 'minecraftTooltip');
+            div.classList.add('minecraftTooltip', i == this.currentHistoryState
+                ? 'history-record-selected'
+                : (i > this.currentHistoryState
+                    ? 'history-record-overridden'
+                    : 'history-record-not-selected'));
             div.addEventListener('click', () => this.loadState(i));
             div.innerHTML = this.history[i].change;
             container.appendChild(div);
-
-        }
-
-        const div = document.createElement("div");
-        div.classList.add('history-record-selected', 'minecraftTooltip');
-        div.addEventListener('click', () => this.loadState(this.currentHistoryState));
-        div.innerHTML = this.history[this.currentHistoryState].change;
-        container.appendChild(div);
-
-        for (let i = this.currentHistoryState - 1; i >= 0; i--) {
-
-            const div = document.createElement("div");
-            div.classList.add('history-record-not-selected', 'minecraftTooltip');
-            div.addEventListener('click', () => this.loadState(i));
-            div.innerHTML = this.history[i].change;
-            container.appendChild(div);
-
         }
     }
 
