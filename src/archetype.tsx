@@ -3,22 +3,13 @@ import React, {type RefObject, useEffect, useRef, useState} from "react";
 import {Modal} from "react-bootstrap";
 import {ColorPalette, FormatterPalette, MaxLengthInput, preventDefocus, type StateSetter} from "./react.tsx";
 import * as utils from "./utils.ts";
+import type Tree from "./tree.tsx";
 
-export function ArchetypeMenu({archetypes, setArchetypes}: {
+export function ArchetypeMenu({archetypes, tree}: {
     archetypes: string[],
-    setArchetypes: StateSetter<string[]>
+    tree: RefObject<Tree>,
 }) {
     const [editedArchetype, editArchetype] = useState(null as (string | null));
-
-    function renameArchetype(oldName: string, newName: string) {
-        setArchetypes(archetypes => archetypes.includes(oldName)
-            ? archetypes.map(name => name === oldName ? newName : name)
-            : archetypes.concat(newName));
-    }
-
-    function deleteArchetype(archetype: string) {
-        setArchetypes(archetypes => archetypes.filter(name => name !== archetype));
-    }
 
     return <div className="normal-container shown-on-tree-edit">
         <div className="d-flex justify-content-end align-items-center ps-2 pe-2 mt-1">
@@ -31,15 +22,15 @@ export function ArchetypeMenu({archetypes, setArchetypes}: {
                     data-bs-target="#archetypeModal" onClick={() => editArchetype("")}>+
             </button>
         </div>
-        <ArchetypeSelector archetypes={archetypes} deleteArchetype={deleteArchetype} editArchetype={editArchetype}/>
+        <ArchetypeSelector archetypes={archetypes} tree={tree} editArchetype={editArchetype}/>
         <ArchetypeModal editedArchetype={editedArchetype} editArchetype={editArchetype}
-                        renameArchetype={renameArchetype}></ArchetypeModal>
+                        tree={tree}></ArchetypeModal>
     </div>;
 }
 
-function ArchetypeSelector({archetypes, deleteArchetype, editArchetype}: {
+function ArchetypeSelector({archetypes, tree, editArchetype}: {
     archetypes: string[],
-    deleteArchetype: (archetype: string) => void,
+    tree: RefObject<Tree>,
     editArchetype: StateSetter<string | null>
 }) {
 
@@ -49,29 +40,29 @@ function ArchetypeSelector({archetypes, deleteArchetype, editArchetype}: {
         {archetypes.map((archetype, i) => {
             return <ArchetypeOption key={i} archetype={archetype} selectedArchetype={selectedArchetype}
                                     setSelectedArchetype={setSelectedArchetype}
-                                    editArchetype={editArchetype} deleteArchetype={deleteArchetype}/>;
+                                    editArchetype={editArchetype} tree={tree}/>;
         })}
     </div>;
 }
 
-function ArchetypeOption({key, archetype, selectedArchetype, setSelectedArchetype, editArchetype, deleteArchetype}: {
+function ArchetypeOption({key, archetype, selectedArchetype, setSelectedArchetype, editArchetype, tree}: {
     key: number,
     archetype: string,
     selectedArchetype: string,
     setSelectedArchetype: StateSetter<string>,
     editArchetype: StateSetter<string | null>,
-    deleteArchetype: ((archetype: string) => void)
+    tree: RefObject<Tree>,
 }) {
     return <div key={key}
                 className={`d-inline-flex minecraftTooltip w-100 mb-1 pt-1${archetype == selectedArchetype ? ' selected-ability' : ''}`}
                 onClick={(e) => {
-                    if ((e.currentTarget as HTMLElement)?.nodeName != 'BUTTON')
+                    if ((e.target as HTMLElement)?.nodeName != 'BUTTON')
                         setSelectedArchetype(archetype == selectedArchetype ? "" : archetype);
                 }}
     >
         <div className="flex-fill overflow-hidden"
              dangerouslySetInnerHTML={{__html: utils.minecraftToHTML(archetype)}}/>
-        {/*<div>{placedArchetypeCounts[archetype]}/{archetypeCounts[archetype]}</div>*/}
+        {/*TODO:*/}{/*<div>{placedArchetypeCounts[archetype]}/{archetypeCounts[archetype]}</div>*/}
         <button type="button" title="Edit" style={{backgroundColor: 'transparent'}}
                 className="small-btn me-1 ms-2 font-default" onClick={() => {
             editArchetype(archetype);
@@ -79,16 +70,16 @@ function ArchetypeOption({key, archetype, selectedArchetype, setSelectedArchetyp
         </button>
         <button type="button" style={{backgroundColor: "transparent"}} title="Delete" className="small-btn font-default"
                 onClick={() => {
-                    deleteArchetype(archetype);
+                    tree.current.deleteArchetype(archetype);
                 }}>💀
         </button>
     </div>;
 }
 
-function ArchetypeModal({editedArchetype, editArchetype, renameArchetype}: {
+function ArchetypeModal({editedArchetype, editArchetype, tree}: {
     editedArchetype: string | null,
     editArchetype: StateSetter<string | null>,
-    renameArchetype: (oldName: string, newName: string) => void
+    tree: RefObject<Tree>
 }) {
     function handleClose() {
         editArchetype(null);
@@ -134,7 +125,7 @@ function ArchetypeModal({editedArchetype, editArchetype, renameArchetype}: {
                 </button>
                 <button type="button" className="btn btn-outline-success ms-4 focusable"
                         onClick={() => {
-                            renameArchetype(editedArchetype ?? "", name);
+                            tree.current.renameArchetype(editedArchetype ?? "", name);
                             handleClose();
                         }}>Save
                 </button>

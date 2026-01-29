@@ -1060,7 +1060,7 @@ export class BaseTree {
             delbtn.style = "background-color: transparent;";
             delbtn.title = "Delete";
             delbtn.innerHTML = "💀";
-            delbtn.addEventListener('click', (e) => this.deleteArchetype(archetype));
+            delbtn.addEventListener('click', () => this.deleteArchetype(archetype));
             div.appendChild(delbtn);
 
             container.appendChild(div);
@@ -1116,7 +1116,7 @@ export class BaseTree {
             const div = generateIconDiv(type, null, this.properties.classs, type == selected ? 2 : 1, false, this.properties.useAlternativeAbilityIcons);
             div.classList.add('ability-type-selector');
             container.appendChild(div);
-            div.addEventListener("click", (e) => {
+            div.addEventListener("click", () => {
                 this.renderAbilityTypeSelector(type);
                 this.renderEditorAbilityTooltip();
             });

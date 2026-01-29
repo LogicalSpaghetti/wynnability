@@ -1,22 +1,19 @@
-import {useEffect, useState} from "react";
+import {useRef, useState} from "react";
 import React from "react";
-import {loadModal, tree, changeHidden} from "./index.ts";
+import {loadModal, changeHidden} from "./index.ts";
+import {tree as oldTree} from "./index.ts";
 import {renderSearchResults} from "./custom_presets";
 import {convertToMinecraftTooltip, insertStringBeforeSelected, preferredDelimiter} from "./utils.ts";
 import {ArchetypeMenu} from "./archetype.tsx";
 import * as utils from "./utils.ts";
+import Tree from "./tree.tsx";
 
 export type StateSetter<T> = (value: ((prevState: T) => T) | T) => void
 
 export function App() {
-
-
-
     const [archetypes, setArchetypes] = useState([] as string[]);
 
-    useEffect(() => {
-        console.log(archetypes);
-    }, [archetypes]);
+    const tree = useRef(new Tree({archetypes, setArchetypes}));
 
     return <>
         <section className="mt-2 pb-2 pt-2">
@@ -43,12 +40,12 @@ export function App() {
                     <ul className="p-0 dropdown-menu share-dropdown">
                         <li>
                             <button type="button"
-                                    onClick={() => navigator.clipboard.writeText(JSON.stringify(tree, null, 0))}
+                                    onClick={() => navigator.clipboard.writeText(JSON.stringify(oldTree, null, 0))}
                                     className="dropdown-item mb-1" title="Copies a shareable JSON">Copy
                             </button>
                         </li>
                         <li>
-                            <button type="button" onClick={() => tree.downloadJSON()} className="dropdown-item"
+                            <button type="button" onClick={() => oldTree.downloadJSON()} className="dropdown-item"
                                     title="Saves current configuration in a shareable file">Download
                             </button>
                         </li>
@@ -65,7 +62,7 @@ export function App() {
                             <div className="pt-2" style={{width: "85%"}}>
                                 <select defaultValue={"archer"} className="form-select form-select-sm mt-1"
                                         aria-label="Class selection" id="classSelect"
-                                        onInput={() => tree.readProperties()}
+                                        onInput={() => oldTree.readProperties()}
                                         title="Affects ability icons and default tree">
                                     <option value="archer">Archer</option>
                                     <option value="warrior">Warrior</option>
@@ -76,25 +73,25 @@ export function App() {
                                 <div className="d-flex flex-row">
                                     <button type="button" className="btn btn-primary mt-2 me-1"
                                             style={{minWidth: "150px", width: "67%"}}
-                                            onClick={(e) => tree.loadTreeFromPreset(e.currentTarget)}
+                                            onClick={(e) => oldTree.loadTreeFromPreset(e.currentTarget)}
                                             title="Loads the in-game tree for the selected class">Load default tree
                                     </button>
                                     <button type="button" className="btn btn-primary mt-2 flex-grow-1"
                                             style={{overflow: "hidden"}}
-                                            onClick={() => tree.loadEmptyTree()}
+                                            onClick={() => oldTree.loadEmptyTree()}
                                             title="Completely clears tree and settings">Reset
                                     </button>
                                 </div>
                                 <div className="d-flex flex-row">
                                     <button type="button" className="btn btn-primary mt-2 me-1 col"
                                             style={{overflow: "hidden"}}
-                                            onClick={() => tree.removeAllAbilityNodes()}
+                                            onClick={() => oldTree.removeAllAbilityNodes()}
                                             title="Removes all abilities from the tree (but not from the menu)">Clear
                                         abilities
                                     </button>
                                     <button type="button" className="btn btn-primary mt-2 col"
                                             style={{overflow: "hidden"}}
-                                            onClick={() => tree.removeAllTravelNodes()}
+                                            onClick={() => oldTree.removeAllTravelNodes()}
                                             title="Removes all connections from the tree">
                                         Clear paths
                                     </button>
@@ -102,7 +99,7 @@ export function App() {
                                 <div className="d-flex flex-row">
                                     <button type="button" className="btn btn-primary mt-2 col"
                                             style={{overflow: "hidden"}}
-                                            onClick={() => tree.autoformatAbilityNames()}
+                                            onClick={() => oldTree.autoformatAbilityNames()}
                                             title="Reformats ability names to match in-game color">Autoformat ability
                                         names
                                     </button>
@@ -117,7 +114,7 @@ export function App() {
                                     Points</label></div>
                                 <div><input type="number" className="form-control integer settingNumberInput"
                                             id="maxAbilityPoints"
-                                            onChange={() => tree.readProperties()}/></div>
+                                            onChange={() => oldTree.readProperties()}/></div>
                             </div>
                             <div className="d-flex flex-row pt-3 ps-3 align-items-center justify-content-between"
                                  style={{width: "85%"}}>
@@ -126,7 +123,7 @@ export function App() {
                                 </div>
                                 <div><input type="number" className="form-control integer settingNumberInput"
                                             id="treePages"
-                                            onChange={() => tree.readProperties()}/></div>
+                                            onChange={() => oldTree.readProperties()}/></div>
                             </div>
                             <div className="d-flex flex-row pt-3 ps-3 align-items-center justify-content-between"
                                  style={{width: "85%"}}>
@@ -135,7 +132,7 @@ export function App() {
                                     Pages</label></div>
                                 <div><input type="number" className="form-control integer settingNumberInput"
                                             id="horizontalPages"
-                                            disabled onChange={() => tree.readProperties()}/></div>
+                                            disabled onChange={() => oldTree.readProperties()}/></div>
                             </div>
                         </div>
                         <div className="col-xs-12 col-sm-6 col-lg-3 pt-3 d-flex flex-column align-items-center">
@@ -146,7 +143,7 @@ export function App() {
                                 </div>
                                 <div><input type="number" className="form-control integer settingNumberInput"
                                             id="rowsPerPage"
-                                            onChange={() => tree.readProperties()}/></div>
+                                            onChange={() => oldTree.readProperties()}/></div>
                             </div>
                             <div className="d-flex flex-row pt-3 ps-3 align-items-center justify-content-between"
                                  style={{width: "85%"}}>
@@ -154,7 +151,7 @@ export function App() {
                                     displayed</label></div>
                                 <div><input type="number" className="form-control integer settingNumberInput"
                                             id="pagesDisplayed"
-                                            onChange={() => tree.readProperties()}/></div>
+                                            onChange={() => oldTree.readProperties()}/></div>
                             </div>
                             <div className="d-flex flex-row pt-3 ps-3 align-items-center justify-content-between"
                                  style={{width: "85%"}}>
@@ -163,7 +160,7 @@ export function App() {
                                 </div>
                                 <div><input type="number" className="form-control integer settingNumberInput"
                                             id="startingPage"
-                                            onChange={() => tree.readProperties()} disabled/></div>
+                                            onChange={() => oldTree.readProperties()} disabled/></div>
                             </div>
                         </div>
                         <div className="col-xs-12 col-sm-6 col-lg-3 pt-4 d-flex flex-column align-items-center">
@@ -174,7 +171,7 @@ export function App() {
                                     tree</label>
                                 <input className="form-check-input me-4" type="checkbox" role="switch"
                                        id="loopTreeSwitch"
-                                       onInput={() => tree.readProperties()}/>
+                                       onInput={() => oldTree.readProperties()}/>
                             </div>
                             <div
                                 className="d-flex flex-row mt-3 ps-3 align-items-center justify-content-between form-check form-switch"
@@ -183,7 +180,7 @@ export function App() {
                                     Up</label>
                                 <input className="form-check-input me-4" type="checkbox" role="switch"
                                        id="travelUpSwitch"
-                                       onInput={() => tree.readProperties()}/>
+                                       onInput={() => oldTree.readProperties()}/>
                             </div>
                             <div
                                 className="d-flex flex-row mt-3 ps-3 align-items-center justify-content-between form-check form-switch"
@@ -192,7 +189,7 @@ export function App() {
                                     Allocation</label>
                                 <input className="form-check-input me-4" type="checkbox" role="switch"
                                        id="strictAllocationSwitch"
-                                       onInput={() => tree.readProperties()}/>
+                                       onInput={() => oldTree.readProperties()}/>
                             </div>
                             <div
                                 className="d-flex flex-row mt-3 ps-3 align-items-center justify-content-between form-check form-switch"
@@ -201,7 +198,7 @@ export function App() {
                                     Icons</label>
                                 <input className="form-check-input me-4" type="checkbox" role="switch"
                                        id="altIconSwitch"
-                                       onInput={() => tree.readProperties()}/>
+                                       onInput={() => oldTree.readProperties()}/>
                             </div>
                         </div>
                     </div>
@@ -213,35 +210,35 @@ export function App() {
                 <div className="col-xs-12 col-sm-12 col-md-6 p-0" style={{maxWidth: "500px"}}>
                     <div className="text-center col shown-on-single-horizontal-page">
                         <img src="assets/img/background/page_up.png" className="page-up-arrow" width="auto" height="40"
-                             onClick={() => tree.incrementVerticalPage(-1)}/>
+                             onClick={() => oldTree.incrementVerticalPage(-1)}/>
                         <img src="assets/img/background/orb_edit.png" className="orb-edit shown-on-tree-edit"
                              width="auto"
-                             height="40" onClick={() => tree.setMode(false)}/>
+                             height="40" onClick={() => oldTree.setMode(false)}/>
                         <img src="assets/img/background/orb_allocate.png" className="orb-allocate shown-on-allocation"
                              width="auto"
-                             height="40" onClick={() => tree.setMode(true)}/>
+                             height="40" onClick={() => oldTree.setMode(true)}/>
                         <img src="assets/img/background/page_down.png" className="page-down-arrow" width="auto"
                              height="40"
-                             onClick={() => tree.incrementVerticalPage(1)}/>
+                             onClick={() => oldTree.incrementVerticalPage(1)}/>
                     </div>
                     <div className="text-center col shown-on-multi-horizontal-page">
                         <img src="assets/img/background/page_up.png" className="page-up-arrow" width="auto" height="40"
-                             onClick={() => tree.incrementVerticalPage(-1)}/>
+                             onClick={() => oldTree.incrementVerticalPage(-1)}/>
                         <img src="assets/img/background/page_down.png" className="page-down-arrow" width="auto"
                              height="40"
-                             onClick={() => tree.incrementVerticalPage(1)}/>
+                             onClick={() => oldTree.incrementVerticalPage(1)}/>
                         <img src="assets/img/background/orb_edit.png" className="orb-edit shown-on-tree-edit"
                              width="auto"
-                             height="40" onClick={() => tree.setMode(false)}/>
+                             height="40" onClick={() => oldTree.setMode(false)}/>
                         <img src="assets/img/background/orb_allocate.png" className="orb-allocate shown-on-allocation"
                              width="auto"
-                             height="40" onClick={() => tree.setMode(true)}/>
+                             height="40" onClick={() => oldTree.setMode(true)}/>
                         <img src="assets/img/background/page_left.png" className="page-left-arrow" width="auto"
                              height="40"
-                             onClick={() => tree.incrementHorizontalPage(-1)}/>
+                             onClick={() => oldTree.incrementHorizontalPage(-1)}/>
                         <img src="assets/img/background/page_right.png" className="page-right-arrow" width="auto"
                              height="40"
-                             onClick={() => tree.incrementHorizontalPage(1)}/>
+                             onClick={() => oldTree.incrementHorizontalPage(1)}/>
                     </div>
                     <div className="w-100 h-auto"
                          style={{
@@ -258,16 +255,16 @@ export function App() {
                              backgroundSize: "100% auto",
                          }}>
                         <div style={{width: "calc(100% / 406 * 32)"}}
-                             onPointerEnter={() => tree.continueEditWithloopedNode(-1)}></div>
+                             onPointerEnter={() => oldTree.continueEditWithloopedNode(-1)}></div>
                         <table className="w-100 m-0" style={{tableLayout: "fixed"}}
                                onWheel={(e) => {
                                    e.preventDefault();
-                                   tree.incrementVerticalPage(e.deltaY > 0 ? 1 : -1);
+                                   oldTree.incrementVerticalPage(e.deltaY > 0 ? 1 : -1);
                                }}>
                             <tbody id="treeTableBody"></tbody>
                         </table>
                         <div id="rightTreeBoundary" style={{width: "calc(100% / 406 * 34)"}}
-                             onPointerEnter={() => tree.continueEditWithloopedNode(1)}></div>
+                             onPointerEnter={() => oldTree.continueEditWithloopedNode(1)}></div>
                     </div>
                     <div className="w-100 h-auto"
                          style={{
@@ -279,40 +276,40 @@ export function App() {
                     </div>
                     <div className="text-center col shown-on-single-horizontal-page">
                         <img src="assets/img/background/page_up.png" className="page-up-arrow" width="auto" height="40"
-                             onClick={() => tree.incrementVerticalPage(-1)}/>
+                             onClick={() => oldTree.incrementVerticalPage(-1)}/>
                         <img src="assets/img/background/orb_edit.png" className="orb-edit shown-on-tree-edit"
                              width="auto"
-                             height="40" onClick={() => tree.setMode(false)}/>
+                             height="40" onClick={() => oldTree.setMode(false)}/>
                         <img src="assets/img/background/orb_allocate.png" className="orb-allocate shown-on-allocation"
                              width="auto"
-                             height="40" onClick={() => tree.setMode(true)}/>
+                             height="40" onClick={() => oldTree.setMode(true)}/>
                         <img src="assets/img/background/page_down.png" className="page-down-arrow" width="auto"
                              height="40"
-                             onClick={() => tree.incrementVerticalPage(1)}/>
+                             onClick={() => oldTree.incrementVerticalPage(1)}/>
                     </div>
                     <div className="text-center col shown-on-multi-horizontal-page">
                         <img src="assets/img/background/page_up.png" className="page-up-arrow" width="auto" height="40"
-                             onClick={() => tree.incrementVerticalPage(-1)}/>
+                             onClick={() => oldTree.incrementVerticalPage(-1)}/>
                         <img src="assets/img/background/page_down.png" className="page-down-arrow" width="auto"
                              height="40"
-                             onClick={() => tree.incrementVerticalPage(1)}/>
+                             onClick={() => oldTree.incrementVerticalPage(1)}/>
                         <img src="assets/img/background/orb_edit.png" className="orb-edit shown-on-tree-edit"
                              width="auto"
-                             height="40" onClick={() => tree.setMode(false)}/>
+                             height="40" onClick={() => oldTree.setMode(false)}/>
                         <img src="assets/img/background/orb_allocate.png" className="orb-allocate shown-on-allocation"
                              width="auto"
-                             height="40" onClick={() => tree.setMode(true)}/>
+                             height="40" onClick={() => oldTree.setMode(true)}/>
                         <img src="assets/img/background/page_left.png" className="page-left-arrow" width="auto"
                              height="40"
-                             onClick={() => tree.incrementHorizontalPage(-1)}/>
+                             onClick={() => oldTree.incrementHorizontalPage(-1)}/>
                         <img src="assets/img/background/page_right.png" className="page-right-arrow" width="auto"
                              height="40"
-                             onClick={() => tree.incrementHorizontalPage(1)}/>
+                             onClick={() => oldTree.incrementHorizontalPage(1)}/>
                     </div>
                 </div>
                 <div className="d-flex flex-column col-xs-12 col-sm-12 col-md-5 col-lg-5 ms-md-4 p-0"
                      style={{maxWidth: "500px"}}>
-                    <ArchetypeMenu archetypes={archetypes} setArchetypes={setArchetypes}/>
+                    <ArchetypeMenu archetypes={archetypes} tree={tree}/>
                     <div className="flex-grow-1 position-relative mt-2 mb-2 shown-on-tree-edit"
                          style={{minHeight: "400px"}}>
                         <div className="position-absolute normal-container"
@@ -321,15 +318,15 @@ export function App() {
                                 <input type="text" className="generic-background text-light" style={{minWidth: "60px"}}
                                        id="abilitySearch" placeholder="Search..."
                                        onInput={() => {
-                                           tree.selectedAbilityID = -1;
-                                           tree.renderAbilities();
+                                           oldTree.selectedAbilityID = -1;
+                                           oldTree.renderAbilities();
                                        }}/>
                                 <div className="me-auto ms-2">
                                     <input className="btn-check" type="checkbox" id="notOnTreeFilter" hidden
                                            style={{position: "absolute"}}
                                            onChange={() => {
-                                               tree.selectedAbilityID = -1;
-                                               tree.renderAbilities();
+                                               oldTree.selectedAbilityID = -1;
+                                               oldTree.renderAbilities();
                                            }} checked={true}/>
                                     <label className="btn btn-outline-success" style={{height: "25px", width: "25px"}}
                                            htmlFor="notOnTreeFilter"
@@ -345,7 +342,7 @@ export function App() {
                                     ABILITIES
                                 </div>
                                 <button className="btn btn-secondary btn-sm ms-2" data-bs-toggle="modal"
-                                        data-bs-target="#abilityModal" onClick={() => tree.editAbility()}>
+                                        data-bs-target="#abilityModal" onClick={() => oldTree.editAbility()}>
                                     +
                                 </button>
                             </div>
@@ -360,7 +357,7 @@ export function App() {
                             </div>
                             <select className="form-select mt-2 focusable" id="startingAbilityInput"
                                     aria-label="Starting ability"
-                                    onInput={(e) => tree.selectStartingAbility(e.currentTarget.value)}></select>
+                                    onInput={(e) => oldTree.selectStartingAbility(e.currentTarget.value)}></select>
                         </div>
                     </div>
                     <div className="shown-on-allocation mt-2 normal-container">
@@ -381,7 +378,7 @@ export function App() {
                                 </div>
                                 <button className="btn btn-secondary btn-sm" data-bs-toggle="modal"
                                         data-bs-target="#treeModal"
-                                        onClick={() => tree.editTree()}>
+                                        onClick={() => oldTree.editTree()}>
                                     +
                                 </button>
                             </div>
@@ -398,8 +395,8 @@ export function App() {
                 <div className="d-flex flex-column align-items-center">
                     <div className="fw-bold mb-1">HISTORY</div>
                     <div>
-                        <button title="Undo" onClick={() => tree.loadStateIncrementally(-1)}>&lt;</button>
-                        <button title="Redo" onClick={() => tree.loadStateIncrementally(1)}>&gt;</button>
+                        <button title="Undo" onClick={() => oldTree.loadStateIncrementally(-1)}>&lt;</button>
+                        <button title="Redo" onClick={() => oldTree.loadStateIncrementally(1)}>&gt;</button>
                     </div>
                 </div>
                 <div className="mt-5 mb-2 d-flex flex-column align-items-center">
@@ -432,7 +429,7 @@ export function App() {
                                    onPaste={e => {
                                        setTimeout(() => {
                                            try {
-                                               tree.loadTreeFromField();
+                                               oldTree.loadTreeFromField();
                                                loadModal.hide();
                                            } catch (error) {
                                                e.currentTarget.select();
@@ -451,7 +448,7 @@ export function App() {
                                 </button>
                                 <input hidden type="file" id="autoFileInput" accept=".json,.txt"
                                        onChange={(e) => {
-                                           tree.loadTreeFromFile(e.currentTarget?.files?.[0]);
+                                           oldTree.loadTreeFromFile(e.currentTarget?.files?.[0]);
                                            loadModal.hide();
                                        }}/>
                                 <button type="button" className="btn btn-primary flex-fill"
@@ -565,14 +562,14 @@ export function App() {
                             <div className="form-floating">
                                 <input type="text" className="form-control focusable" id="abilityNameInput"
                                        autoComplete="off"
-                                       placeholder="Name" onInput={() => tree.renderEditorAbilityTooltip()}
+                                       placeholder="Name" onInput={() => oldTree.renderEditorAbilityTooltip()}
                                        maxLength={200}/>
                                 <label className="maxlength-label" htmlFor="abilityNameInput">Name</label>
                             </div>
                             <div className="form-floating mt-2">
                         <textarea style={{minHeight: "200px"}} className="form-control focusable"
                                   id="abilityDescriptionInput" autoComplete="off" placeholder="Description"
-                                  onInput={() => tree.renderEditorAbilityTooltip()} maxLength={1500}></textarea>
+                                  onInput={() => oldTree.renderEditorAbilityTooltip()} maxLength={1500}></textarea>
                                 <label className="maxlength-label" htmlFor="abilityDescriptionInput">Description</label>
                             </div>
                             <div className="btn-group dropup w-100 mt-2">
@@ -586,7 +583,7 @@ export function App() {
                             </div>
                             <select className="form-select mt-2 focusable" id="abilityArchetypeInput"
                                     aria-label="Archetype"
-                                    onInput={() => tree.renderEditorAbilityTooltip()}></select>
+                                    onInput={() => oldTree.renderEditorAbilityTooltip()}></select>
                             <div className="d-flex align-items-center justify-content-between w-100 mt-2 ps-1">
                                 <div className="me-5 text-light"><label htmlFor="pointsRequiredInput"
                                                                         className="form-label">Points
@@ -594,7 +591,7 @@ export function App() {
                                 <div><input type="number" min="0" max="8" value="1"
                                             className="form-control focusable integer"
                                             style={{width: "80px"}} id="pointsRequiredInput"
-                                            onChange={() => tree.renderEditorAbilityTooltip()}/></div>
+                                            onChange={() => oldTree.renderEditorAbilityTooltip()}/></div>
                             </div>
                             <div className="d-flex align-items-center justify-content-between w-100 mt-2 ps-1">
                                 <div className="me-5 text-light"><label htmlFor="archetypePointsRequiredInput"
@@ -603,11 +600,11 @@ export function App() {
                                 <div><input type="number" min="0" max="8" value="0"
                                             className="form-control focusable integer"
                                             style={{width: "80px"}} id="archetypePointsRequiredInput"
-                                            onChange={() => tree.renderEditorAbilityTooltip()}/></div>
+                                            onChange={() => oldTree.renderEditorAbilityTooltip()}/></div>
                             </div>
                             <select className="form-select mt-2 focusable" id="abilityPrerequiseteInput"
                                     aria-label="Prerequisite ability"
-                                    onInput={() => tree.renderEditorAbilityTooltip()}></select>
+                                    onInput={() => oldTree.renderEditorAbilityTooltip()}></select>
                             <div className="mt-3 mb-3" style={{backgroundColor: "#110111", height: "1px"}}></div>
                             <div className="minecraftTooltip" id="editAbilityTooltip"></div>
                         </div>
@@ -619,7 +616,7 @@ export function App() {
                                         data-bs-dismiss="modal">Close
                                 </button>
                                 <button type="button" className="btn btn-outline-success ms-4 focusable"
-                                        onClick={() => tree.saveAbility()} data-bs-dismiss="modal">Save
+                                        onClick={() => oldTree.saveAbility()} data-bs-dismiss="modal">Save
                                 </button>
                             </div>
                         </div>
@@ -682,7 +679,7 @@ export function App() {
                             </button>
                             <button type="button" className="btn btn-outline-success ms-4 focusable"
                                     data-bs-dismiss="modal"
-                                    onClick={() => tree.saveTree()}>Save
+                                    onClick={() => oldTree.saveTree()}>Save
                             </button>
                         </div>
                     </form>
